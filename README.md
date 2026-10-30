@@ -1,0 +1,40 @@
+# Gökyüzü Haritam
+
+Türkçe/İngilizce astroloji mobil uygulaması (Expo + React Native + TypeScript).
+
+## Özellikler
+- **Doğum haritası:** Güneş–Plüton, Kuzey/Güney Ay Düğümü, Lilith, Şans Noktası, Vertex; ev konumları, açılar, element dengesi, gezegen güçleri (yönetici/yücelim/zarar/düşüş), ev yöneticisi yorumları, harita çarkı.
+- **Ev sistemleri:** Placidus (kutup enlemlerinde otomatik Porphyry), Tam Burç, Eşit Ev, Porphyry.
+- **Stil:** Venüs (zevk), Yükselen (silüet, saç, makyaj), Ay (rahat kombin), Mars (spor), MC (iş imajı), 1. ev gezegenleri, kişisel renk paleti.
+- **Aşk:** Venüs, Mars, 5. ve 7. ev, Venüs’ün evi, 7. ev gezegenleri + iki kişilik uyum (sinastri) analizi.
+- **Kariyer:** MC yönü ve uygun alanlar, 10. ev gezegenleri, 6. ev çalışma tarzı, 2. ev para ilişkisi, Jüpiter ve Satürn.
+- **Bugün:** Kişisel transitler, Ay burcu/fazı/evi, günlük puanlar, retro gezegenler, 45 günlük gökyüzü takvimi.
+- **Trendler:** Sosyal medyada en çok konuşulan 30 yerleşim; haritanda olanlar, popüler iddia + astrolojik anlamıyla (özgün metin).
+
+## Doğruluk
+- Gezegen konumları `astronomy-engine` ile hesaplanır (görünür, geosentrik, tropikal, gerçek ekliptik).
+- `npm run verify`: 400 rastgele haritayı Swiss Ephemeris ile karşılaştırır. Son sonuç: gezegenlerde ≤ 21″, ev başlangıçları/ASC/MC ≤ 0.3″, burç/ev/retro uyuşmazlığı 0. Lilith (ortalama apoje) ≈ 7′ farkla.
+- Doğum saati IANA saat dilimi veritabanıyla (yaz saati ve tarihsel değişiklikler dahil) UTC’ye çevrilir.
+- Şehir arama: Open-Meteo Geocoding (internet), çevrimdışıyken yerleşik şehir listesi; elle koordinat da girilebilir.
+
+## Çalıştırma
+```bash
+npm install
+npx expo start          # telefonda Expo Go ile QR kodu okut
+npm run typecheck
+npm run verify          # Swiss Ephemeris ile doğruluk testi
+npm run build:web       # web çıktısı → dist/
+```
+Mağaza derlemesi: `npx eas-cli@latest build --platform android` (veya ios).
+
+## Cloudflare Pages ile yayın
+Cloudflare Pages → Create → Connect to Git → `zeybit/sentor`:
+- Framework preset: **None**
+- Build command: `npm run build:web`
+- Build output directory: `dist`
+- Ortam değişkeni: `NODE_VERSION` = `22`
+
+`main` dalına yapılan her push otomatik olarak yeniden yayınlanır.
+
+## Not
+Astroloji bilimsel olarak kanıtlanmış bir yöntem değildir; uygulama eğlence ve kişisel keşif amaçlıdır. Bu not uygulamanın Ayarlar > Hakkında bölümünde ve giriş ekranında yer alır.
