@@ -35,3 +35,18 @@ for (let k = 0; k < 400; k++) {
 }
 console.log('Maks. hata (yay saniyesi):'); for (const k in max) console.log(k.padEnd(16), max[k].toFixed(1));
 console.log({ signMismatch, retroMismatch, houseMismatch });
+
+// ---- Juno: uygulama tablosu ↔ Swiss Ephemeris (asteroit dosyası varsa) ----
+import { junoLon } from '../src/engine/astro';
+import * as path from 'path';
+const ephe = process.env.SE_EPHE_PATH;
+if (ephe) {
+  S.set_ephe_path(ephe);
+  let jmax = 0;
+  for (let k = 0; k < 2000; k++) {
+    const jd = S.julday(1901, 1, 1, 0, 1) + r() * 72000;
+    const ref = S.calc_ut(jd, C.SE_JUNO, C.SEFLG_SWIEPH).data[0];
+    jmax = Math.max(jmax, angleDiff(ref, junoLon(jd)!) * 3600);
+  }
+  console.log('juno (yay saniyesi)', jmax.toFixed(1));
+} else console.log('Juno testi için SE_EPHE_PATH=<seas_18.se1 klasörü> ver.', path.sep);

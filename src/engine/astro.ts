@@ -4,13 +4,14 @@
 import * as A from 'astronomy-engine';
 import { LocalDateTime, ZoneId } from '@js-joda/core';
 import '@js-joda/timezone';
+import { JUNO_B64, JUNO_JD0, JUNO_STEP } from './junoData';
 
 export type BodyId =
   | 'sun' | 'moon' | 'mercury' | 'venus' | 'mars' | 'jupiter' | 'saturn'
-  | 'uranus' | 'neptune' | 'pluto' | 'node' | 'southNode' | 'lilith' | 'fortune';
+  | 'uranus' | 'neptune' | 'pluto' | 'node' | 'southNode' | 'lilith' | 'fortune' | 'juno';
 
 export const PLANETS: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
-export const ALL_BODIES: BodyId[] = [...PLANETS, 'node', 'southNode', 'lilith', 'fortune'];
+export const ALL_BODIES: BodyId[] = [...PLANETS, 'juno', 'node', 'southNode', 'lilith', 'fortune'];
 
 export type HouseSystem = 'placidus' | 'wholeSign' | 'equal' | 'porphyry';
 
@@ -211,6 +212,8 @@ export function angleDiff(a: number, b: number) {
   return d > 180 ? 360 - d : d;
 }
 
+const POINTS: BodyId[] = ['node', 'southNode', 'lilith', 'fortune', 'juno'];
+
 export function findAspects(pos: Record<string, { lon: number }>, ids: BodyId[], orbScale = 1): Aspect[] {
   const out: Aspect[] = [];
   for (let i = 0; i < ids.length; i++) {
@@ -221,7 +224,7 @@ export function findAspects(pos: Record<string, { lon: number }>, ids: BodyId[],
       for (const asp of ASPECTS) {
         let orb = asp.orb;
         if (a === 'sun' || a === 'moon' || b === 'sun' || b === 'moon') orb += 2;
-        if (['node', 'southNode', 'lilith', 'fortune'].includes(a) || ['node', 'southNode', 'lilith', 'fortune'].includes(b)) orb = Math.min(orb, 4);
+        if (POINTS.includes(a) || POINTS.includes(b)) orb = Math.min(orb, 4);
         orb *= orbScale;
         const o = Math.abs(d - asp.angle);
         if (o <= orb) { out.push({ a, b, type: asp.type, orb: o, exact: asp.angle }); break; }
@@ -253,6 +256,12 @@ export function computeChart(input: BirthInput, houseSystem: HouseSystem = 'plac
     raw[id] = { lon: lonAt(id, t), speed: speedOf(id, t) };
   }
   raw.southNode = { lon: norm(raw.node.lon + 180), speed: raw.node.speed };
+  const jd = toJdUT(utc);
+  const j0 = junoLon(jd - 0.5), j1 = junoLon(jd + 0.5);
+  if (j0 !== null && j1 !== null) {
+    let d = j1 - j0; if (d > 180) d -= 360; if (d < -180) d += 360;
+    raw.juno = { lon: junoLon(jd)!, speed: d };
+  }
 
   let cusps: number[] = [];
   let asc: number | null = null, mc: number | null = null, vertex: number | null = null;
@@ -316,4 +325,39 @@ export function fmtDeg(lon: number) {
   let min = Math.round((d - deg) * 60);
   if (min === 60) { min = 0; deg += 1; }
   return `${deg}°${String(min).padStart(2, '0')}'`;
+}
+
+// ---------- Juno (tablodan, ikinci derece interpolasyon) ----------
+let junoTable: Uint16Array | null = null;
+function decodeB64(b64: string): Uint8Array {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const lookup = new Uint8Array(128);
+  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
+  const len = b64.length, pad = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  const out = new Uint8Array((len * 3) / 4 - pad);
+  let o = 0;
+  for (let i = 0; i < len; i += 4) {
+    const n = (lookup[b64.charCodeAt(i)] << 18) | (lookup[b64.charCodeAt(i + 1)] << 12) | (lookup[b64.charCodeAt(i + 2)] << 6) | lookup[b64.charCodeAt(i + 3)];
+    if (o < out.length) out[o++] = (n >> 16) & 255;
+    if (o < out.length) out[o++] = (n >> 8) & 255;
+    if (o < out.length) out[o++] = n & 255;
+  }
+  return out;
+}
+/** Juno boylamı (1900–2100 arası; dışında null). Swiss Ephemeris'ten üretilmiş tablo, hata < 0.01° */
+export function junoLon(jdUT: number): number | null {
+  if (!junoTable) {
+    const bytes = decodeB64(JUNO_B64);
+    junoTable = new Uint16Array(bytes.length / 2);
+    for (let i = 0; i < junoTable.length; i++) junoTable[i] = bytes[2 * i] | (bytes[2 * i + 1] << 8);
+  }
+  const x = (jdUT - JUNO_JD0) / JUNO_STEP;
+  const i = Math.floor(x);
+  if (i < 0 || i + 2 >= junoTable.length) return null;
+  const f = x - i;
+  const v = (k: number) => (junoTable![k] / 65536) * 360;
+  const un = (a: number, b: number) => { let d = b - a; if (d > 180) d -= 360; if (d < -180) d += 360; return d; };
+  const y0 = v(i), d1 = un(y0, v(i + 1)), d2 = d1 + un(v(i + 1), v(i + 2));
+  const a = (d2 - 2 * d1) / 2, b = d1 - a;
+  return norm(y0 + a * f * f + b * f);
 }

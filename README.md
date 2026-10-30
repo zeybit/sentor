@@ -9,11 +9,12 @@ Türkçe/İngilizce astroloji mobil uygulaması (Expo + React Native + TypeScrip
 - **Aşk:** Venüs, Mars, 5. ve 7. ev, Venüs’ün evi, 7. ev gezegenleri + iki kişilik uyum (sinastri) analizi.
 - **Kariyer:** MC yönü ve uygun alanlar, 10. ev gezegenleri, 6. ev çalışma tarzı, 2. ev para ilişkisi, Jüpiter ve Satürn.
 - **Bugün:** Kişisel transitler, Ay burcu/fazı/evi, günlük puanlar, retro gezegenler, 45 günlük gökyüzü takvimi.
+- **Portföy:** Hayat, stil & partner portföyü — aura ve gardırop, makyaj/ten bitişi/dudak-allık tonları/saç, gelecekteki eş profili (Alçalan, 7. ev yöneticisi, Juno, Venüs–Mars), harita yöneticisi, kariyer, 2./8. ev, Ay Düğümleri ve 3 somut tavsiye.
 - **Trendler:** Sosyal medyada en çok konuşulan 30 yerleşim; haritanda olanlar, popüler iddia + astrolojik anlamıyla (özgün metin).
 
 ## Doğruluk
 - Gezegen konumları `astronomy-engine` ile hesaplanır (görünür, geosentrik, tropikal, gerçek ekliptik).
-- `npm run verify`: 400 rastgele haritayı Swiss Ephemeris ile karşılaştırır. Son sonuç: gezegenlerde ≤ 21″, ev başlangıçları/ASC/MC ≤ 0.3″, burç/ev/retro uyuşmazlığı 0. Lilith (ortalama apoje) ≈ 7′ farkla.
+- `npm run verify`: 400 rastgele haritayı Swiss Ephemeris ile karşılaştırır. Son sonuç: gezegenlerde ≤ 21″, ev başlangıçları/ASC/MC ≤ 0.3″, burç/ev/retro uyuşmazlığı 0. Lilith (ortalama apoje) ≈ 7′ farkla. Juno, Swiss Ephemeris asteroit dosyasından üretilmiş 1900–2100 tablosundan okunur (hata < 15″; test: `SE_EPHE_PATH=<seas_18.se1 klasörü> npm run verify`).
 - Doğum saati IANA saat dilimi veritabanıyla (yaz saati ve tarihsel değişiklikler dahil) UTC’ye çevrilir.
 - Şehir arama: Open-Meteo Geocoding (internet), çevrimdışıyken yerleşik şehir listesi; elle koordinat da girilebilir.
 

@@ -4,7 +4,9 @@ import type { BodyId, Chart } from '../engine/astro';
 import { SIGN_GLYPHS, BODIES, ASPECT_INFO } from '../content/base';
 import { C, ELEMENT_COLOR } from '../theme';
 
-const SHOW: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'node', 'lilith'];
+const SHOW: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'juno', 'node', 'lilith'];
+
+const PLANET_SET: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'node'];
 
 export default function Wheel({ chart, size = 320 }: { chart: Chart; size?: number }) {
   const cx = size / 2, cy = size / 2;
@@ -16,7 +18,7 @@ export default function Wheel({ chart, size = 320 }: { chart: Chart; size?: numb
   };
 
   // Gezegen çakışmalarını açmak için basit yayma
-  const placed = SHOW.map(id => ({ id, lon: chart.positions[id].lon, d: chart.positions[id].lon }))
+  const placed = SHOW.filter(id => chart.positions[id]).map(id => ({ id, lon: chart.positions[id].lon, d: chart.positions[id].lon }))
     .sort((a, b) => a.lon - b.lon);
   for (let pass = 0; pass < 4; pass++) {
     for (let i = 0; i < placed.length; i++) {
@@ -51,7 +53,7 @@ export default function Wheel({ chart, size = 320 }: { chart: Chart; size?: numb
           </G>
         );
       })}
-      {chart.aspects.filter(a => SHOW.includes(a.a) && SHOW.includes(a.b) && a.type !== 'conjunction' && a.type !== 'quincunx').map((a, i) => {
+      {chart.aspects.filter(a => PLANET_SET.includes(a.a) && PLANET_SET.includes(a.b) && a.type !== 'conjunction' && a.type !== 'quincunx').map((a, i) => {
         const p1 = pt(chart.positions[a.a].lon, rAsp), p2 = pt(chart.positions[a.b].lon, rAsp);
         const n = ASPECT_INFO[a.type].nature;
         return <Line key={'a' + i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={n === 'harmonious' ? C.air : C.rose} strokeWidth={0.9} opacity={0.75} />;

@@ -73,6 +73,7 @@ export const BODIES: Record<BodyId, { glyph: string; name: L }> = {
   southNode: { glyph: '☋', name: { tr: 'Güney Ay Düğümü', en: 'South Node' } },
   lilith: { glyph: '⚸', name: { tr: 'Lilith (Kara Ay)', en: 'Lilith (Black Moon)' } },
   fortune: { glyph: '⊗', name: { tr: 'Şans Noktası', en: 'Part of Fortune' } },
+  juno: { glyph: '⚵', name: { tr: 'Juno', en: 'Juno' } },
 };
 
 /** Gezegenin temsil ettiği işlev — "… temanı" kalıbıyla */
@@ -91,6 +92,7 @@ export const BODY_FUNCTION: Record<BodyId, L> = {
   southNode: { tr: 'doğuştan getirdiğin yetenekler ve konfor alanın', en: 'your innate gifts and comfort zone' },
   lilith: { tr: 'bastırılmış arzuların, isyanın ve vahşi gücün', en: 'your suppressed desires, rebellion and raw power' },
   fortune: { tr: 'kendini en doğal ve bereketli hissettiğin alan', en: 'where you feel most naturally abundant' },
+  juno: { tr: 'bağlılık ihtiyacın ve ideal eş/evlilik beklentin', en: 'your commitment needs and ideal spouse' },
 };
 
 export const HOUSES: { name: L; area: L; short: L }[] = [

@@ -123,7 +123,22 @@ export const SATURN: L[] = [
   S('Hayallerine sınır ve yapı vermek dersin.', 'Giving structure to your dreams is your lesson.'),
 ];
 
-const HANDWRITTEN: Partial<Record<BodyId, L[]>> = { sun: SUN, moon: MOON, mercury: MERCURY, venus: VENUS, mars: MARS, jupiter: JUPITER, saturn: SATURN };
+export const JUNO_SIGN: L[] = [
+  S('Juno Koç: Eşinde cesaret, bağımsızlık ve heyecan ararsın; eşit ve dinamik bir evlilik.', 'Juno in Aries: you seek courage, independence and excitement in a spouse; an equal, dynamic marriage.'),
+  S('Juno Boğa: Sadakat, güven ve maddi istikrar bağlılığının temeli.', 'Juno in Taurus: loyalty, security and stability are the foundation of commitment.'),
+  S('Juno İkizler: Zihinsel uyum ve sürekli iletişim; en iyi arkadaşın olan bir eş.', 'Juno in Gemini: mental rapport and constant conversation; a best-friend spouse.'),
+  S('Juno Yengeç: Duygusal güven, aile ve yuva; şefkatli ve korumacı bir eş.', 'Juno in Cancer: emotional safety, family and home; a caring, protective spouse.'),
+  S('Juno Aslan: Hayranlık, sadakat ve romantizm; seni gururlandıran bir eş.', 'Juno in Leo: admiration, loyalty and romance; a spouse who makes you proud.'),
+  S('Juno Başak: Günlük hayatı paylaşan, güvenilir ve yardımsever bir eş.', 'Juno in Virgo: a reliable, helpful spouse who shares daily life.'),
+  S('Juno Terazi: Eşitlik, uyum ve estetik; klasik anlamda “ideal evlilik” arayışı.', 'Juno in Libra: equality, harmony and beauty; the classic “ideal marriage”.'),
+  S('Juno Akrep: Derin, tutkulu ve tam bağlılık; güven her şeydir.', 'Juno in Scorpio: deep, passionate, total commitment; trust is everything.'),
+  S('Juno Yay: Özgürlük tanıyan, birlikte büyüyen ve keşfeden bir eş.', 'Juno in Sagittarius: a spouse who gives freedom and grows and explores with you.'),
+  S('Juno Oğlak: Ciddi, sorumluluk sahibi ve uzun vadeli hedefleri olan bir eş.', 'Juno in Capricorn: a serious, responsible spouse with long-term goals.'),
+  S('Juno Kova: Alan tanıyan, arkadaş gibi ve sıra dışı bir evlilik.', 'Juno in Aquarius: a spacious, friend-like, unconventional marriage.'),
+  S('Juno Balık: Ruhsal bağ, şefkat ve romantizm; ruh eşi beklentisi.', 'Juno in Pisces: spiritual bond, compassion and romance; a soulmate expectation.'),
+];
+
+const HANDWRITTEN: Partial<Record<BodyId, L[]>> = { sun: SUN, moon: MOON, mercury: MERCURY, venus: VENUS, mars: MARS, jupiter: JUPITER, saturn: SATURN, juno: JUNO_SIGN };
 
 /** Bir gezegenin burç yerleşimi için yorum */
 export function placementText(id: BodyId, sign: number): L {

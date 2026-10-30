@@ -74,6 +74,14 @@ const tr = {
   aboutText: 'Gezegen konumları astronomy-engine ile hesaplanır ve Swiss Ephemeris ile karşılaştırılarak doğrulanmıştır (gezegenlerde 1 yay dakikasının altında fark). Yorumlar geleneksel ve modern astroloji kaynaklarıyla tutarlı şekilde yazılmıştır. Astroloji bilimsel olarak kanıtlanmış bir yöntem değildir; bu uygulama eğlence ve kişisel keşif amaçlıdır. Sağlık, hukuk veya finans kararları için uzmanlara danış.',
   disclaimer: 'Eğlence ve kişisel keşif amaçlıdır.',
   dayChart: 'Gündüz haritası', nightChart: 'Gece haritası',
+  pf: {
+    tab: 'Portföy', title: 'Hayat, Stil & Partner Portföyün', method: 'Gezegen = NE · Burç = NASIL · Ev = NEREDE',
+    s1: '🌟 1. Kişisel Aura & Gardırop', aesthetic: 'Estetik kimlik', body: 'Görünüm & duruş', wardrobe: 'Gardırop temelleri', palette: 'İmza renk paleti', firstHouse: '1. ev gezegenleri',
+    s2: '💄 2. Astro-Güzellik: Makyaj, Saç & Glam', makeup: 'Makyaj stili & odak', finish: 'Ten bitişi', feature: 'Öne çıkarılacak bölge', lip: 'Dudak tonları', blush: 'Allık tonları', hairCut: 'Saç kesimi & şekillendirme', hairColor: 'Saç rengi seçenekleri', venusMods: 'Venüs açılarının etkisi',
+    s3: '💍 3. Gelecekteki Eş Profili & İlişki Dinamiği', look: 'Görünüm & stil', personality: 'Kişilik & enerji', career: 'Olası meslek alanları', meet: 'Tanışma ortamı', ruler: '7. ev yöneticisi', juno: 'Juno — bağlılık beklentin', dynamic: 'İlişki dinamiği', in7: '7. evdeki gezegenler',
+    s4: '📜 4. Doğum Haritası & Hayat Alanları', chartRuler: 'Harita yöneticisi & ana tema', careerT: 'Kariyer & toplumsal başarı (10. ev, MC)', fields: 'Uygun alanlar', money2: 'Kazanç tarzı (2. ev)', money8: 'Ortak kaynaklar & yatırım (8. ev)', mind: 'Zihin & iletişim (Merkür, 3./9. ev)', node: 'Karmik yol (Ay Düğümleri)', grow: 'Geliştir', release: 'Bırak', advice: 'Usta tavsiyesi: 3 somut adım',
+    note: 'Fiziksel eş betimlemeleri geleneksel astrolojideki burç–görünüm eşleştirmelerine dayanır; olasılık olarak oku.',
+  },
 };
 
 export type Strings = typeof tr;
@@ -144,6 +152,14 @@ const en: Strings = {
   aboutText: 'Planet positions are computed with astronomy-engine and verified against the Swiss Ephemeris (under 1 arcminute for planets). Interpretations are written to be consistent with traditional and modern astrology sources. Astrology is not a scientifically proven method; this app is for entertainment and self-reflection. Consult professionals for health, legal or financial decisions.',
   disclaimer: 'For entertainment and self-reflection.',
   dayChart: 'Day chart', nightChart: 'Night chart',
+  pf: {
+    tab: 'Portfolio', title: 'Your Life, Style & Partner Portfolio', method: 'Planet = WHAT · Sign = HOW · House = WHERE',
+    s1: '🌟 1. Personal Aura & Wardrobe', aesthetic: 'Aesthetic identity', body: 'Look & posture', wardrobe: 'Wardrobe essentials', palette: 'Signature colour palette', firstHouse: '1st-house planets',
+    s2: '💄 2. Astro-Beauty: Makeup, Hair & Glam', makeup: 'Makeup style & focus', finish: 'Skin finish', feature: 'Feature to highlight', lip: 'Lip shades', blush: 'Blush shades', hairCut: 'Haircut & styling', hairColor: 'Hair colour options', venusMods: 'Venus aspects',
+    s3: '💍 3. Future Spouse Profile & Dynamics', look: 'Appearance & style', personality: 'Personality & vibe', career: 'Likely career fields', meet: 'Meeting ground', ruler: '7th-house ruler', juno: 'Juno — your commitment ideal', dynamic: 'Relationship dynamic', in7: 'Planets in your 7th house',
+    s4: '📜 4. Core Chart & Life Areas', chartRuler: 'Chart ruler & main theme', careerT: 'Career & public success (10th, MC)', fields: 'Fields that suit you', money2: 'Earning style (2nd)', money8: 'Shared resources & investing (8th)', mind: 'Mind & communication (Mercury, 3rd/9th)', node: 'Karmic path (Lunar Nodes)', grow: 'Grow toward', release: 'Release', advice: 'Master advice: 3 concrete steps',
+    note: 'Physical partner descriptions follow traditional sign–appearance associations; read them as possibilities.',
+  },
 };
 
 export const STRINGS: Record<Lang, Strings> = { tr, en };
