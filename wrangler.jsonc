@@ -1,0 +1,13 @@
+{
+  // Cloudflare Workers: Expo web çıktısını (dist/) statik site olarak yayınlar
+  "name": "sentor",
+  "compatibility_date": "2026-10-01",
+  "build": {
+    // `wrangler deploy` öncesinde web çıktısını üretir
+    "command": "npm run build:web"
+  },
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

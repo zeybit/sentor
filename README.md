@@ -27,12 +27,10 @@ npm run build:web       # web çıktısı → dist/
 ```
 Mağaza derlemesi: `npx eas-cli@latest build --platform android` (veya ios).
 
-## Cloudflare Pages ile yayın
-Cloudflare Pages → Create → Connect to Git → `zeybit/sentor`:
-- Framework preset: **None**
-- Build command: `npm run build:web`
-- Build output directory: `dist`
-- Ortam değişkeni: `NODE_VERSION` = `22`
+## Cloudflare ile yayın
+Repodaki `wrangler.jsonc`, `dist/` klasörünü Cloudflare Workers'ta statik site olarak yayınlar.
+- Deploy command: `npx wrangler deploy` (derleme dosyadaki `build.command` ile otomatik yapılır)
+- Worker adı `wrangler.jsonc` içindeki `name` ile aynı olmalı (`sentor`).
 
 `main` dalına yapılan her push otomatik olarak yeniden yayınlanır.
 
