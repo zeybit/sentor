@@ -4,11 +4,17 @@ Türkçe/İngilizce astroloji mobil uygulaması (Expo + React Native + TypeScrip
 
 ## Özellikler
 - **Doğum haritası:** Güneş–Plüton, Kuzey/Güney Ay Düğümü, Lilith, Şans Noktası, Vertex; ev konumları, açılar, element dengesi, gezegen güçleri (yönetici/yücelim/zarar/düşüş), ev yöneticisi yorumları, harita çarkı.
-- **Ev sistemleri:** Placidus (kutup enlemlerinde otomatik Porphyry), Tam Burç, Eşit Ev, Porphyry.
+- **Ev sistemleri (11):** Placidus, Koch, Porphyry, Regiomontanus, Campanus, Eşit, Tam Burç, Alcabitius, Topocentric, Morinus, Meridyen (kutup enlemlerinde otomatik Porphyry). Tropikal veya sidereal (Lahiri) zodyak.
+- **Asteroitler:** Chiron, Ceres, Pallas, Juno, Vesta (ayarlardan aç/kapa).
+- **Harita türleri (Harita sekmesi):** Doğum, Transit (çift çark), İkincil progresyon, Solar Arc, Güneş dönüşü, Ay dönüşü, Antiscia, Şimdiki gökyüzü — tarih çubuğuyla saat/gün/hafta/ay/yıl ileri-geri, elle tarih ve oynatma.
+- **Yorum tarzı:** Her yerleşim (burç + ev) ve her açı için ayrı başlık ve paragraf; ~70 gezegen çiftine özel açı metni, gezegen-ev metinleri, transit/progresyon/dönüş yorumları (özgün metinler).
+- **Tablolar:** Konumlar (derece, ev, deklinasyon), ev başlangıçları, üçgen açı ızgarası, element/nitelik yüzdeleri, Arap noktaları (15), orta noktalar, paraleller, sabit yıldızlar, Lilly güç tablosu.
+- **Araçlar:** Astrokartografi (MC/IC/ASC/DSC çizgileri ve yakın şehirler), Bulucu (gelecekteki transitleri arar).
 - **Stil:** Venüs (zevk), Yükselen (silüet, saç, makyaj), Ay (rahat kombin), Mars (spor), MC (iş imajı), 1. ev gezegenleri, kişisel renk paleti.
-- **Aşk:** Venüs, Mars, 5. ve 7. ev, Venüs’ün evi, 7. ev gezegenleri + iki kişilik uyum (sinastri) analizi.
+- **Aşk:** Venüs, Mars, 5. ve 7. ev, Venüs’ün evi, 7. ev gezegenleri + kayıtlı kişilerle sinastri (çift çark, uyum yüzdesi, açı yorumları), Kompozit ve Davison haritaları.
+- **Ayarlar:** Birden çok kişi kaydı, açık/koyu tema, ev sistemi, zodyak, güncel konum.
 - **Kariyer (Portföy içinde):** MC yönü ve uygun alanlar, 10. ev gezegenleri, 6. ev çalışma tarzı, 2. ev para ilişkisi, Jüpiter ve Satürn.
-- **Bugün:** Kişisel transitler, Ay burcu/fazı/evi, günlük puanlar, retro gezegenler, 45 günlük gökyüzü takvimi.
+- **Bugün:** Kişisel transitler, Ay burcu/fazı/evi, günlük puanlar, retro gezegenler, gezegen saatleri, aylık transit listesi (istasyonlar ve burç geçişleri dahil), Ay takvimi (fazlar ve Ay'ın burç geçişleri).
 - **Portföy:** Hayat, stil & partner portföyü — aura ve gardırop, makyaj/ten bitişi/dudak-allık tonları/saç, gelecekteki eş profili (Alçalan, 7. ev yöneticisi, Juno, Venüs–Mars), harita yöneticisi, kariyer, 2./8. ev, Ay Düğümleri ve 3 somut tavsiye.
 - **Soru Sor (horary):** Sorunun sorulduğu an ve yer için Regiomontanus haritası; soran ve konu göstergeleri, perfection, ışık aktarımı, engelleme, refranation, karşılıklı kabul, boşta Ay, erken/geç yükselen, Satürn köşede uyarıları ve zamanlama. Kurallar William Lilly (Christian Astrology) ve Öner Döşer'e (The Art of Horary Astrology) dayanır. Sağlık, hukuk ve hamilelik soruları bilinçli olarak yoktur.
 - **Klasik tarifler (Lilly, 1647):** Yükselen ve eş görünümü Lilly'nin kuralıyla (ev burcu + yönetici burcu + Ay + evdeki gezegenler), meslek göstergeleri (MC yöneticisi ve 10. ev), klasik renkler.
@@ -17,7 +23,7 @@ Türkçe/İngilizce astroloji mobil uygulaması (Expo + React Native + TypeScrip
 
 ## Doğruluk
 - Gezegen konumları `astronomy-engine` ile hesaplanır (görünür, geosentrik, tropikal, gerçek ekliptik).
-- `npm run verify`: 400 rastgele haritayı Swiss Ephemeris ile karşılaştırır. Son sonuç: gezegenlerde ≤ 21″, ev başlangıçları/ASC/MC ≤ 0.3″, burç/ev/retro uyuşmazlığı 0. Lilith (ortalama apoje) ≈ 7′ farkla. Juno, Swiss Ephemeris asteroit dosyasından üretilmiş 1900–2100 tablosundan okunur (hata < 15″; test: `SE_EPHE_PATH=<seas_18.se1 klasörü> npm run verify`).
+- `npm run verify`: 400 rastgele haritayı Swiss Ephemeris ile karşılaştırır. Son sonuç: gezegenlerde ≤ 21″, ev başlangıçları/ASC/MC ≤ 0.3″, burç/ev/retro uyuşmazlığı 0. Lilith (ortalama apoje) ≈ 7′ farkla. 11 ev sistemi, sidereal, asteroitler, progresyon, Güneş dönüşü, Ay fazları ve gün doğumu da Swiss Ephemeris ile test edilir. Asteroitler Swiss Ephemeris dosyasından üretilmiş 1900–2100 tablosundan okunur ( test: `SE_EPHE_PATH=<seas_18.se1 klasörü> npm run verify`).
 - Doğum saati IANA saat dilimi veritabanıyla (yaz saati ve tarihsel değişiklikler dahil) UTC’ye çevrilir.
 - Şehir arama: Open-Meteo Geocoding (internet), çevrimdışıyken yerleşik şehir listesi; elle koordinat da girilebilir.
 
