@@ -39,7 +39,7 @@ export default function DateBar({ date, onChange, t, lang, tzOffsetMin = 0, play
   };
   const Btn = ({ title, onPress, on }: { title: string; onPress: () => void; on?: boolean }) => (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: on ? C.rose : C.line, backgroundColor: on ? C.rose : C.card }, pressed && { opacity: 0.6 }]}>
-      <Text style={{ color: on ? '#fff' : C.ink, fontSize: 14, fontWeight: '600' }}>{title}</Text>
+      <Text style={{ color: on ? C.onAccent : C.ink, fontSize: 14, fontWeight: '600' }}>{title}</Text>
     </Pressable>
   );
   return (

@@ -22,7 +22,7 @@ export default function TrendsScreen() {
     if (id === 'vertex' && chart.vertex !== null) return `${s.yourVertex}: ${SIGNS[Math.floor(chart.vertex / 30)][lang]} ${fmtDeg(chart.vertex)}`;
     if (id === 'pof' && chart.positions.fortune) {
       const f = chart.positions.fortune;
-      return `${SIGNS[f.sign][lang]} ${fmtDeg(f.lon)} · ${HOUSES[f.house - 1].name[lang]}`;
+      return `${SIGNS[f.sign][lang]} ${fmtDeg(f.lon)}, ${HOUSES[f.house - 1].name[lang]}`;
     }
     if (id === 'chartRulerAsp' && chart.asc !== null) {
       const r = SIGN_RULERS[Math.floor(chart.asc / 30)];

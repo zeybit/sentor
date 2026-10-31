@@ -3,7 +3,7 @@ import { Pressable, Switch, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { HOUSE_SYSTEMS, HouseSystem, Zodiac } from '../engine/astro';
 import BirthForm, { searchPlaces, Place } from '../ui/BirthForm';
-import { Btn, Chips, Field, H1, P, Section, Sub, st } from '../ui/kit';
+import { Btn, Chips, Field, H1, Notice, P, Section, Sub, st } from '../ui/kit';
 import { C, ThemeMode } from '../theme';
 import { T2S } from '../i18n2';
 
@@ -14,6 +14,8 @@ export default function SettingsScreen({ onDone }: { onDone: () => void }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [removed, setRemoved] = useState<{ p: typeof people[number]; wasActive: boolean } | null>(null);
+  useEffect(() => { if (!removed) return; const id = setTimeout(() => setRemoved(null), 8000); return () => clearTimeout(id); }, [removed]);
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Place[]>([]);
   const timer = useRef<any>(null);
@@ -30,14 +32,16 @@ export default function SettingsScreen({ onDone }: { onDone: () => void }) {
       <H1>{s.settings}</H1>
 
       <Section title={t.people}>
+        {removed ? <Notice text={lang === 'tr' ? `${removed.p.name || 'Kişi'} silindi.` : `${removed.p.name || 'Person'} removed.`} action={lang === 'tr' ? 'Geri al' : 'Undo'}
+          onAction={() => { const { id, ...rest } = removed.p; const np = addPerson(rest); if (removed.wasActive) setActiveId(np.id); setRemoved(null); }} /> : null}
         {people.map(p => (
           <View key={p.id} style={[st.row, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
             <Pressable style={{ flex: 1 }} onPress={() => setActiveId(p.id)} accessibilityRole="button">
-              <Text style={[st.p, { fontWeight: p.id === activeId ? '700' : '400' }]}>{p.name || '—'}{p.id === activeId ? ` · ${t.active}` : ''}</Text>
-              <Text style={st.sub}>{String(p.birth.day).padStart(2, '0')}.{String(p.birth.month).padStart(2, '0')}.{p.birth.year} · {p.place}</Text>
+              <Text style={[st.p, { fontWeight: p.id === activeId ? '700' : '400' }]}>{p.name || '—'}{p.id === activeId ? `, ${t.active}` : ''}</Text>
+              <Text style={st.sub}>{String(p.birth.day).padStart(2, '0')}.{String(p.birth.month).padStart(2, '0')}.{p.birth.year}, {p.place}</Text>
             </Pressable>
             <Pressable onPress={() => setEditId(editId === p.id ? null : p.id)} hitSlop={8}><Text style={{ color: C.rose }}>{t.edit}</Text></Pressable>
-            {people.length > 1 ? <Pressable onPress={() => removePerson(p.id)} hitSlop={8}><Text style={{ color: C.sub }}>{t.remove}</Text></Pressable> : null}
+            {people.length > 1 ? <Pressable onPress={() => { setRemoved({ p, wasActive: p.id === activeId }); removePerson(p.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t.remove}: ${p.name}`}><Text style={{ color: C.danger }}>{t.remove}</Text></Pressable> : null}
           </View>
         ))}
         {editing ? <BirthForm initial={editing} submitLabel={t.save} onSubmit={v => { setProfile({ ...v, id: editing.id }); setEditId(null); onDone(); }} /> : null}

@@ -98,10 +98,10 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
           {!place && results.map((r, i) => (
             <Pressable key={i} onPress={() => { setPlace(r); setQ(r.label); setResults([]); }} style={({ pressed }) => [{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line }, pressed && { opacity: 0.6 }]}>
               <Text style={st.p}>{r.label}</Text>
-              <Text style={st.sub}>{r.lat.toFixed(2)}, {r.lon.toFixed(2)} · {r.tz}</Text>
+              <Text style={st.sub}>{r.lat.toFixed(2)}, {r.lon.toFixed(2)}, {r.tz}</Text>
             </Pressable>
           ))}
-          {place && <Sub>{place.lat.toFixed(3)}, {place.lon.toFixed(3)} · {place.tz}</Sub>}
+          {place && <Sub>{place.lat.toFixed(3)}, {place.lon.toFixed(3)}, {place.tz}</Sub>}
         </View>
       ) : (
         <View>

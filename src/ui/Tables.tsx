@@ -65,7 +65,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
           );
         })}
         {chart.asc !== null ? (
-          <Sub style={{ marginTop: 8 }}>ASC {SIGN_GLYPHS[Math.floor(chart.asc / 30)]} {fmtDeg(chart.asc)} · MC {SIGN_GLYPHS[Math.floor(chart.mc! / 30)]} {fmtDeg(chart.mc!)} · Vertex {SIGN_GLYPHS[Math.floor(chart.vertex! / 30)]} {fmtDeg(chart.vertex!)}{chart.zodiac === 'sidereal' ? ` · Ayanamsa ${chart.ayanamsa.toFixed(2)}°` : ''}</Sub>
+          <Sub style={{ marginTop: 8 }}>ASC {SIGN_GLYPHS[Math.floor(chart.asc / 30)]} {fmtDeg(chart.asc)}, MC {SIGN_GLYPHS[Math.floor(chart.mc! / 30)]} {fmtDeg(chart.mc!)}, Vertex {SIGN_GLYPHS[Math.floor(chart.vertex! / 30)]} {fmtDeg(chart.vertex!)}{chart.zodiac === 'sidereal' ? `, Ayanamsa ${chart.ayanamsa.toFixed(2)}°` : ''}</Sub>
         ) : null}
       </Section>
 
@@ -92,7 +92,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
                   const n = a ? ASPECT_INFO[a.type].nature : null;
                   return (
                     <View key={String(col)} style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.line }}>
-                      {a ? <Text style={{ fontSize: 13, color: n === 'harmonious' ? C.air : n === 'challenging' ? C.rose : C.gold }}>{ASPECT_INFO[a.type].glyph}</Text> : null}
+                      {a ? <Text style={{ fontSize: 13, color: n === 'harmonious' ? C.air : n === 'challenging' ? C.fire : C.gold }}>{ASPECT_INFO[a.type].glyph}</Text> : null}
                     </View>
                   );
                 })}
@@ -101,7 +101,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
           </View>
         </ScrollView>
         <Expand more={lang === 'tr' ? 'Açı listesini göster' : 'Show aspect list'} less={lang === 'tr' ? 'Gizle' : 'Hide'} initial={0} items={chart.aspects.map((a, i) => (
-          <Text key={i} style={[cell, { paddingVertical: 3 }]}>{BODIES[a.a].glyph} {ASPECT_INFO[a.type].glyph} {BODIES[a.b].glyph}  {BODIES[a.a].name[lang]} {ASPECT_INFO[a.type].name[lang]} {BODIES[a.b].name[lang]} · {a.orb.toFixed(2)}°{a.applying === undefined ? '' : a.applying ? ' A' : ' S'}</Text>
+          <Text key={i} style={[cell, { paddingVertical: 3 }]}>{BODIES[a.a].glyph} {ASPECT_INFO[a.type].glyph} {BODIES[a.b].glyph}  {BODIES[a.a].name[lang]} {ASPECT_INFO[a.type].name[lang]} {BODIES[a.b].name[lang]}, {a.orb.toFixed(2)}°{a.applying === undefined ? '' : a.applying ? ' A' : ' S'}</Text>
         ))} />
       </Section>
 
@@ -109,7 +109,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
         <Section title={t.lots}>
           {lotList.map(x => (
             <View key={x.id} style={st.row}>
-              <Text style={[st.p, { fontWeight: '600' }]}>{LOT_TEXT[x.id].name[lang]} — {SIGN_GLYPHS[Math.floor(x.lon / 30)]} {SIGNS[Math.floor(x.lon / 30)][lang]} {fmtDeg(x.lon)} · {x.house}.</Text>
+              <Text style={[st.p, { fontWeight: '600' }]}>{LOT_TEXT[x.id].name[lang]} — {SIGN_GLYPHS[Math.floor(x.lon / 30)]} {SIGNS[Math.floor(x.lon / 30)][lang]} {fmtDeg(x.lon)}, {x.house}.</Text>
               <Sub>{LOT_TEXT[x.id].desc[lang]}</Sub>
             </View>
           ))}
@@ -122,7 +122,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
             {extra.eq.el.map((v, i) => <Bar key={i} label={Object.values(ELEMENTS)[i][lang]} pct={v} color={ELEMENT_COLOR[i]} />)}
             <View style={{ height: 8 }} />
             {extra.eq.q.map((v, i) => <Bar key={i} label={t.qualities[i]} pct={v} color={C.gold} />)}
-            <Sub style={{ marginTop: 6 }}>{t.dominant}: {Object.values(ELEMENTS)[extra.eq.dominantElement][lang]} · {t.qualities[extra.eq.dominantQuality]} · {SIGN_GLYPHS[extra.eq.dominantSign]} {SIGNS[extra.eq.dominantSign][lang]}</Sub>
+            <Sub style={{ marginTop: 6 }}>{t.dominant}: {Object.values(ELEMENTS)[extra.eq.dominantElement][lang]}, {t.qualities[extra.eq.dominantQuality]}, {SIGN_GLYPHS[extra.eq.dominantSign]} {SIGNS[extra.eq.dominantSign][lang]}</Sub>
             <Sub style={{ marginTop: 4 }}>{lang === 'tr' ? 'Yükselen, Güneş ve Ay 3 puan; MC ve diğer gezegenler 1 puan sayılır.' : 'Ascendant, Sun and Moon count 3 points; MC and other planets 1 point.'}</Sub>
           </Section>
 
@@ -139,7 +139,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
 
           <Section title={t.parallels}>
             {extra.par.length ? extra.par.map((x, i) => (
-              <Text key={i} style={[cell, { paddingVertical: 3 }]}>{BODIES[x.a].glyph} {BODIES[x.b].glyph}  {BODIES[x.a].name[lang]} – {BODIES[x.b].name[lang]}: {x.type === 'parallel' ? t.parallel : t.contraparallel} · {x.orb.toFixed(2)}°</Text>
+              <Text key={i} style={[cell, { paddingVertical: 3 }]}>{BODIES[x.a].glyph} {BODIES[x.b].glyph}  {BODIES[x.a].name[lang]} – {BODIES[x.b].name[lang]}: {x.type === 'parallel' ? t.parallel : t.contraparallel}, {x.orb.toFixed(2)}°</Text>
             )) : <P>{t.none}</P>}
             <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? 'Paralel kavuşum gibi, kontra-paralel karşıt gibi okunur.' : 'Parallels read like conjunctions, contra-parallels like oppositions.'}</Sub>
           </Section>
@@ -147,7 +147,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
           <Section title={t.stars}>
             {extra.stars.length ? extra.stars.map((x, i) => (
               <View key={i} style={st.row}>
-                <Text style={[st.p, { fontWeight: '600' }]}>{x.star} ☌ {ptName(x.point)[lang]} · {x.orb.toFixed(2)}°</Text>
+                <Text style={[st.p, { fontWeight: '600' }]}>{x.star} ☌ {ptName(x.point)[lang]}, {x.orb.toFixed(2)}°</Text>
                 <Sub>{STAR_NATURE[x.nature]?.[lang]}</Sub>
               </View>
             )) : <P>{t.none}</P>}

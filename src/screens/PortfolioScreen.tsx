@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useStore } from '../store';
 import { buildPortfolio } from '../content/portfolio';
 import { SIGNS, HOUSES } from '../content/base';
 import { ord } from '../content/life';
-import { H1, P, Row, Section, Sub, st } from '../ui/kit';
+import { H1, P, Row, Section, Segmented, Sub, st } from '../ui/kit';
+import StyleScreen from './StyleScreen';
+import LoveScreen from './LoveScreen';
 import { C, serif } from '../theme';
 
 type Sw = { name: { tr: string; en: string }; hex: string };
@@ -22,7 +24,7 @@ function Swatches({ items, lang }: { items: Sw[]; lang: 'tr' | 'en' }) {
   );
 }
 
-export default function PortfolioScreen() {
+function Report() {
   const { chart, s, lang, profile } = useStore();
   const pf = useMemo(() => chart && buildPortfolio(chart), [chart]);
   if (!chart || !pf) return null;
@@ -31,9 +33,6 @@ export default function PortfolioScreen() {
 
   return (
     <View>
-      <Sub>{profile?.name}</Sub>
-      <H1>{t.title}</H1>
-      <Sub style={{ marginBottom: 14 }}>{t.method}</Sub>
 
       <Section title={t.s1}>
         <Row label={t.aesthetic}>{aura.aesthetic[lang]}</Row>
@@ -62,7 +61,7 @@ export default function PortfolioScreen() {
       <Section title={t.s3}>
         {spouse.desc === null ? <P>{s.needsTime}</P> : (
           <>
-            <Text style={{ fontFamily: serif, fontSize: 17, color: C.ink, marginBottom: 4 }}>
+            <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginBottom: 4 }}>
               {lang === 'tr' ? `Alçalan (7. ev) ${SIGNS[spouse.desc].tr}` : `Descendant (7th) in ${SIGNS[spouse.desc].en}`}
             </Text>
             <Row label={t.look}>{spouse.look![lang]}</Row>
@@ -103,6 +102,22 @@ export default function PortfolioScreen() {
           </View>
         ))}
       </Section>
+    </View>
+  );
+}
+
+type Part = 'report' | 'style' | 'love';
+export default function PortfolioScreen() {
+  const { s, lang, profile } = useStore();
+  const [part, setPart] = useState<Part>('report');
+  const t = s.pf;
+  const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
+  return (
+    <View>
+      <H1>{t.title}</H1>
+      <Sub style={{ marginBottom: 18, maxWidth: 620 }}>{profile?.name ? `${profile.name}. ` : ''}{t.method}</Sub>
+      <Segmented<Part> items={[{ key: 'report', label: L('Rapor', 'Report') }, { key: 'style', label: L('Stil ayrıntıları', 'Style details') }, { key: 'love', label: L('Aşk ve uyum', 'Love and compatibility') }]} value={part} onChange={setPart} />
+      {part === 'report' ? <Report /> : part === 'style' ? <StyleScreen /> : <LoveScreen />}
     </View>
   );
 }

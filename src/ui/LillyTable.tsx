@@ -22,7 +22,7 @@ export default function LillyTable({ chart, lang }: { chart: Chart; lang: Lang }
   return (
     <View>
       <Sub style={{ marginBottom: 10 }}>{t.intro}</Sub>
-      <Text style={{ fontFamily: serif, fontSize: 17, color: C.ink, marginBottom: 8 }}>
+      <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginBottom: 8 }}>
         {t.strongest}: {BODIES[best.id].glyph} {BODIES[best.id].name[lang]} ({best.total > 0 ? '+' : ''}{best.total})
       </Text>
       {scores.map(s => {
@@ -45,7 +45,7 @@ export default function LillyTable({ chart, lang }: { chart: Chart; lang: Lang }
                 </View>
                 <Text style={{ width: 34, textAlign: 'right', fontWeight: '700', color: s.total >= 0 ? C.earth : C.rose, fontVariant: ['tabular-nums'] }}>{s.total > 0 ? '+' : ''}{s.total}</Text>
               </View>
-              <Text style={[st.sub, { marginTop: 2 }]}>{SIGNS[p.sign][lang]}{p.house ? ` · ${p.house}.` : ''} · {t.ess} {s.essTotal >= 0 ? '+' : ''}{s.essTotal} · {t.acc} {s.accTotal >= 0 ? '+' : ''}{s.accTotal}{!isOpen ? ` · ${t.tap}` : ''}</Text>
+              <Text style={[st.sub, { marginTop: 2 }]}>{SIGNS[p.sign][lang]}{p.house ? `, ${p.house}.` : ''}, {t.ess} {s.essTotal >= 0 ? '+' : ''}{s.essTotal}, {t.acc} {s.accTotal >= 0 ? '+' : ''}{s.accTotal}{!isOpen ? `, ${t.tap}` : ''}</Text>
             </Pressable>
             {isOpen ? (
               <View style={{ marginTop: 8, gap: 2 }}>

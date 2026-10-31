@@ -99,7 +99,7 @@ export function PlanetaryHours({ t, lang, lat, lon, tz }: { t: T2; lang: Lang; l
   const cur = data.hours.find(h => now >= h.start && now < h.end);
   return (
     <Section title={t.hoursTitle}>
-      <Sub>{t.sunrise} {fmtTime(data.sunrise, tz)} · {t.sunset} {fmtTime(data.sunset, tz)} · {t.dayRuler}: {BODIES[data.dayRuler].glyph} {BODIES[data.dayRuler].name[lang]}</Sub>
+      <Sub>{t.sunrise} {fmtTime(data.sunrise, tz)}, {t.sunset} {fmtTime(data.sunset, tz)}, {t.dayRuler}: {BODIES[data.dayRuler].glyph} {BODIES[data.dayRuler].name[lang]}</Sub>
       {cur ? <P style={{ marginTop: 8 }}><Text style={{ fontWeight: '700', color: C.rose }}>{t.nowHour}: {BODIES[cur.ruler].glyph} {BODIES[cur.ruler].name[lang]}</Text> — {HOUR_USE[cur.ruler]?.[lang]}</P> : null}
       <Expand more={lang === 'tr' ? 'Tüm saatleri göster' : 'Show all hours'} less={lang === 'tr' ? 'Daha az' : 'Less'} initial={0} items={data.hours.map((h, i) => (
         <View key={i} style={[st.row, { flexDirection: 'row', gap: 10, paddingVertical: 6, backgroundColor: h === cur ? C.roseSoft : 'transparent' }]}>

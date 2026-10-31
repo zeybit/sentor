@@ -6,13 +6,13 @@ import { QUESTIONS, VERDICT_TEXT, sigLine, horaryNotes } from '../content/horary
 import { HOUSES } from '../content/base';
 import { searchPlaces, Place } from '../ui/BirthForm';
 import Wheel from '../ui/Wheel';
-import { Btn, Field, H1, P, Section, Sub, st } from '../ui/kit';
+import { Btn, Field, H1, P, Section, Sub, st, useLayout } from '../ui/kit';
 import { C, serif } from '../theme';
 
 export default function HoraryScreen() {
   const { s, lang, profile } = useStore();
   const t = s.hq;
-  const { width } = useWindowDimensions();
+  const { inner } = useLayout();
   const [qKey, setQKey] = useState(QUESTIONS[0].key);
   const [text, setText] = useState('');
   const [place, setPlace] = useState<Place | null>(profile ? { label: profile.place, lat: profile.birth.lat, lon: profile.birth.lon, tz: profile.birth.tz } : null);
@@ -50,7 +50,7 @@ export default function HoraryScreen() {
     const col = v.tone === 'good' ? C.earth : v.tone === 'mixed' ? C.gold : C.rose;
     return (
       <View>
-        <Sub>{fmt(res.asked)} · {place?.label}</Sub>
+        <Sub>{fmt(res.asked)}, {place?.label}</Sub>
         <H1>{res.question}</H1>
         <Section>
           <Text style={{ fontFamily: serif, fontSize: 22, lineHeight: 28, color: col, marginBottom: 6 }}>{v.title[lang]}</Text>
@@ -68,7 +68,7 @@ export default function HoraryScreen() {
           </Section>
         ) : null}
         <Section title={t.chartAt}>
-          <View style={{ alignItems: 'center' }}><Wheel chart={r.chart} size={Math.min(width - 68, 380)} /></View>
+          <View style={{ alignItems: 'center' }}><Wheel chart={r.chart} size={Math.min(inner(760), 440)} /></View>
           <Sub style={{ marginTop: 8 }}>Regiomontanus</Sub>
         </Section>
         <Sub style={{ marginBottom: 10 }}>{t.note}</Sub>

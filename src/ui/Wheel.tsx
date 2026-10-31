@@ -67,12 +67,12 @@ export default function Wheel({ chart, outer, cross, size = 320, asteroids = tru
       {!bi ? chart.aspects.filter(a => PLANET_SET.includes(a.a) && PLANET_SET.includes(a.b) && a.type !== 'conjunction' && a.type !== 'quincunx').map((a, i) => {
         const p1 = pt(chart.positions[a.a].lon, rAsp), p2 = pt(chart.positions[a.b].lon, rAsp);
         const n = ASPECT_INFO[a.type].nature;
-        return <Line key={'a' + i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={n === 'harmonious' ? C.air : C.rose} strokeWidth={0.9} opacity={0.75} />;
+        return <Line key={'a' + i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={n === 'harmonious' ? C.air : C.fire} strokeWidth={0.9} opacity={0.75} />;
       }) : (cross ?? []).filter(a => a.type !== 'conjunction').slice(0, 25).map((a, i) => {
         const lo = (c: Chart, k: CrossAspect['a']) => (k === 'asc' ? c.asc! : k === 'mc' ? c.mc! : c.positions[k].lon);
         const p1 = pt(lo(outer!, a.a), rAsp), p2 = pt(lo(chart, a.b), rAsp);
         const n = ASPECT_INFO[a.type].nature;
-        return <Line key={'x' + i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={n === 'harmonious' ? C.air : C.rose} strokeWidth={0.9} opacity={0.75} />;
+        return <Line key={'x' + i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={n === 'harmonious' ? C.air : C.fire} strokeWidth={0.9} opacity={0.75} />;
       })}
       {inner.map(p => {
         const g = pt(p.d, rPlanet), tick1 = pt(p.lon, rRing), tick2 = pt(p.lon, rRing - 5);

@@ -3,7 +3,8 @@ import { Text, View } from 'react-native';
 import { useStore } from '../store';
 import { computeDaily, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast';
 import { BODIES, MOON_PHASE_TIP, SIGNS, SIGN_GLYPHS } from '../content/base';
-import { H1, Meter, P, Section, Sub, Expand, st } from '../ui/kit';
+import { H1, Meter, P, Section, Sub, Expand, st, useLayout } from '../ui/kit';
+import SkyBand from '../ui/SkyBand';
 import { YearCard } from '../ui/LillyBlocks';
 import { MonthlyTransits, LunarCalendar, PlanetaryHours } from '../ui/TodayExtras';
 import { T2S } from '../i18n2';
@@ -12,6 +13,7 @@ import { C, serif } from '../theme';
 export default function TodayScreen() {
   const { chart, s, lang, profile, location } = useStore();
   const t2 = T2S[lang];
+  const { inner } = useLayout();
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
   if (!chart || !daily) return null;
@@ -21,6 +23,10 @@ export default function TodayScreen() {
     <View>
       <Sub>{fmt.format(now)}</Sub>
       <H1>{profile?.name ? `${profile.name}, ${s.todayFor.toLocaleLowerCase(lang)}` : s.todayFor}</H1>
+
+      <View style={{ marginTop: 8, marginBottom: 32 }}>
+        <SkyBand natal={chart} width={inner(760)} lang={lang} />
+      </View>
 
       <Section>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 16 }}>
@@ -35,8 +41,8 @@ export default function TodayScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}>
           <Text style={{ fontSize: 40, color: C.water }}>{SIGN_GLYPHS[daily.moonSign]}</Text>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: serif, fontSize: 18, color: C.ink }}>{daily.phase.name[lang]} · {SIGNS[daily.moonSign][lang]}</Text>
-            <Sub>%{Math.round(daily.phase.illum * 100)} · {MOON_PHASE_TIP[daily.phase.idx][lang]}</Sub>
+            <Text style={{ fontFamily: serif, fontSize: 20, color: C.ink }}>{daily.phase.name[lang]}, {SIGNS[daily.moonSign][lang]}</Text>
+            <Sub>{lang === 'tr' ? `Aydınlık %${Math.round(daily.phase.illum * 100)}. ` : `${Math.round(daily.phase.illum * 100)}% lit. `}{MOON_PHASE_TIP[daily.phase.idx][lang]}</Sub>
           </View>
         </View>
         <P>{MOON_SIGN_DAY[daily.moonSign][lang]}</P>

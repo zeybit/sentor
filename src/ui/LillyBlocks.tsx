@@ -80,7 +80,7 @@ export function YearCard({ chart, lang }: { chart: Chart; lang: Lang }) {
   const fmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   return (
     <Section title={t.year}>
-      <Sub style={{ marginBottom: 6 }}>{t.yearRange}: {fmt.format(y.start)} – {fmt.format(y.end)} · {SIGNS[y.profSign][lang]}</Sub>
+      <Sub style={{ marginBottom: 6 }}>{t.yearRange}: {fmt.format(y.start)} – {fmt.format(y.end)}, {SIGNS[y.profSign][lang]}</Sub>
       {y.lines.map((x, i) => (
         <View key={i} style={st.row}>
           <Text style={st.rowLabel}>{x.label[lang]}</Text>

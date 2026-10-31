@@ -15,7 +15,7 @@ import { T2S } from '../i18n2';
 import BirthForm from '../ui/BirthForm';
 import Wheel from '../ui/Wheel';
 import Tables from '../ui/Tables';
-import { Bar, Btn, Chips, Expand, H1, P, Row, Section, Sub, st } from '../ui/kit';
+import { Bar, Btn, Chips, P, Row, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, serif } from '../theme';
 
 type Rel = 'synastry' | 'composite' | 'davison';
@@ -23,7 +23,8 @@ type Rel = 'synastry' | 'composite' | 'davison';
 export default function LoveScreen() {
   const { chart, s, lang, opts, people, profile, addPerson, chartOf, showAsteroids } = useStore();
   const t = T2S[lang];
-  const { width } = useWindowDimensions();
+  const { inner } = useLayout();
+  const width = inner(760) + 32;
   const others = people.filter(p => p.id !== profile?.id);
   const [pid, setPid] = useState<string | null>(others[0]?.id ?? null);
   const [adding, setAdding] = useState(others.length === 0);
@@ -52,13 +53,12 @@ export default function LoveScreen() {
 
   return (
     <View>
-      <H1>{s.tabs.love}</H1>
       <Section>
-        <Row label={`${s.loveStyle} · ${SIGNS[P_.venus.sign][lang]}`}>{VENUS[P_.venus.sign][lang]}</Row>
-        <Row label={`${s.desire} · ${SIGNS[P_.mars.sign][lang]}`}>{MARS_DESIRE[P_.mars.sign][lang]}</Row>
-        {desc !== null ? <Row label={`${s.partner} · ${SIGNS[desc][lang]}`}>{PARTNER[desc][lang]}</Row> : null}
-        {fifth !== null ? <Row label={`${s.dating} · ${SIGNS[fifth][lang]}`}>{DATING[fifth][lang]}</Row> : null}
-        {P_.venus.house ? <Row label={`${s.meet} · ${P_.venus.house}.`}>{VENUS_HOUSE_MEET[P_.venus.house - 1][lang]}</Row> : null}
+        <Row label={`${s.loveStyle}, ${SIGNS[P_.venus.sign][lang]}`}>{VENUS[P_.venus.sign][lang]}</Row>
+        <Row label={`${s.desire}, ${SIGNS[P_.mars.sign][lang]}`}>{MARS_DESIRE[P_.mars.sign][lang]}</Row>
+        {desc !== null ? <Row label={`${s.partner}, ${SIGNS[desc][lang]}`}>{PARTNER[desc][lang]}</Row> : null}
+        {fifth !== null ? <Row label={`${s.dating}, ${SIGNS[fifth][lang]}`}>{DATING[fifth][lang]}</Row> : null}
+        {P_.venus.house ? <Row label={`${s.meet}, ${P_.venus.house}.`}>{VENUS_HOUSE_MEET[P_.venus.house - 1][lang]}</Row> : null}
         {in7.length ? <Row label={s.seventhPlanets}>{in7.map(p => PLANET_IN_7[p]![lang]).join('\n\n')}</Row> : null}
         {desc !== null ? <Sub style={{ marginTop: 8 }}>{houseRulerText(chart, 7)?.[lang]}</Sub> : <Sub>{s.needsTime}</Sub>}
       </Section>
@@ -79,10 +79,10 @@ export default function LoveScreen() {
         <>
           <Chips items={(['synastry', 'composite', 'davison'] as Rel[]).map(k => ({ key: k, label: t.relKinds[k] }))} value={rel} onChange={v => setRel(v as Rel)} />
           <View style={{ alignItems: 'center', marginBottom: 10 }}>
-            {rel === 'synastry' ? <Wheel chart={chart} outer={pc} cross={data.wheelCross} size={Math.min(width - 32, 440)} asteroids={showAsteroids} /> : <Wheel chart={relChart!} size={Math.min(width - 32, 440)} asteroids={showAsteroids} />}
-            {rel === 'synastry' ? <Text style={[st.sub, { marginTop: 6 }]}><Text style={{ color: C.second }}>● {partner.name}</Text> · {profile.name}</Text> : null}
+            {rel === 'synastry' ? <Wheel chart={chart} outer={pc} cross={data.wheelCross} size={Math.min(width - 32, 460)} asteroids={showAsteroids} /> : <Wheel chart={relChart!} size={Math.min(width - 32, 460)} asteroids={showAsteroids} />}
+            {rel === 'synastry' ? <Text style={[st.sub, { marginTop: 6 }]}><Text style={{ color: C.second }}>● {partner.name}</Text>   {profile.name}</Text> : null}
           </View>
-          <Chips items={[{ key: 'readings', label: t.views.readings }, { key: 'tables', label: t.views.tables }]} value={view} onChange={v => setView(v as any)} />
+          <Segmented items={[{ key: 'readings', label: t.views.readings }, { key: 'tables', label: t.views.tables }]} value={view} onChange={v => setView(v as any)} />
 
           {view === 'tables' ? (
             rel === 'synastry'
@@ -96,7 +96,7 @@ export default function LoveScreen() {
                   <Sub>{HARMONY[harmonyBand(data.sy.total)][lang]}</Sub>
                 </View>
                 {data.sy.parts.map(p => <Bar key={p.key} label={SYN_LABEL[p.key][lang]} pct={p.score} />)}
-                <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? '0–30 zayıf · 30–50 orta · 50–80 iyi · 80–100 mükemmel' : '0–30 weak · 30–50 average · 50–80 good · 80–100 perfect'}</Sub>
+                <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? '0–30 zayıf, 30–50 orta, 50–80 iyi, 80–100 mükemmel' : '0–30 weak, 30–50 average, 50–80 good, 80–100 perfect'}</Sub>
               </Section>
               <SynastryReport me={chart} them={pc!} cross={data.cross} myName={profile.name} theirName={partner.name} lang={lang} asteroids={showAsteroids} />
               <Section title={data.lilly ? data.lilly.title[lang] : ''}>

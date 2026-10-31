@@ -2,29 +2,36 @@ import { Platform } from 'react-native';
 
 export type ThemeMode = 'light' | 'dark';
 
+// "Siyanotip": eski gök fotoğraf plakalarının Prusya mavisi mürekkebi, serin kâğıt ve tek sıcak vurgu (kadife çiçeği).
 const LIGHT = {
-  bg: '#EEE8F5',        // lavanta sisi
-  card: '#FBF9FE',
-  ink: '#241B3A',       // mürekkep moru
-  sub: '#6B6283',
-  line: '#D9D0E6',
-  rose: '#C2306A',      // Venüs gülü (vurgu)
-  roseSoft: '#F6DCE7',
-  gold: '#A9822A',
-  fire: '#D2492A', earth: '#5E7D3A', air: '#3C7BB5', water: '#5A55B0',
-  second: '#C2306A',    // çift çarkta ikinci harita
+  bg: '#E8EEF2',        // serin kâğıt
+  card: '#F6F9FB',      // kabarık yüzey
+  ink: '#0F2A46',       // Prusya mürekkebi
+  sub: '#4F6578',
+  line: '#C8D5DF',
+  rose: '#1E4F8A',      // vurgu (Prusya mavisi) — eski adı korunur
+  roseSoft: '#D6E3EF',  // vurgu zemini
+  gold: '#A86A12',      // kadife çiçeği (Güneş, "şimdi")
+  goldSoft: '#F5E6C8',
+  onAccent: '#FFFFFF',
+  danger: '#B3261E',
+  fire: '#C2410C', earth: '#4D7C0F', air: '#0369A1', water: '#5B4BB7',
+  second: '#B4472F',    // ikinci harita (pas kırmızısı)
 };
 const DARK: typeof LIGHT = {
-  bg: '#15111F',
-  card: '#1F1A2D',
-  ink: '#ECE6F7',
-  sub: '#A69CBD',
-  line: '#352E47',
-  rose: '#F06A9C',
-  roseSoft: '#3A2030',
-  gold: '#D9B45A',
-  fire: '#F07856', earth: '#93B86A', air: '#71A9DE', water: '#9C97EC',
-  second: '#F06A9C',
+  bg: '#0B1A2B',
+  card: '#10243A',
+  ink: '#E3ECF3',
+  sub: '#93A9BB',
+  line: '#22405C',
+  rose: '#8DBCEB',
+  roseSoft: '#17334F',
+  gold: '#F2B84B',
+  goldSoft: '#3A2E14',
+  onAccent: '#0B1A2B',
+  danger: '#FF8A80',
+  fire: '#F28A5B', earth: '#9BC26B', air: '#6CC0F0', water: '#A99BF5',
+  second: '#F08F6F',
 };
 
 /** Etkin renkler. Tema değiştiğinde yerinde güncellenir ve uygulama yeniden çizilir. */
@@ -41,4 +48,14 @@ export function applyTheme(mode: ThemeMode) {
   listeners.forEach(f => f());
 }
 
-export const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' });
+// Yazı: EB Garamond (1600'lerin kitap harfi — Lilly'nin çağı) + Hanken Grotesk (arayüz ve metin)
+const web = Platform.OS === 'web';
+export const F = {
+  serif: web ? '"EB Garamond", Georgia, serif' : 'EBGaramond_500Medium',
+  serifBold: web ? '"EB Garamond", Georgia, serif' : 'EBGaramond_700Bold',
+  serifItalic: web ? '"EB Garamond", Georgia, serif' : 'EBGaramond_400Regular_Italic',
+  sans: web ? '"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif' : 'HankenGrotesk_400Regular',
+  sansMed: web ? '"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif' : 'HankenGrotesk_500Medium',
+  sansBold: web ? '"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif' : 'HankenGrotesk_700Bold',
+};
+export const serif = F.serif;

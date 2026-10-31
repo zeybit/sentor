@@ -8,7 +8,7 @@ import { synPair } from '../content/techniqueTexts';
 import { relPlacementTitle, relPlacementText, relAscText, relAspectTitle, relAspectText, relName, synTitle, synLongText, synWhy } from '../content/relationship';
 import { score, areas, summary, questions, intimacy, topAspects, BAND, INTIMACY, Intimacy, Scored, synOrb } from '../content/synastryAreas';
 import { Expand, P, Section, Sub, st } from './kit';
-import { C, serif } from '../theme';
+import { C, F, serif } from '../theme';
 
 type Lang = 'tr' | 'en';
 type K = BodyId | 'asc' | 'mc';
@@ -16,7 +16,7 @@ const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
 const ASTS: BodyId[] = ['ceres', 'pallas', 'vesta'];
 
 function Head({ children }: { children: React.ReactNode }) {
-  return <Text style={{ fontFamily: serif, fontSize: 18, color: C.ink, fontWeight: '700' }}>{children}</Text>;
+  return <Text style={{ fontFamily: F.serifBold, fontSize: 19, color: C.ink, fontWeight: '700' }}>{children}</Text>;
 }
 function Item({ title, body, meta }: { title: string; body: string; meta?: string }) {
   return (
@@ -71,7 +71,7 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
           <View key={i} style={st.row}>
             <Head>{q.q[lang]}</Head>
             <P style={{ marginTop: 4 }}>{q.text[lang]}</P>
-            <Text style={[st.sub, { marginTop: 2 }]}><Text style={{ color: C.air }}>{tx('Destek', 'Support', lang)}: {q.sup}</Text>  ·  <Text style={{ color: C.fire }}>{tx('Dikkat', 'Caution', lang)}: {q.cau}</Text></Text>
+            <Text style={[st.sub, { marginTop: 2 }]}><Text style={{ color: C.air }}>{tx('Destek', 'Support', lang)}: {q.sup}</Text>. <Text style={{ color: C.fire }}>{tx('Dikkat', 'Caution', lang)}: {q.cau}</Text></Text>
           </View>
         ))}
       </Section>
@@ -80,7 +80,7 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
         {data.ar.map(a => (
           <View key={a.def.id} style={st.row}>
             <Head>{a.def.title[lang]}</Head>
-            <Text style={[st.sub, { marginTop: 2 }]}><Text style={{ color: a.band === 'veryGood' || a.band === 'good' ? C.air : a.band === 'balanced' ? C.gold : C.fire, fontWeight: '700' }}>{BAND[a.band].name[lang]}</Text> · {tx('Puan', 'Score', lang)}: {a.score}</Text>
+            <Text style={[st.sub, { marginTop: 2 }]}><Text style={{ color: a.band === 'veryGood' || a.band === 'good' ? C.air : a.band === 'balanced' ? C.gold : C.fire, fontWeight: '700' }}>{BAND[a.band].name[lang]}</Text>, {tx('Puan', 'Score', lang)}: {a.score}</Text>
             <P style={{ marginTop: 4 }}>{BAND[a.band].text[lang]}</P>
             {a.sup.length ? <><Text style={[st.rowLabel, { marginTop: 6 }]}>{tx('Destekleyen göstergeler', 'Supporting indicators', lang)}</Text>{a.sup.map((s, i) => <P key={i}>• <Text style={{ fontWeight: '600' }}>{line(s)}</Text>: {a.def.sup[lang]}.</P>)}</> : null}
             {a.cha.length ? <><Text style={[st.rowLabel, { marginTop: 6 }]}>{tx('Dikkat isteyen göstergeler', 'Indicators needing care', lang)}</Text>{a.cha.map((s, i) => <P key={i}>• <Text style={{ fontWeight: '600' }}>{line(s)}</Text>: {a.def.cha[lang]}.</P>)}</> : null}
@@ -104,10 +104,10 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
       </Section>
 
       <Section title={tx('En Kolaylaştırıcı Açılar', 'Most Supportive Aspects', lang)}>
-        {data.top.easy.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`Orb ${s.x.orb.toFixed(2)}° · ${tx('Neden önemli?', 'Why it matters', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
+        {data.top.easy.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`Orb ${s.x.orb.toFixed(2)}°, ${tx('Neden önemli?', 'Why it matters', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
       </Section>
       <Section title={tx('En Çok Dikkat İsteyen Açılar', 'Aspects Needing Most Care', lang)}>
-        {data.top.hard.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`Orb ${s.x.orb.toFixed(2)}° · ${tx('Neden dikkat ister?', 'Why it needs care', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
+        {data.top.hard.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`Orb ${s.x.orb.toFixed(2)}°, ${tx('Neden dikkat ister?', 'Why it needs care', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
         <Sub style={{ marginTop: 6 }}>{tx('Zorlayıcı açılar ilişkiyi bitirmek zorunda değildir; doğru farkındalıkla tarafların birbirini daha iyi anlamasına yardım eder.', 'Challenging aspects need not end a relationship; with awareness they help you understand each other better.', lang)}</Sub>
       </Section>
 
@@ -147,7 +147,7 @@ export function SynastryTables({ me, them, cross, myName, theirName, lang }: { m
   );
   return (
     <View>
-      <Section title={tx('Sinastri Açı Tablosu', 'Synastry Aspect Grid', lang)} sub={tx(`Satırlar: ${myName || 'sen'} · Sütunlar: ${theirName || 'partner'}`, `Rows: ${myName || 'you'} · Columns: ${theirName || 'partner'}`, lang)}>
+      <Section title={tx('Sinastri Açı Tablosu', 'Synastry Aspect Grid', lang)} sub={tx(`Satırlar: ${myName || 'sen'}, Sütunlar: ${theirName || 'partner'}`, `Rows: ${myName || 'you'}, Columns: ${theirName || 'partner'}`, lang)}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View>
             <View style={{ flexDirection: 'row' }}>
@@ -170,7 +170,7 @@ export function SynastryTables({ me, them, cross, myName, theirName, lang }: { m
                   const n = x ? ASPECT_INFO[x.type].nature : null;
                   return (
                     <View key={c} style={{ width: cellW, height: cellW, alignItems: 'center', justifyContent: 'center', borderWidth: x && x.orb < 1 ? 1.5 : 0.5, borderColor: x && x.orb < 1 ? C.ink : C.line }}>
-                      {x ? <Text style={{ fontSize: 14, color: n === 'harmonious' ? C.air : n === 'challenging' ? C.rose : C.gold }}>{ASPECT_INFO[x.type].glyph}</Text> : null}
+                      {x ? <Text style={{ fontSize: 14, color: n === 'harmonious' ? C.air : n === 'challenging' ? C.fire : C.gold }}>{ASPECT_INFO[x.type].glyph}</Text> : null}
                       {x ? <Text style={{ fontSize: 7, color: C.sub }}>{x.orb.toFixed(1)}</Text> : null}
                     </View>
                   );
@@ -179,7 +179,7 @@ export function SynastryTables({ me, them, cross, myName, theirName, lang }: { m
             ))}
           </View>
         </ScrollView>
-        <Sub style={{ marginTop: 6 }}>{tx('Kalın çerçeve: 1°’den dar orb. Mavi: uyumlu · Pembe: zorlayıcı · Altın: kavuşum.', 'Bold frame: orb under 1°. Blue: harmonious · Pink: challenging · Gold: conjunction.', lang)}</Sub>
+        <Sub style={{ marginTop: 6 }}>{tx('Kalın çerçeve: 1°’den dar orb. Mavi: uyumlu, Kırmızı: zorlayıcı, Altın: kavuşum.', 'Bold frame: orb under 1°. Blue: harmonious, Red: challenging, Gold: conjunction.', lang)}</Sub>
       </Section>
 
       <Section title={tx('Tüm Sinastri Açıları', 'All Synastry Aspects', lang)}>

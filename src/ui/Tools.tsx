@@ -7,7 +7,7 @@ import { PLANETS } from '../engine/astro';
 import { cartography, lineLongitudes, finder, AngleLine } from '../engine/techniques';
 import { BODIES, SIGNS, ASPECT_INFO } from '../content/base';
 import { lineText, ptName } from '../content/techniqueTexts';
-import { Btn, Chips, Expand, P, Section, Sub, st } from './kit';
+import { Btn, Chips, Expand, P, Section, Sub, st, useLayout } from './kit';
 import { C, serif } from '../theme';
 import type { T2 } from '../i18n2';
 import { fmtLocal } from '../util';
@@ -18,11 +18,11 @@ const bigCities = () => BIG ?? (BIG = (cityTz.cityMapping as any[]).filter(c => 
 
 // ---------------- Kartografi ----------------
 export function Cartography({ natal, t, lang }: { natal: Chart; t: T2; lang: Lang }) {
-  const { width } = useWindowDimensions();
+  const { inner, wide } = useLayout();
   const [body, setBody] = useState<BodyId>('venus');
   const hits = useMemo(() => cartography(natal, bigCities(), [body]), [natal, body]);
   const L = useMemo(() => lineLongitudes(natal, body), [natal, body]);
-  const W = Math.min(width - 68, 560), H = W / 2;
+  const W = Math.min(inner(wide ? 1180 : 760), 980), H = W / 2;
   const x = (lon: number) => ((lon + 180) / 360) * W, y = (lat: number) => ((90 - lat) / 180) * H;
   const curve = (f: (lat: number) => number | null) => {
     const pts: string[] = []; const segs: string[] = [];
@@ -62,9 +62,9 @@ export function Cartography({ natal, t, lang }: { natal: Chart; t: T2; lang: Lan
       </Section>
       {(['MC', 'ASC', 'DSC', 'IC'] as AngleLine[]).map(line => (
         <Section key={line}>
-          <Text style={{ fontFamily: serif, fontSize: 17, color: C.ink }}>{BODIES[body].glyph} {line}</Text>
+          <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink }}>{BODIES[body].glyph} {line}</Text>
           <P style={{ marginVertical: 6 }}>{lineText(body, line)[lang]}</P>
-          {byLine[line].length ? byLine[line].map((h, i) => <Text key={i} style={[st.sub, { paddingVertical: 2 }]}>{h.city}, {h.country} · {h.distKm} km</Text>) : <Sub>{t.none}</Sub>}
+          {byLine[line].length ? byLine[line].map((h, i) => <Text key={i} style={[st.sub, { paddingVertical: 2 }]}>{h.city}, {h.country}, {h.distKm} km</Text>) : <Sub>{t.none}</Sub>}
         </Section>
       ))}
     </View>
