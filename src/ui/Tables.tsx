@@ -24,10 +24,11 @@ function Bar({ label, pct, color }: { label: string; pct: number; color: string 
   );
 }
 
-export default function Tables({ chart, t, lang, natal = true, asteroids = true }: { chart: Chart; t: T2; lang: Lang; natal?: boolean; asteroids?: boolean }) {
+export default function Tables({ chart, t, lang, natal = true, asteroids = true, showLots = false }: { chart: Chart; t: T2; lang: Lang; natal?: boolean; asteroids?: boolean; showLots?: boolean }) {
   const cell = { fontSize: 13, color: C.ink, fontVariant: ['tabular-nums'] as any };
   const ids = ALL_BODIES.filter(i => chart.positions[i] && (asteroids || !['chiron', 'ceres', 'pallas', 'juno', 'vesta'].includes(i)));
   const extra = useMemo(() => natal ? { eq: elementQuality(chart), mids: midpoints(chart), lots: lots(chart), par: parallels(chart), stars: starContacts(chart) } : null, [chart, natal]);
+  const lotList = useMemo(() => (natal || showLots ? lots(chart) : []), [chart, natal, showLots]);
   const gridIds: (BodyId | 'asc' | 'mc')[] = [...PLANETS, 'node', ...(chart.asc !== null ? ['asc', 'mc'] as const : [])];
   const lonOf = (k: BodyId | 'asc' | 'mc') => (k === 'asc' ? chart.asc! : k === 'mc' ? chart.mc! : chart.positions[k].lon);
   const glyph = (k: BodyId | 'asc' | 'mc') => (k === 'asc' ? 'AC' : k === 'mc' ? 'MC' : BODIES[k].glyph);
@@ -104,6 +105,17 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true 
         ))} />
       </Section>
 
+  {lotList.length ? (
+        <Section title={t.lots}>
+          {lotList.map(x => (
+            <View key={x.id} style={st.row}>
+              <Text style={[st.p, { fontWeight: '600' }]}>{LOT_TEXT[x.id].name[lang]} — {SIGN_GLYPHS[Math.floor(x.lon / 30)]} {SIGNS[Math.floor(x.lon / 30)][lang]} {fmtDeg(x.lon)} · {x.house}.</Text>
+              <Sub>{LOT_TEXT[x.id].desc[lang]}</Sub>
+            </View>
+          ))}
+        </Section>
+      ) : null}
+
       {extra ? (
         <>
           <Section title={t.elements}>
@@ -115,17 +127,6 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true 
           </Section>
 
           <Section title={t.dignity}><LillyTable chart={chart} lang={lang} /></Section>
-
-          {extra.lots.length ? (
-            <Section title={t.lots}>
-              {extra.lots.map(x => (
-                <View key={x.id} style={st.row}>
-                  <Text style={[st.p, { fontWeight: '600' }]}>{LOT_TEXT[x.id].name[lang]} — {SIGN_GLYPHS[Math.floor(x.lon / 30)]} {SIGNS[Math.floor(x.lon / 30)][lang]} {fmtDeg(x.lon)} · {x.house}.</Text>
-                  <Sub>{LOT_TEXT[x.id].desc[lang]}</Sub>
-                </View>
-              ))}
-            </Section>
-          ) : null}
 
           <Section title={t.midpoints}>
             <Expand more={lang === 'tr' ? 'Tümünü göster' : 'Show all'} less={lang === 'tr' ? 'Daha az' : 'Less'} initial={8}

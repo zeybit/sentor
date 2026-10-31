@@ -126,6 +126,14 @@ const SYN: Record<string, { s: L; h: L; c: L }> = {
   'moon-venus': { c: l('Şefkatli ve sevgi dolu bir yakınlık.', 'A tender, loving closeness.'), s: l('Duygusal ve romantik uyum.', 'Emotional and romantic harmony.'), h: l('Duygusal ihtiyaçlar ve sevgi ifadesi farklı.', 'Emotional needs and love expression differ.') },
   'mercury-moon': { c: l('Duyguları kolayca konuşabilirsiniz.', 'You can talk feelings easily.'), s: l('Anlayışlı iletişim.', 'Understanding communication.'), h: l('Mantık ile duygu arasında yanlış anlamalar.', 'Misunderstandings between logic and feeling.') },
 };
+export function synPair(a: K, b: K, type: AspectType): L | null {
+  const n = nature(type);
+  for (const k of [`${a}-${b}`, `${b}-${a}`]) {
+    const t = SYN[k];
+    if (t) return n === 'fusion' ? t.c : n === 'harmonious' ? t.s : t.h;
+  }
+  return null;
+}
 export function synastryText(a: K, b: K, type: AspectType): L {
   const nat = nature(type);
   for (const k of [`${a}-${b}`, `${b}-${a}`]) {
