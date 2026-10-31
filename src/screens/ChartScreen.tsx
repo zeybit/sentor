@@ -6,7 +6,6 @@ import { BODIES, SIGNS, SIGN_GLYPHS, HOUSES, ASPECT_INFO, ELEMENTS, dignityOf, S
 import { placementText, ASC } from '../content/placements';
 import { planetInHouse, houseRulerText } from '../content/life';
 import Wheel from '../ui/Wheel';
-import LillyTable from '../ui/LillyTable';
 import { Expand, H1, P, Section, Sub, st } from '../ui/kit';
 import { C, ELEMENT_COLOR, serif } from '../theme';
 
@@ -59,10 +58,6 @@ export default function ChartScreen() {
             <Text style={[st.sub, { width: 20 }]}>{n}</Text>
           </View>
         ))}
-      </Section>
-
-      <Section title={lang === 'tr' ? 'Lilly güç tablosu' : 'Lilly’s table of fortitudes'}>
-        <LillyTable chart={chart} lang={lang} />
       </Section>
 
       <Section title={s.placements}>

@@ -5,6 +5,7 @@ import { computeChart, BodyId } from '../engine/astro';
 import { VENUS } from '../content/placements';
 import { MARS_DESIRE, PARTNER, DATING, VENUS_HOUSE_MEET, PLANET_IN_7, signOfCusp, houseRulerText } from '../content/life';
 import { synastry, SYN_LABEL } from '../content/forecast';
+import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import BirthForm, { BirthFormValue } from '../ui/BirthForm';
 import { Bar, Btn, Expand, H1, P, Row, Section, Sub, st } from '../ui/kit';
@@ -16,7 +17,7 @@ export default function LoveScreen() {
   const [editing, setEditing] = useState(false);
   const syn = useMemo(() => {
     if (!chart || !partner) return null;
-    try { return synastry(chart, computeChart(partner.birth, hs)); } catch { return null; }
+    try { const pc = computeChart(partner.birth, hs); return { ...synastry(chart, pc), lilly: concord(chart, pc) }; } catch { return null; }
   }, [chart, partner, hs]);
   if (!chart) return null;
   const P_ = chart.positions;
@@ -50,6 +51,12 @@ export default function LoveScreen() {
             <Expand more={s.showMore} less={s.showLess} initial={6} items={syn.aspects.map((a, i) => (
               <View key={i} style={st.row}><P>{a.text[lang]}</P><Sub>orb {a.orb.toFixed(1)}°</Sub></View>
             ))} />
+            {syn.lilly ? (
+              <View style={{ marginTop: 10 }}>
+                <Text style={st.h2}>{syn.lilly.title[lang]}</Text>
+                {syn.lilly.items.map((it, i) => <View key={i} style={st.row}><P>{it.text[lang]}</P></View>)}
+              </View>
+            ) : null}
             <Btn kind="ghost" title={s.editPartner} onPress={() => setEditing(true)} />
           </View>
         ) : null}

@@ -7,11 +7,12 @@ Türkçe/İngilizce astroloji mobil uygulaması (Expo + React Native + TypeScrip
 - **Ev sistemleri:** Placidus (kutup enlemlerinde otomatik Porphyry), Tam Burç, Eşit Ev, Porphyry.
 - **Stil:** Venüs (zevk), Yükselen (silüet, saç, makyaj), Ay (rahat kombin), Mars (spor), MC (iş imajı), 1. ev gezegenleri, kişisel renk paleti.
 - **Aşk:** Venüs, Mars, 5. ve 7. ev, Venüs’ün evi, 7. ev gezegenleri + iki kişilik uyum (sinastri) analizi.
-- **Kariyer:** MC yönü ve uygun alanlar, 10. ev gezegenleri, 6. ev çalışma tarzı, 2. ev para ilişkisi, Jüpiter ve Satürn.
+- **Kariyer (Portföy içinde):** MC yönü ve uygun alanlar, 10. ev gezegenleri, 6. ev çalışma tarzı, 2. ev para ilişkisi, Jüpiter ve Satürn.
 - **Bugün:** Kişisel transitler, Ay burcu/fazı/evi, günlük puanlar, retro gezegenler, 45 günlük gökyüzü takvimi.
 - **Portföy:** Hayat, stil & partner portföyü — aura ve gardırop, makyaj/ten bitişi/dudak-allık tonları/saç, gelecekteki eş profili (Alçalan, 7. ev yöneticisi, Juno, Venüs–Mars), harita yöneticisi, kariyer, 2./8. ev, Ay Düğümleri ve 3 somut tavsiye.
 - **Soru Sor (horary):** Sorunun sorulduğu an ve yer için Regiomontanus haritası; soran ve konu göstergeleri, perfection, ışık aktarımı, engelleme, refranation, karşılıklı kabul, boşta Ay, erken/geç yükselen, Satürn köşede uyarıları ve zamanlama. Kurallar William Lilly (Christian Astrology) ve Öner Döşer'e (The Art of Horary Astrology) dayanır. Sağlık, hukuk ve hamilelik soruları bilinçli olarak yoktur.
 - **Klasik tarifler (Lilly, 1647):** Yükselen ve eş görünümü Lilly'nin kuralıyla (ev burcu + yönetici burcu + Ay + evdeki gezegenler), meslek göstergeleri (MC yöneticisi ve 10. ev), klasik renkler.
+- **Lilly Analizi (Christian Astrology III, 1647):** Lilly'nin kendi karar sıralarıyla doğum haritası yorumu — harita efendisi, mizaç (sıcak/soğuk/nemli/kuru sayımı), karakter göstergesi ve gezegen karışımları, sabit yıldızlar, zekâ (Merkür–Ay), zenginlik (göstergeler, kaynak, meşru yol, süreklilik, zamanlama), evlilik (istek, kolaylık, partnerin geldiği yer ve karakteri, aforizmalar, uyum), meslek (Merkür/Venüs/Mars beş adımlı kural, karışımlar, başarı), yolculuk, dostlar, Lilly güç tablosu (esas + ilineksel onurlar), yıllık ve aylık profeksiyon ve Güneş dönüşü. Aşk sekmesindeki uyum analizine Lilly'nin "iki kişi arasındaki uyum" kuralı (Bölüm CLI) eklenir. Ömür, ölüm ve hastalık hükümleri bilinçli olarak yoktur.
 - **Trendler:** Sosyal medyada en çok konuşulan 30 yerleşim; haritanda olanlar, popüler iddia + astrolojik anlamıyla (özgün metin).
 
 ## Doğruluk

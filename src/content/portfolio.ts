@@ -5,8 +5,8 @@ import type { BodyId, Chart, AspectType } from '../engine/astro';
 import { SIGN_RULERS } from '../engine/astro';
 import { L, SIGNS, BODIES, HOUSES } from './base';
 import { STYLE, buildStyleReport } from './style';
-import { PARTNER, MC_CAREER, MONEY_STYLE, PLANET_IN_7, PLANET_IN_10, ord } from './life';
-import { MERCURY, JUNO_SIGN } from './placements';
+import { PARTNER, MC_CAREER, MONEY_STYLE, PLANET_IN_7, PLANET_IN_10, WORK_STYLE, planetInHouse, ord } from './life';
+import { MERCURY, JUNO_SIGN, JUPITER, SATURN } from './placements';
 import { describePerson, lillyCareer, LILLY_SIGN_COLOUR, LILLY_PLANET_COLOUR } from './lilly';
 
 const l = (tr: string, en: string): L => ({ tr, en });
@@ -264,7 +264,7 @@ export interface Portfolio {
   aura: { aesthetic: L; body: L; lilly: L[]; classicColours: L | null; wardrobe: L[]; palette: { name: L; hex: string; from: L }[]; firstHouse: L[] };
   beauty: { trend: L; finish: L; makeup: L; feature: L | null; lip: Sw[]; blush: Sw[]; hairCut: L | null; hairColor: L; venusMods: L[] };
   spouse: { desc: number | null; look: L | null; lilly: L[]; personality: L | null; career: L | null; meet: L | null; dynamic: L; juno: L | null; junoHouse: number; in7: L[]; ruler: L | null };
-  core: { chartRuler: L | null; career: L | null; careerFields: L | null; lillyCareer: L[]; in10: L[]; money2: L | null; money8: L | null; mind: L; ninth: L | null; node: { grow: L; release: L; sign: number; house: number }; advice: L[] };
+  core: { chartRuler: L | null; career: L | null; careerFields: L | null; lillyCareer: L[]; work6: L | null; luck: L; lesson: L; in10: L[]; money2: L | null; money8: L | null; mind: L; ninth: L | null; node: { grow: L; release: L; sign: number; house: number }; advice: L[] };
 }
 
 function personLines(ch: Chart, house: number): L[] {
@@ -378,6 +378,9 @@ export function buildPortfolio(ch: Chart): Portfolio {
     career: mc !== null ? MC_CAREER[mc].text : null,
     careerFields: mc !== null ? MC_CAREER[mc].fields : null,
     lillyCareer: (() => { const c = lillyCareer(ch); return c ? [c.text, ...c.extra] : []; })(),
+    work6: cuspSign(6) !== null ? WORK_STYLE[cuspSign(6)!] : null,
+    luck: { tr: `${JUPITER[P.jupiter.sign].tr}${P.jupiter.house ? ' ' + planetInHouse('jupiter', P.jupiter.house).tr : ''}`, en: `${JUPITER[P.jupiter.sign].en}${P.jupiter.house ? ' ' + planetInHouse('jupiter', P.jupiter.house).en : ''}` },
+    lesson: { tr: `${SATURN[P.saturn.sign].tr}${P.saturn.house ? ' ' + planetInHouse('saturn', P.saturn.house).tr : ''}`, en: `${SATURN[P.saturn.sign].en}${P.saturn.house ? ' ' + planetInHouse('saturn', P.saturn.house).en : ''}` },
     in10,
     money2: sec !== null ? MONEY_STYLE[sec] : null,
     money8: eig !== null ? EIGHTH_STYLE[eig] : null,

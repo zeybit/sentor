@@ -83,6 +83,9 @@ export default function PortfolioScreen() {
         {core.career ? <Row label={t.careerT}>{`${core.career[lang]}${core.in10.length ? '\n\n' + core.in10.map(x => x[lang]).join('\n\n') : ''}`}</Row> : null}
         {core.careerFields ? <Row label={t.fields}>{core.careerFields[lang]}</Row> : null}
         {core.lillyCareer.length ? <Row label={t.lillyCareer}>{core.lillyCareer.map(x => x[lang]).join('\n\n')}</Row> : null}
+        {core.work6 ? <Row label={s.workStyle}>{core.work6[lang]}</Row> : null}
+        <Row label={s.luck}>{core.luck[lang]}</Row>
+        <Row label={s.saturnLesson}>{core.lesson[lang]}</Row>
         {core.money2 ? <Row label={t.money2}>{core.money2[lang]}</Row> : null}
         {core.money8 ? <Row label={t.money8}>{core.money8[lang]}</Row> : null}
         <Row label={t.mind}>{`${core.mind[lang]}${core.ninth ? ' ' + core.ninth[lang] : ''}`}</Row>
