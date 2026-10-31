@@ -68,7 +68,7 @@ const tr = {
   yourVertex: 'Vertex’in',
   // settings
   language: 'Dil', houseSystem: 'Ev sistemi', editProfile: 'Doğum bilgilerimi düzenle', resetAll: 'Tüm verileri sil',
-  hsNames: { placidus: 'Placidus', wholeSign: 'Tam Burç (Whole Sign)', equal: 'Eşit Ev', porphyry: 'Porphyry', regiomontanus: 'Regiomontanus' },
+  hsNames: { placidus: 'Placidus', koch: 'Koch', porphyry: 'Porphyry', regiomontanus: 'Regiomontanus', campanus: 'Campanus', equal: 'Eşit Ev', wholeSign: 'Tam Burç (Whole Sign)', alcabitius: 'Alcabitius', topocentric: 'Topocentric', morinus: 'Morinus', meridian: 'Meridian (Axial)' },
   polarNote: 'Kutup bölgesine yakın enlemlerde Placidus tanımsız olduğundan Porphyry kullanıldı.',
   about: 'Hakkında',
   aboutText: 'Gezegen konumları astronomy-engine ile hesaplanır ve Swiss Ephemeris ile karşılaştırılarak doğrulanmıştır (gezegenlerde 1 yay dakikasının altında fark). Yorumlar geleneksel ve modern astroloji kaynaklarıyla tutarlı şekilde yazılmıştır. Astroloji bilimsel olarak kanıtlanmış bir yöntem değildir; bu uygulama eğlence ve kişisel keşif amaçlıdır. Sağlık, hukuk veya finans kararları için uzmanlara danış.',
@@ -154,7 +154,7 @@ const en: Strings = {
   noTrends: 'No matching placements in this category.',
   yourVertex: 'Your Vertex',
   language: 'Language', houseSystem: 'House system', editProfile: 'Edit birth details', resetAll: 'Delete all data',
-  hsNames: { placidus: 'Placidus', wholeSign: 'Whole Sign', equal: 'Equal House', porphyry: 'Porphyry', regiomontanus: 'Regiomontanus' },
+  hsNames: { placidus: 'Placidus', koch: 'Koch', porphyry: 'Porphyry', regiomontanus: 'Regiomontanus', campanus: 'Campanus', equal: 'Equal House', wholeSign: 'Whole Sign', alcabitius: 'Alcabitius', topocentric: 'Topocentric', morinus: 'Morinus', meridian: 'Meridian (Axial)' },
   polarNote: 'Placidus is undefined near the poles, so Porphyry was used.',
   about: 'About',
   aboutText: 'Planet positions are computed with astronomy-engine and verified against the Swiss Ephemeris (under 1 arcminute for planets). Interpretations are written to be consistent with traditional and modern astrology sources. Astrology is not a scientifically proven method; this app is for entertainment and self-reflection. Consult professionals for health, legal or financial decisions.',

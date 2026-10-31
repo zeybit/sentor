@@ -1,5 +1,5 @@
 import type { BodyId } from '../engine/astro';
-import { L, SIGNS, SIGN_ADVERB, BODY_FUNCTION } from './base';
+import { L, SIGNS, SIGN_ADVERB, BODY_FUNCTION, BODIES } from './base';
 
 const S = (tr: string, en: string): L => ({ tr, en });
 
@@ -167,5 +167,8 @@ export function placementText(id: BodyId, sign: number): L {
     tr: `Şans Noktası ${s.tr}: ${s.tr} temalarıyla (${SIGN_ADVERB[sign].tr}) hareket ettiğinde bolluk ve keyif kendiliğinden gelir.`,
     en: `Part of Fortune in ${s.en}: abundance and joy flow when you act ${SIGN_ADVERB[sign].en}.`,
   };
-  return { tr: '', en: '' };
+  return {
+    tr: `${BODIES[id].name.tr} ${s.tr} burcunda: ${fn.tr} ${adv.tr} bir şekilde ifade bulur.`,
+    en: `${BODIES[id].name.en} in ${s.en}: ${fn.en} find expression ${adv.en}.`,
+  };
 }

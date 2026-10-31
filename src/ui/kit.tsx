@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
-import { C, serif } from '../theme';
+import { Pressable, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
+import { C, serif, onThemeChange } from '../theme';
 
 export const H1 = ({ children }: { children: React.ReactNode }) => <Text style={st.h1}>{children}</Text>;
 export const H2 = ({ children }: { children: React.ReactNode }) => <Text style={st.h2}>{children}</Text>;
@@ -94,7 +94,7 @@ export function Expand({ items, initial = 4, more, less }: { items: React.ReactN
   );
 }
 
-export const st = StyleSheet.create({
+const makeSt = () => ({
   h1: { fontFamily: serif, fontSize: 30, lineHeight: 36, color: C.ink, marginBottom: 6 },
   h2: { fontFamily: serif, fontSize: 21, lineHeight: 27, color: C.ink, marginBottom: 4 },
   sub: { fontSize: 14, lineHeight: 20, color: C.sub },
@@ -106,9 +106,12 @@ export const st = StyleSheet.create({
   btnGhost: { backgroundColor: 'transparent' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   label: { fontSize: 13, color: C.sub, marginBottom: 4, fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: C.ink, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: C.ink, backgroundColor: C.card },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   chip: { borderRadius: 999, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: C.card },
-  chipOn: { backgroundColor: C.ink, borderColor: C.ink },
+  chipOn: { backgroundColor: C.rose, borderColor: C.rose },
   chipText: { fontSize: 14, color: C.ink },
-});
+}) as const;
+/** Stil nesnesi: tema değişince yerinde yenilenir */
+export const st: ReturnType<typeof makeSt> = makeSt();
+onThemeChange(() => Object.assign(st, makeSt()));

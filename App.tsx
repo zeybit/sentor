@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { StoreProvider, useStore } from './src/store';
 import BirthForm from './src/ui/BirthForm';
 import { H1, Sub } from './src/ui/kit';
-import { C, serif } from './src/theme';
+import { C, serif, onThemeChange } from './src/theme';
 import TodayScreen from './src/screens/TodayScreen';
 import ChartScreen from './src/screens/ChartScreen';
 import StyleScreen from './src/screens/StyleScreen';
@@ -68,20 +68,27 @@ function Shell() {
   );
 }
 
+function Themed() {
+  const { theme } = useStore();
+  return (
+    <SafeAreaView key={theme} style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <Shell />
+    </SafeAreaView>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <StoreProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
-          <StatusBar style="dark" />
-          <Shell />
-        </SafeAreaView>
+        <Themed />
       </StoreProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = () => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   page: { padding: 16, paddingBottom: 40, maxWidth: 640, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
@@ -90,4 +97,6 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', paddingVertical: 4 },
   tabIcon: { fontSize: 20, color: C.sub },
   tabText: { fontSize: 10, color: C.sub, marginTop: 2 },
-});
+}) as const;
+const styles: ReturnType<typeof makeStyles> = makeStyles();
+onThemeChange(() => Object.assign(styles, makeStyles()));

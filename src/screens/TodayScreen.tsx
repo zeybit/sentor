@@ -1,20 +1,21 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useStore } from '../store';
-import { computeDaily, skyCalendar, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast';
+import { computeDaily, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast';
 import { BODIES, MOON_PHASE_TIP, SIGNS, SIGN_GLYPHS } from '../content/base';
 import { H1, Meter, P, Section, Sub, Expand, st } from '../ui/kit';
 import { YearCard } from '../ui/LillyBlocks';
+import { MonthlyTransits, LunarCalendar, PlanetaryHours } from '../ui/TodayExtras';
+import { T2S } from '../i18n2';
 import { C, serif } from '../theme';
 
 export default function TodayScreen() {
-  const { chart, s, lang, profile } = useStore();
+  const { chart, s, lang, profile, location } = useStore();
+  const t2 = T2S[lang];
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
-  const cal = useMemo(() => skyCalendar(now, 45), [now.toDateString()]);
   if (!chart || !daily) return null;
   const fmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-  const fmtShort = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short' });
 
   return (
     <View>
@@ -50,20 +51,18 @@ export default function TodayScreen() {
         )}
       </Section>
 
+      {location ? <PlanetaryHours t={t2} lang={lang} lat={location.lat} lon={location.lon} tz={location.tz} /> : null}
+
+      <MonthlyTransits natal={chart} t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} />
+
       <YearCard chart={chart} lang={lang} />
+
+      <LunarCalendar t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} />
 
       <Section title={s.retrogrades}>
         <P>{daily.retrogrades.length ? daily.retrogrades.map(r => `${BODIES[r].glyph} ${BODIES[r].name[lang]}`).join('   ') : s.none}</P>
       </Section>
 
-      <Section title={s.calendar}>
-        {cal.map((e, i) => (
-          <View key={i} style={[st.row, { flexDirection: 'row', gap: 12 }]}>
-            <Text style={[st.p, { width: 64, color: e.kind === 'lunation' ? C.rose : C.sub, fontWeight: '700' }]}>{fmtShort.format(e.date)}</Text>
-            <Text style={[st.p, { flex: 1 }]}>{e.text[lang]}</Text>
-          </View>
-        ))}
-      </Section>
     </View>
   );
 }

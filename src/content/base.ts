@@ -74,6 +74,10 @@ export const BODIES: Record<BodyId, { glyph: string; name: L }> = {
   lilith: { glyph: '⚸', name: { tr: 'Lilith (Kara Ay)', en: 'Lilith (Black Moon)' } },
   fortune: { glyph: '⊗', name: { tr: 'Şans Noktası', en: 'Part of Fortune' } },
   juno: { glyph: '⚵', name: { tr: 'Juno', en: 'Juno' } },
+  chiron: { glyph: '⚷', name: { tr: 'Chiron', en: 'Chiron' } },
+  ceres: { glyph: '⚳', name: { tr: 'Ceres', en: 'Ceres' } },
+  pallas: { glyph: '⚴', name: { tr: 'Pallas', en: 'Pallas' } },
+  vesta: { glyph: '⚶', name: { tr: 'Vesta', en: 'Vesta' } },
 };
 
 /** Gezegenin temsil ettiği işlev — "… temanı" kalıbıyla */
@@ -93,6 +97,10 @@ export const BODY_FUNCTION: Record<BodyId, L> = {
   lilith: { tr: 'bastırılmış arzuların, isyanın ve vahşi gücün', en: 'your suppressed desires, rebellion and raw power' },
   fortune: { tr: 'kendini en doğal ve bereketli hissettiğin alan', en: 'where you feel most naturally abundant' },
   juno: { tr: 'bağlılık ihtiyacın ve ideal eş/evlilik beklentin', en: 'your commitment needs and ideal spouse' },
+  chiron: { tr: 'en derin yaran ve bu yaradan doğan şifa verme gücün', en: 'your deepest wound and the healing gift born from it' },
+  ceres: { tr: 'beslenme, bakım verme ve bakım görme biçimin', en: 'how you nurture and need to be nurtured' },
+  pallas: { tr: 'stratejik zekân, yaratıcı problem çözme ve örüntüleri görme yeteneğin', en: 'your strategic intelligence, creative problem-solving and pattern recognition' },
+  vesta: { tr: 'kendini adadığın, odaklandığın ve kutsal saydığın alan', en: 'what you devote yourself to, focus on and hold sacred' },
 };
 
 export const HOUSES: { name: L; area: L; short: L }[] = [
