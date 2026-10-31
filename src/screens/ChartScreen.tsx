@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { useStore } from '../store';
 import { ALL_BODIES, fmtDeg } from '../engine/astro';
@@ -6,12 +6,17 @@ import { BODIES, SIGNS, SIGN_GLYPHS, HOUSES, ASPECT_INFO, ELEMENTS, dignityOf, S
 import { placementText, ASC } from '../content/placements';
 import { planetInHouse, houseRulerText } from '../content/life';
 import Wheel from '../ui/Wheel';
+import LillyTable from '../ui/LillyTable';
+import { LordAndTemperament, SectionView, LILLY_NOTE } from '../ui/LillyBlocks';
+import * as N from '../content/lillyNatal';
+import { lillyScore, mannersFor, CLASSICAL, Classical } from '../content/lillyDignity';
 import { Expand, H1, P, Section, Sub, st } from '../ui/kit';
 import { C, ELEMENT_COLOR, serif } from '../theme';
 
 export default function ChartScreen() {
   const { chart, s, lang, profile } = useStore();
   const { width } = useWindowDimensions();
+  const lillyAreas = useMemo(() => chart ? [N.manners(chart), N.wit(chart), N.wealth(chart), N.marriage(chart), N.profession(chart), N.travel(chart), N.friends(chart)] : [], [chart]);
   if (!chart) return null;
   const P_ = chart.positions;
   const ascSign = chart.asc !== null ? Math.floor(chart.asc / 30) : null;
@@ -25,6 +30,7 @@ export default function ChartScreen() {
   if (ascSign !== null) elCount[ascSign % 4]++;
   const total = elCount.reduce((a, b) => a + b, 0);
   const ids = ALL_BODIES.filter(i => P_[i]);
+
 
   return (
     <View>
@@ -47,6 +53,8 @@ export default function ChartScreen() {
         ))}
         {ascSign === null ? <Sub>{s.needsTime}</Sub> : null}
       </Section>
+
+      <LordAndTemperament chart={chart} lang={lang} />
 
       <Section title={s.elements}>
         {elCount.map((n, i) => (
@@ -72,10 +80,17 @@ export default function ChartScreen() {
               {dig ? <Text style={[st.sub, { color: C.gold }]}>{dig[lang]}</Text> : null}
               <P style={{ marginTop: 4 }}>{placementText(id, p.sign)[lang]}</P>
               {p.house ? <P style={{ marginTop: 4, color: C.sub }}>{planetInHouse(id, p.house)[lang]}</P> : null}
+              {(CLASSICAL as string[]).includes(id) ? (() => {
+                const sc = lillyScore(chart, id as Classical);
+                const m = mannersFor(sc);
+                return <P style={{ marginTop: 6 }}><Text style={{ fontWeight: '700', color: sc.total >= 0 ? C.earth : C.rose }}>{lang === 'tr' ? 'Lilly' : 'Lilly'} {sc.total > 0 ? '+' : ''}{sc.total}: </Text>{m.text[lang]}</P>;
+              })() : null}
             </View>
           );
         })}
       </Section>
+
+      {lillyAreas.map((sec, i) => <SectionView key={i} sec={sec} lang={lang} />)}
 
       <Section title={s.houses}>
         {chart.cusps.length === 0 ? <P>{s.needsTime}</P> : (
@@ -107,6 +122,10 @@ export default function ChartScreen() {
           );
         })} />
       </Section>
+      <Section title={lang === 'tr' ? 'Gezegenlerin güç tablosu' : 'Planetary strength table'}>
+        <LillyTable chart={chart} lang={lang} />
+      </Section>
+      <Sub style={{ marginBottom: 20 }}>{LILLY_NOTE[lang]}</Sub>
     </View>
   );
 }

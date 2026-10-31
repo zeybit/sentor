@@ -208,7 +208,7 @@ export function manners(ch: Chart): Section {
     for (const p of [sig, ...(ch.asc !== null ? [] : [])] as Classical[]) if (angleDiff(P[p].lon, sl) < 1.5) items.push({ label: l('Sabit yıldız', 'Fixed star'), text: { tr: `${nm(p).tr}, ${s.name.tr} yıldızıyla kavuşuk: ${s.text.tr}.`, en: `${nm(p).en} conjunct ${s.name.en}: ${s.text.en}.` } });
     if (ch.asc !== null && angleDiff(ch.asc, sl) < 1.5) items.push({ label: l('Sabit yıldız', 'Fixed star'), text: { tr: `Yükselen ${s.name.tr} ile kavuşuk: ${s.text.tr}.`, en: `Ascendant conjunct ${s.name.en}: ${s.text.en}.` } });
   }
-  return { title: l('Karakter ve davranış (Bölüm CVII–CVIII)', 'Manners (Ch. CVII–CVIII)'), items };
+  return { title: l('Karakterin', 'Your character'), items };
 }
 
 // ================= 4. Zekâ ve anlayış (Bölüm CIX) =================
@@ -235,7 +235,7 @@ export function wit(ch: Chart): Section {
   if (ANGULAR.includes(m.house) && [2, 5].includes(m.sign)) items.push({ text: l('Merkür köşe evde ve kendi burcunda: Lilly’ye göre her işe uygun, becerikli bir zekâ.', 'Mercury angular in its own sign: per Lilly a wit fit for any employment.') });
   const rec = domicileRuler(m.sign) === 'saturn' || exaltRuler(m.sign) === 'saturn';
   if (rec) items.push({ text: l('Merkür Satürn’ün burcunda: Lilly’ye göre derin ve özgün bir hayal gücü.', 'Mercury in Saturn’s sign: per Lilly a wonderfully deep imagination.') });
-  return { title: l('Zekâ ve anlayış (Bölüm CIX)', 'Wit and understanding (Ch. CIX)'), items };
+  return { title: l('Zihnin ve zekân', 'Your mind and wit'), items };
 }
 
 // ================= 5. Zenginlik (Bölüm CXIII–CXVII) =================
@@ -298,7 +298,7 @@ export function wealth(ch: Chart): Section | null {
   const h = P[best.p].house;
   const when = [10, 11, 12].includes(h) ? l('gençlikte', 'in youth') : [7, 8, 9].includes(h) ? l('yetişkinlikte (yaklaşık 25–40 yaş)', 'in adulthood (about 25–40)') : [4, 5, 6].includes(h) ? l('olgunlukta (yaklaşık 40–50 yaş)', 'in maturity (about 40–50)') : l('ileri yaşlarda', 'in later life');
   items.push({ label: l('Bolluğun zamanı', 'Timing of prosperity'), text: { tr: `En güçlü varlık göstergen ${nm(best.p).tr} ${h}. evde: Lilly’nin çeyrek kuralına göre bolluk en çok ${when.tr} gelir.`, en: `Your strongest significator ${nm(best.p).en} is in the ${ord(h)}: by Lilly’s quarter rule, prosperity comes mostly ${when.en}.` } });
-  return { title: l('Zenginlik ve kaynakları (Bölüm CXIII–CXVII)', 'Riches and their source (Ch. CXIII–CXVII)'), items };
+  return { title: l('Para ve varlık', 'Money and wealth'), items };
 }
 
 // ================= 6. Evlilik (Bölüm CXXX–CXXXVII) =================
@@ -385,7 +385,7 @@ export function marriage(ch: Chart): Section | null {
   // Birden fazla önemli ilişki
   const appsAll = moonApplications(ch).length;
   items.push({ label: l('İlişki sayısı eğilimi', 'Tendency in number of bonds'), text: [2, 5, 8, 11].includes(P.moon.sign) && appsAll >= 2 ? l('Ay çift gövdeli burçta ve birden fazla gezegene uyguluyor: Lilly’ye göre hayatta birden fazla önemli ilişki ya da evlilik eğilimi.', 'The Moon in a double-bodied sign applying to several planets: per Lilly, a tendency to more than one significant relationship or marriage.') : l('Lilly’nin kurallarına göre tek ve kalıcı bir bağ eğilimi öne çıkıyor.', 'By Lilly’s rules, a tendency toward one lasting bond stands out.') });
-  return { title: l('Evlilik ve partner (Bölüm CXXX–CXXXVII)', 'Marriage and partner (Ch. CXXX–CXXXVII)'), items };
+  return { title: l('Evlilik ve partner', 'Marriage and partner'), items };
 }
 
 // ================= 7. Meslek (Bölüm CXLVIII–CXLIX) =================
@@ -467,7 +467,7 @@ export function profession(ch: Chart): Section {
     const rising = CLASSICAL.filter(p => p !== 'sun' && p !== 'moon').map(p => ({ p, d: norm(P.sun.lon - P[p].lon) })).filter(x => x.d > 0 && x.d < 180).sort((a, b) => a.d - b.d)[0]?.p;
     if (rising) items.push({ label: l('Batlamyus’un yöntemi', 'Ptolemy’s method'), text: { tr: `Güneş’ten önce doğan gezegen ${nm(rising).tr}, MC yöneticisi ${nm(mcr).tr}.${rising === mcr ? ' İkisi aynı: Lilly’ye göre bu gezegen kişinin bütün eylem ve mesleklerinin efendisidir.' : ' Lilly ikisinin doğasını birlikte okumayı önerir.'}`, en: `The planet rising before the Sun is ${nm(rising).en}; the Midheaven ruler is ${nm(mcr).en}.${rising === mcr ? ' They coincide: per Lilly this planet masters all the native’s actions and arts.' : ' Lilly advises reading their natures together.'}` } });
   }
-  return { title: l('Meslek ve yetenek (Bölüm CXLVIII–CXLIX)', 'Profession (Ch. CXLVIII–CXLIX)'), items };
+  return { title: l('Meslek ve yetenek', 'Profession and talent'), items };
 }
 
 // ================= 8. Yolculuk (Bölüm CXXXIX–CXL) =================
@@ -496,7 +496,7 @@ export function travel(ch: Chart): Section | null {
   items.push({ label: l('Kazanç', 'Profit'), text: MOVABLE.includes(P[lord9].sign) ? l('9. ev yöneticisi öncü burçta: Lilly’ye göre yolculuklar kazançlı ve hızlı sonuç veren cinsten.', 'The 9th ruler in a movable sign: per Lilly, profitable journeys with quick results.') : FIXED.includes(P[lord9].sign) ? l('9. ev yöneticisi sabit burçta: Lilly’ye göre yurt dışında uzun kalış, ama maddi kazanç sınırlı.', 'The 9th ruler in a fixed sign: per Lilly, long stays abroad but limited profit.') : l('9. ev yöneticisi değişken burçta: hem kısa hem uzun, karışık yolculuklar.', 'The 9th ruler in a mutable sign: a mix of short and long journeys.') });
   const HOUSE_TRAVEL: L[] = [l('yeni yerler görme isteği', 'a natural desire to see new places'), l('ticaret ve kazanç', 'trade and gain'), l('kardeşler, yakın çevre ya da eğitim', 'siblings, neighbours or study'), l('aile ve mülk işleri', 'family and property'), l('keyif, aşk ve tatil', 'pleasure, love and holiday'), l('iş ve hizmet', 'work and service'), l('ortaklık ve evlilik', 'partnership and marriage'), l('miras ya da ortak kaynaklar', 'inheritance or shared resources'), l('eğitim, inanç ve bilgi', 'education, belief and knowledge'), l('kariyer ve itibar', 'career and reputation'), l('arkadaşlar ve topluluklar', 'friends and communities'), l('içsel arayış ya da gizli işler', 'inner search or private matters')];
   items.push({ label: l('Yolculuğun nedeni (Bölüm CXL)', 'Cause of travel (Ch. CXL)'), text: { tr: `9. evin yöneticisi ${nm(lord9).tr} ${P[lord9].house}. evde: yolculukların en çok ${HOUSE_TRAVEL[P[lord9].house - 1].tr} nedeniyle.`, en: `The 9th ruler ${nm(lord9).en} in the ${ord(P[lord9].house)}: journeys mostly for ${HOUSE_TRAVEL[P[lord9].house - 1].en}.` } });
-  return { title: l('Yolculuklar (Bölüm CXXXIX–CXL)', 'Journeys (Ch. CXXXIX–CXL)'), items };
+  return { title: l('Yolculuklar', 'Journeys'), items };
 }
 
 // ================= 9. Arkadaşlar (Bölüm CXLIX–CL) =================
@@ -530,7 +530,7 @@ export function friends(ch: Chart): Section | null {
   const a = aspectBetween(ch, lord1, lord11);
   items.push({ text: lord1 === lord11 ? l('Yükselen ile 11. ev aynı gezegence yönetiliyor: dostlarla doğal bir ruh birliği.', 'The same planet rules the Ascendant and the 11th: a natural kinship with friends.') : a && ['trine', 'sextile', 'conjunction'].includes(a.type) ? l('Yükselenin yöneticisi ile 11. evin yöneticisi uyumlu: dostluk ve destek kolay gelir.', 'The Ascendant and 11th rulers are in harmony: friendship and support come easily.') : !a ? l('Yükselenin ve 11. evin yöneticileri arasında açı yok: Lilly’ye göre dostluklar kendiliğinden kurulmaz, emek ve süreklilik ister.', 'No aspect between the Ascendant and 11th rulers: per Lilly friendships don’t form by themselves; they need effort and constancy.') : l('Yükselenin ve 11. evin yöneticileri gergin açıda: arkadaşlarla zaman zaman görüş ayrılığı.', 'The Ascendant and 11th rulers in tension: occasional disagreements with friends.') });
   items.push({ label: l('Dostlukların kalıcılığı', 'Constancy of friends'), text: FIXED.includes(s11) ? l('11. ev sabit burçta: Lilly’ye göre kalıcı ve sadık dostlar.', 'Fixed sign on the 11th: per Lilly, constant, faithful friends.') : MOVABLE.includes(s11) ? l('11. ev öncü burçta: Lilly’ye göre değişen ve dönemsel dostluklar.', 'Movable sign on the 11th: per Lilly, changing, seasonal friendships.') : l('11. ev değişken burçta: orta derecede kalıcı dostluklar.', 'Mutable sign on the 11th: friendships of middling constancy.') });
-  return { title: l('Dostlar (Bölüm CXLIX–CL)', 'Friends (Ch. CXLIX–CL)'), items };
+  return { title: l('Dostlar', 'Friends'), items };
 }
 
 // ================= 10. İki kişinin uyumu (Bölüm CLI) =================

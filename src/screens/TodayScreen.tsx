@@ -4,6 +4,7 @@ import { useStore } from '../store';
 import { computeDaily, skyCalendar, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast';
 import { BODIES, MOON_PHASE_TIP, SIGNS, SIGN_GLYPHS } from '../content/base';
 import { H1, Meter, P, Section, Sub, Expand, st } from '../ui/kit';
+import { YearCard } from '../ui/LillyBlocks';
 import { C, serif } from '../theme';
 
 export default function TodayScreen() {
@@ -48,6 +49,8 @@ export default function TodayScreen() {
           ))} />
         )}
       </Section>
+
+      <YearCard chart={chart} lang={lang} />
 
       <Section title={s.retrogrades}>
         <P>{daily.retrogrades.length ? daily.retrogrades.map(r => `${BODIES[r].glyph} ${BODIES[r].name[lang]}`).join('   ') : s.none}</P>
