@@ -38,11 +38,13 @@ export default function PortfolioScreen() {
       <Section title={t.s1}>
         <Row label={t.aesthetic}>{aura.aesthetic[lang]}</Row>
         <Row label={t.body}>{aura.body[lang]}</Row>
+        {aura.lilly.length ? <Row label={t.lillyBody}>{aura.lilly.map(x => x[lang]).join('\n\n')}</Row> : null}
         <Row label={t.wardrobe}>{aura.wardrobe.map(w => w[lang]).join('\n\n')}</Row>
         {aura.firstHouse.length ? <Row label={t.firstHouse}>{aura.firstHouse.map(f => f[lang]).join('\n\n')}</Row> : null}
         <View style={st.row}>
           <Text style={st.rowLabel}>{t.palette}</Text>
           <Swatches lang={lang} items={aura.palette} />
+          {aura.classicColours ? <Sub style={{ marginTop: 8 }}>{aura.classicColours[lang]}</Sub> : null}
         </View>
       </Section>
 
@@ -64,6 +66,7 @@ export default function PortfolioScreen() {
               {lang === 'tr' ? `Alçalan (7. ev) ${SIGNS[spouse.desc].tr}` : `Descendant (7th) in ${SIGNS[spouse.desc].en}`}
             </Text>
             <Row label={t.look}>{spouse.look![lang]}</Row>
+            {spouse.lilly.length ? <Row label={t.lillySpouse}>{spouse.lilly.map(x => x[lang]).join('\n\n')}</Row> : null}
             <Row label={t.personality}>{spouse.personality![lang]}</Row>
             <Row label={t.career}>{spouse.career![lang]}</Row>
             {spouse.meet ? <Row label={t.meet}>{`${spouse.meet[lang]}${spouse.ruler ? `\n${spouse.ruler[lang]}` : ''}`}</Row> : null}
@@ -79,6 +82,7 @@ export default function PortfolioScreen() {
         {core.chartRuler ? <Row label={t.chartRuler}>{core.chartRuler[lang]}</Row> : null}
         {core.career ? <Row label={t.careerT}>{`${core.career[lang]}${core.in10.length ? '\n\n' + core.in10.map(x => x[lang]).join('\n\n') : ''}`}</Row> : null}
         {core.careerFields ? <Row label={t.fields}>{core.careerFields[lang]}</Row> : null}
+        {core.lillyCareer.length ? <Row label={t.lillyCareer}>{core.lillyCareer.map(x => x[lang]).join('\n\n')}</Row> : null}
         {core.money2 ? <Row label={t.money2}>{core.money2[lang]}</Row> : null}
         {core.money8 ? <Row label={t.money8}>{core.money8[lang]}</Row> : null}
         <Row label={t.mind}>{`${core.mind[lang]}${core.ninth ? ' ' + core.ninth[lang] : ''}`}</Row>

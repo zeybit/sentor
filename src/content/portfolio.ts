@@ -7,6 +7,7 @@ import { L, SIGNS, BODIES, HOUSES } from './base';
 import { STYLE, buildStyleReport } from './style';
 import { PARTNER, MC_CAREER, MONEY_STYLE, PLANET_IN_7, PLANET_IN_10, ord } from './life';
 import { MERCURY, JUNO_SIGN } from './placements';
+import { describePerson, lillyCareer, LILLY_SIGN_COLOUR, LILLY_PLANET_COLOUR } from './lilly';
 
 const l = (tr: string, en: string): L => ({ tr, en });
 type Sw = { name: L; hex: string };
@@ -260,10 +261,15 @@ const ADVICE_ELEMENT: L[] = [
 
 // ---------------- RAPOR ----------------
 export interface Portfolio {
-  aura: { aesthetic: L; body: L; wardrobe: L[]; palette: { name: L; hex: string; from: L }[]; firstHouse: L[] };
+  aura: { aesthetic: L; body: L; lilly: L[]; classicColours: L | null; wardrobe: L[]; palette: { name: L; hex: string; from: L }[]; firstHouse: L[] };
   beauty: { trend: L; finish: L; makeup: L; feature: L | null; lip: Sw[]; blush: Sw[]; hairCut: L | null; hairColor: L; venusMods: L[] };
-  spouse: { desc: number | null; look: L | null; personality: L | null; career: L | null; meet: L | null; dynamic: L; juno: L | null; junoHouse: number; in7: L[]; ruler: L | null };
-  core: { chartRuler: L | null; career: L | null; careerFields: L | null; in10: L[]; money2: L | null; money8: L | null; mind: L; ninth: L | null; node: { grow: L; release: L; sign: number; house: number }; advice: L[] };
+  spouse: { desc: number | null; look: L | null; lilly: L[]; personality: L | null; career: L | null; meet: L | null; dynamic: L; juno: L | null; junoHouse: number; in7: L[]; ruler: L | null };
+  core: { chartRuler: L | null; career: L | null; careerFields: L | null; lillyCareer: L[]; in10: L[]; money2: L | null; money8: L | null; mind: L; ninth: L | null; node: { grow: L; release: L; sign: number; house: number }; advice: L[] };
+}
+
+function personLines(ch: Chart, house: number): L[] {
+  const d = describePerson(ch, house);
+  return d ? [d.cusp, d.ruler, ...d.planets, d.moon] : [];
 }
 
 const elemName = (i: number): L => [l('Ateş', 'Fire'), l('Toprak', 'Earth'), l('Hava', 'Air'), l('Su', 'Water')][i];
@@ -281,6 +287,11 @@ export function buildPortfolio(ch: Chart): Portfolio {
       ? { tr: `${TREND_AESTHETIC[asc].tr} (Yükselen ${SIGNS[asc].tr}) × ${TREND_AESTHETIC[venus].tr} (Venüs ${SIGNS[venus].tr})`, en: `${TREND_AESTHETIC[asc].en} (${SIGNS[asc].en} Rising) × ${TREND_AESTHETIC[venus].en} (Venus in ${SIGNS[venus].en})` }
       : { tr: `${TREND_AESTHETIC[venus].tr} (Venüs ${SIGNS[venus].tr})`, en: `${TREND_AESTHETIC[venus].en} (Venus in ${SIGNS[venus].en})` },
     body: asc !== null ? ASC_BODY[asc] : l('Yükselen burç için doğum saati gerekli.', 'Your birth time is needed for the Ascendant.'),
+    lilly: personLines(ch, 1),
+    classicColours: asc !== null ? {
+      tr: `Lilly'nin klasik renkleri: Yükselen ${SIGNS[asc].tr} → ${LILLY_SIGN_COLOUR[asc].tr}; harita yöneticisi ${BODIES[SIGN_RULERS[asc]].name.tr} → ${LILLY_PLANET_COLOUR[SIGN_RULERS[asc]]!.tr}.`,
+      en: `Lilly's classic colours: ${SIGNS[asc].en} Rising → ${LILLY_SIGN_COLOUR[asc].en}; chart ruler ${BODIES[SIGN_RULERS[asc]].name.en} → ${LILLY_PLANET_COLOUR[SIGN_RULERS[asc]]!.en}.`,
+    } : null,
     wardrobe: [aStyle.clothes, ...(asc !== null && asc !== venus ? [STYLE[venus].clothes] : []), STYLE[venus].accessories],
     palette: style.palette,
     firstHouse: style.firstHouse,
@@ -318,6 +329,7 @@ export function buildPortfolio(ch: Chart): Portfolio {
   const spouse = {
     desc,
     look: desc !== null ? SPOUSE_LOOK[desc] : null,
+    lilly: personLines(ch, 7),
     personality: desc !== null ? PARTNER[desc] : null,
     career: desc !== null ? SPOUSE_CAREER[desc] : null,
     meet: ruler7 && P[ruler7].house ? MEET_BY_RULER_HOUSE[P[ruler7].house - 1] : null,
@@ -365,6 +377,7 @@ export function buildPortfolio(ch: Chart): Portfolio {
     } : null,
     career: mc !== null ? MC_CAREER[mc].text : null,
     careerFields: mc !== null ? MC_CAREER[mc].fields : null,
+    lillyCareer: (() => { const c = lillyCareer(ch); return c ? [c.text, ...c.extra] : []; })(),
     in10,
     money2: sec !== null ? MONEY_STYLE[sec] : null,
     money8: eig !== null ? EIGHTH_STYLE[eig] : null,

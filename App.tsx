@@ -14,10 +14,11 @@ import LoveScreen from './src/screens/LoveScreen';
 import CareerScreen from './src/screens/CareerScreen';
 import TrendsScreen from './src/screens/TrendsScreen';
 import PortfolioScreen from './src/screens/PortfolioScreen';
+import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
-type Tab = 'today' | 'portfolio' | 'chart' | 'style' | 'love' | 'career' | 'trends' | 'settings';
-const ICONS: Record<Exclude<Tab, 'settings'>, string> = { today: '☽', portfolio: '✧', chart: '◎', style: '♀', love: '♡', career: '♄', trends: '✦' };
+type Tab = 'today' | 'portfolio' | 'ask' | 'chart' | 'style' | 'love' | 'career' | 'trends' | 'settings';
+const ICONS: Record<Exclude<Tab, 'settings'>, string> = { today: '☽', portfolio: '✧', ask: '?', chart: '◎', style: '♀', love: '♡', career: '♄', trends: '✦' };
 
 function Shell() {
   const { ready, profile, chart, s, setProfile } = useStore();
@@ -41,7 +42,7 @@ function Shell() {
     );
   }
 
-  const Screen = { today: TodayScreen, portfolio: PortfolioScreen, chart: ChartScreen, style: StyleScreen, love: LoveScreen, career: CareerScreen, trends: TrendsScreen }[tab as Exclude<Tab, 'settings'>];
+  const Screen = { today: TodayScreen, portfolio: PortfolioScreen, ask: HoraryScreen, chart: ChartScreen, style: StyleScreen, love: LoveScreen, career: CareerScreen, trends: TrendsScreen }[tab as Exclude<Tab, 'settings'>];
 
   return (
     <View style={{ flex: 1 }}>
@@ -60,7 +61,7 @@ function Shell() {
         {(Object.keys(ICONS) as Exclude<Tab, 'settings'>[]).map(k => (
           <Pressable key={k} onPress={() => go(k)} style={styles.tab} accessibilityRole="tab" accessibilityState={{ selected: tab === k }}>
             <Text style={[styles.tabIcon, tab === k && { color: C.rose }]}>{ICONS[k]}</Text>
-            <Text style={[styles.tabText, tab === k && { color: C.rose, fontWeight: '700' }]} numberOfLines={1}>{k === 'portfolio' ? s.pf.tab : s.tabs[k]}</Text>
+            <Text style={[styles.tabText, tab === k && { color: C.rose, fontWeight: '700' }]} numberOfLines={1}>{k === 'portfolio' ? s.pf.tab : k === 'ask' ? s.hq.tab : s.tabs[k]}</Text>
           </Pressable>
         ))}
       </View>
@@ -89,5 +90,5 @@ const styles = StyleSheet.create({
   tabbar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.card, paddingTop: 6, paddingBottom: 4 },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 4 },
   tabIcon: { fontSize: 20, color: C.sub },
-  tabText: { fontSize: 11, color: C.sub, marginTop: 2 },
+  tabText: { fontSize: 10, color: C.sub, marginTop: 2 },
 });

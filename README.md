@@ -10,6 +10,8 @@ Türkçe/İngilizce astroloji mobil uygulaması (Expo + React Native + TypeScrip
 - **Kariyer:** MC yönü ve uygun alanlar, 10. ev gezegenleri, 6. ev çalışma tarzı, 2. ev para ilişkisi, Jüpiter ve Satürn.
 - **Bugün:** Kişisel transitler, Ay burcu/fazı/evi, günlük puanlar, retro gezegenler, 45 günlük gökyüzü takvimi.
 - **Portföy:** Hayat, stil & partner portföyü — aura ve gardırop, makyaj/ten bitişi/dudak-allık tonları/saç, gelecekteki eş profili (Alçalan, 7. ev yöneticisi, Juno, Venüs–Mars), harita yöneticisi, kariyer, 2./8. ev, Ay Düğümleri ve 3 somut tavsiye.
+- **Soru Sor (horary):** Sorunun sorulduğu an ve yer için Regiomontanus haritası; soran ve konu göstergeleri, perfection, ışık aktarımı, engelleme, refranation, karşılıklı kabul, boşta Ay, erken/geç yükselen, Satürn köşede uyarıları ve zamanlama. Kurallar William Lilly (Christian Astrology) ve Öner Döşer'e (The Art of Horary Astrology) dayanır. Sağlık, hukuk ve hamilelik soruları bilinçli olarak yoktur.
+- **Klasik tarifler (Lilly, 1647):** Yükselen ve eş görünümü Lilly'nin kuralıyla (ev burcu + yönetici burcu + Ay + evdeki gezegenler), meslek göstergeleri (MC yöneticisi ve 10. ev), klasik renkler.
 - **Trendler:** Sosyal medyada en çok konuşulan 30 yerleşim; haritanda olanlar, popüler iddia + astrolojik anlamıyla (özgün metin).
 
 ## Doğruluk
@@ -26,6 +28,8 @@ npm run typecheck
 npm run verify          # Swiss Ephemeris ile doğruluk testi
 npm run build:web       # web çıktısı → dist/
 ```
+Horary testi: `npx tsx test/horary.ts` (açı anları Swiss Ephemeris ile karşılaştırılır).
+
 Mağaza derlemesi: `npx eas-cli@latest build --platform android` (veya ios).
 
 ## Cloudflare ile yayın

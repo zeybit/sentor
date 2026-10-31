@@ -5,6 +5,7 @@ import type { BodyId } from '../engine/astro';
 import { MC_CAREER, WORK_STYLE, MONEY_STYLE, PLANET_IN_10, signOfCusp, planetInHouse, houseRulerText } from '../content/life';
 import { SATURN, JUPITER, SUN } from '../content/placements';
 import { SIGNS } from '../content/base';
+import { lillyCareer } from '../content/lilly';
 import { H1, P, Row, Section, Sub } from '../ui/kit';
 
 export default function CareerScreen() {
@@ -22,6 +23,7 @@ export default function CareerScreen() {
         <Section title={`${s.careerPath} · ${SIGNS[mc][lang]}`}>
           <P>{MC_CAREER[mc].text[lang]}</P>
           <Row label={s.fields}>{MC_CAREER[mc].fields[lang]}</Row>
+          {(() => { const c = lillyCareer(chart); return c ? <Row label={s.pf.lillyCareer}>{[c.text, ...c.extra].map(x => x[lang]).join('\n\n')}</Row> : null; })()}
           {houseRulerText(chart, 10) ? <Sub style={{ marginTop: 6 }}>{houseRulerText(chart, 10)![lang]}</Sub> : null}
         </Section>
       ) : (

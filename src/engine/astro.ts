@@ -13,7 +13,7 @@ export type BodyId =
 export const PLANETS: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
 export const ALL_BODIES: BodyId[] = [...PLANETS, 'juno', 'node', 'southNode', 'lilith', 'fortune'];
 
-export type HouseSystem = 'placidus' | 'wholeSign' | 'equal' | 'porphyry';
+export type HouseSystem = 'placidus' | 'wholeSign' | 'equal' | 'porphyry' | 'regiomontanus';
 
 export interface BirthInput {
   year: number; month: number; day: number;
@@ -115,6 +115,9 @@ function meanLilithLon(t: A.AstroTime): number {
   return norm(perigee + 180);
 }
 
+/** Bir gövdenin belirli bir tarihteki boylamı */
+export function bodyLon(id: BodyId, date: Date): number { return lonAt(id, A.MakeTime(date)); }
+
 function lonAt(id: BodyId, t: A.AstroTime): number {
   if (id === 'node') return trueNodeLon(t);
   if (id === 'lilith') return meanLilithLon(t);
@@ -173,6 +176,17 @@ function houseCusps(sys: HouseSystem, ramc: number, eps: number, lat: number, as
       return { cusps: c, used: 'placidus' };
     }
     return houseCusps('porphyry', ramc, eps, lat, asc, mc);
+  }
+  if (sys === 'regiomontanus') {
+    // Regiomontanus: ilk dikey çemberin eşit bölümleri; kutup yüksekliği tan(φp) = tan(φ)·sin(θ)
+    const pole = (th: number) => Math.atan(tand(lat) * sind(th)) * R2D;
+    c[0] = asc; c[9] = mc;
+    c[10] = ascFrom(norm(ramc - 60), eps, pole(30));
+    c[11] = ascFrom(norm(ramc - 30), eps, pole(60));
+    c[1] = ascFrom(norm(ramc + 30), eps, pole(60));
+    c[2] = ascFrom(norm(ramc + 60), eps, pole(30));
+    for (let i = 3; i < 9; i++) c[i] = norm(c[(i + 6) % 12] + 180);
+    return { cusps: c, used: sys };
   }
   if (sys === 'wholeSign') {
     const start = Math.floor(asc / 30) * 30;

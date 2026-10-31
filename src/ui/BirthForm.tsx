@@ -7,9 +7,9 @@ import { Btn, Field, P, Sub, st } from './kit';
 import { C } from '../theme';
 
 export interface BirthFormValue { name: string; place: string; birth: BirthInput }
-interface Place { label: string; lat: number; lon: number; tz: string }
+export interface Place { label: string; lat: number; lon: number; tz: string }
 
-async function searchPlaces(q: string, lang: string): Promise<Place[]> {
+export async function searchPlaces(q: string, lang: string): Promise<Place[]> {
   try {
     const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?count=8&language=${lang}&name=${encodeURIComponent(q)}`);
     const j = await r.json();

@@ -20,7 +20,7 @@ for (let k = 0; k < 400; k++) {
     if (Math.floor(res.data[0] / 30) !== (ch.positions as any)[id].sign) signMismatch++;
     if (id !== 'node' && id !== 'lilith' && (res.data[3] < 0) !== (ch.positions as any)[id].retro && Math.abs(res.data[3]) > 0.002) retroMismatch++;
   }
-  for (const [sys, code] of [['placidus','P'],['wholeSign','W'],['equal','E'],['porphyry','O']] as const) {
+  for (const [sys, code] of [['placidus','P'],['wholeSign','W'],['equal','E'],['porphyry','O'],['regiomontanus','R']] as const) {
     const ch2 = sys === 'placidus' ? ch : computeChart({ year: y, month: mo, day: d, hour: h, minute: mi, timeKnown: true, lat, lon, tz: 'UTC' }, sys);
     const hs = S.houses(jd, lat, lon, code);
     const cus = hs.data.houses;
