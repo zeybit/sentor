@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -74,6 +74,15 @@ function Wordmark({ size = 21 }: { size?: number }) {
 
 function Shell() {
   const { ready, profile, chart, s, setProfile, lang } = useStore();
+  // Tarayıcı çevirisinin Türkçe metni bozmasını önle: sayfa dilini uygulama diliyle eşle
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const html = document.documentElement;
+    html.lang = lang; html.setAttribute('translate', 'no'); html.classList.add('notranslate');
+    if (!document.querySelector('meta[name="google"]')) {
+      const m = document.createElement('meta'); m.name = 'google'; m.content = 'notranslate'; document.head.appendChild(m);
+    }
+  }, [lang]);
   const { wide, tablet } = useLayout();
   const [tab, setTab] = useState<Tab>('today');
   const scroll = useRef<ScrollViewInstance>(null);
