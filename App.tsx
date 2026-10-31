@@ -36,7 +36,7 @@ function PersonSwitch({ onManage, compact }: { onManage: () => void; compact?: b
   const { people, activeId, setActiveId, lang, profile } = useStore();
   const [open, setOpen] = useState(false);
   return (
-    <View style={{ position: 'relative', zIndex: 20 }}>
+    <View style={{ position: 'relative', zIndex: 60 }}>
       <Pressable onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Kişi değiştir' : 'Switch person'} accessibilityState={{ expanded: open }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 10, minHeight: 38, maxWidth: compact ? 150 : undefined }}>
         <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
@@ -46,7 +46,11 @@ function PersonSwitch({ onManage, compact }: { onManage: () => void; compact?: b
         <Icon name="chevron" size={16} color={C.sub} />
       </Pressable>
       {open ? (
-        <View style={{ position: 'absolute', top: 44, right: compact ? 0 : undefined, left: compact ? undefined : 0, minWidth: 230, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 6, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+        <Pressable onPress={() => setOpen(false)} accessibilityLabel={lang === 'tr' ? 'Menüyü kapat' : 'Close menu'}
+          style={{ position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any, top: -2000, left: -2000, width: 6000, height: 6000, zIndex: 1, cursor: 'default' as any }} />
+      ) : null}
+      {open ? (
+        <View style={{ zIndex: 2, position: 'absolute', top: 44, right: compact ? 0 : undefined, left: compact ? undefined : 0, minWidth: 230, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 6, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
           {people.map(p => (
             <Pressable key={p.id} onPress={() => { setActiveId(p.id); setOpen(false); }} accessibilityRole="menuitem" accessibilityState={{ selected: p.id === activeId }}
               style={({ hovered }: any) => [{ paddingVertical: 9, paddingHorizontal: 14 }, hovered && { backgroundColor: C.roseSoft }]}>
@@ -125,7 +129,7 @@ function Shell() {
       <View style={{ flex: 1, flexDirection: 'row' }}>
         <View style={styles.rail} accessibilityRole="navigation">
           <View style={{ paddingHorizontal: 16, marginBottom: 22 }}><Wordmark size={24} /></View>
-          <View style={{ paddingHorizontal: 12, marginBottom: 22 }}><PersonSwitch onManage={() => go('settings')} /></View>
+          <View style={{ paddingHorizontal: 12, marginBottom: 22, zIndex: 50, position: 'relative' }}><PersonSwitch onManage={() => go('settings')} /></View>
           {MAIN.map(m => <NavItem key={m.key} k={m.key} icon={m.icon} />)}
           <View style={{ flex: 1 }} />
           <NavItem k="help" icon="help" />
