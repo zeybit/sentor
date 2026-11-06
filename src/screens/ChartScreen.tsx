@@ -63,7 +63,7 @@ export default function ChartScreen() {
         <Chips items={kinds.map(k => ({ key: k, label: t.kinds[k] }))} value={kind} onChange={k => setKind(k as Kind)} />
       </ScrollView>
 
-      <KindAbout kind={kind} lang={lang} />
+      <KindAbout key={kind} kind={kind} lang={lang} />
 
       {kind === 'timeline' ? <FutureScreen embedded />
         : kind === 'cartography' ? <Cartography natal={chart} t={t} lang={lang} />
@@ -107,7 +107,7 @@ export default function ChartScreen() {
 
 function KindAbout({ kind, lang }: { kind: string; lang: 'tr' | 'en' }) {
   const info = KIND_INFO[kind];
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   if (!info) return null;
   const tr = lang === 'tr';
   return (
