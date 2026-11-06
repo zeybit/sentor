@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { STYLE, buildStyleReport } from '../content/style';
 import { SIGNS } from '../content/base';
-import { Btn, H2, P, Row, Section, Sub, useLayout } from '../ui/kit';
+import { Btn, Chips, H2, P, Row, Section, Sub, useLayout } from '../ui/kit';
 import { HAIR, MAKEUP, OUTFIT, OUTFIT_PINS, OUTFIT_Q, MAKEUP_PINS, HAIR_PINS, PIECE_NAME, pinterest } from '../content/looks';
 import { PieceArt } from '../ui/LookArt';
 import { PinStrip } from '../ui/PinStrip';
@@ -13,9 +13,12 @@ export default function StyleScreen() {
   const { chart, s, lang } = useStore();
   const narrow = useLayout().inner(760) < 560;
   const r = useMemo(() => chart && buildStyleReport(chart), [chart]);
+  const [side, setSide] = useState<'venus' | 'asc'>('venus');
   if (!chart || !r) return null;
   const v = STYLE[r.venus];
   const a = r.asc !== null ? STYLE[r.asc] : null;
+  const hasAsc = r.asc !== null && r.asc !== r.venus;
+  const os = side === 'asc' && hasAsc ? r.asc! : r.venus;
 
   return (
     <View>
@@ -66,10 +69,14 @@ export default function StyleScreen() {
       </Section>
 
       <Section title={lang === 'tr' ? 'Kombin panon' : 'Your outfit board'}
-        sub={lang === 'tr' ? `${v.aesthetic.tr} tarzı, kendi renk paletinle` : `${v.aesthetic.en} style, in your own palette`}>
+        sub={lang === 'tr' ? 'Hangi tarafını öne çıkarmak istediğini seç; parçalar ve örnekler ona göre değişir.' : 'Choose which side of you to dress; the pieces and examples change with it.'}>
+        {hasAsc ? <View style={{ marginBottom: 14 }}><Chips items={[
+          { key: 'venus', label: lang === 'tr' ? `${SIGNS[r.venus].tr} (Venüs): ${STYLE[r.venus].aesthetic.tr}` : `${SIGNS[r.venus].en} (Venus): ${STYLE[r.venus].aesthetic.en}` },
+          { key: 'asc', label: lang === 'tr' ? `${SIGNS[r.asc!].tr} (Yükselen): ${STYLE[r.asc!].aesthetic.tr}` : `${SIGNS[r.asc!].en} (Rising): ${STYLE[r.asc!].aesthetic.en}` },
+        ]} value={side} onChange={setSide} /></View> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {OUTFIT[r.venus].map(({ piece, c }) => {
-            const col = typeof c === 'number' ? (STYLE[r.venus].colors[c]?.hex ?? '#999') : c;
+          {OUTFIT[os].map(({ piece, c }) => {
+            const col = typeof c === 'number' ? (STYLE[os].colors[c]?.hex ?? '#999') : c;
             return (
               <View key={piece} style={{ width: narrow ? '30%' : 100, alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 10 }}>
                 <PieceArt piece={piece} color={col} ink={C.ink} size={60} />
@@ -78,12 +85,11 @@ export default function StyleScreen() {
             );
           })}
         </View>
-        <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginTop: 18, marginBottom: 2 }}>{lang === 'tr' ? 'Pinterest\'ten 5 kombin' : '5 outfits from Pinterest'}</Text>
-        <Sub style={{ marginBottom: 10 }}>{lang === 'tr' ? 'Tarzına en uyan örnekler. Kaydırarak gez, beğendiğini Pinterest\'te aç.' : 'Examples closest to your style. Swipe through and open the one you like.'}</Sub>
-        <PinStrip pins={OUTFIT_PINS[r.venus]} lang={lang} />
+        <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginTop: 18, marginBottom: 2 }}>{lang === 'tr' ? `${STYLE[os].aesthetic.tr}: Pinterest'ten 5 kombin` : `${STYLE[os].aesthetic.en}: 5 outfits from Pinterest`}</Text>
+        <Sub style={{ marginBottom: 10 }}>{STYLE[os].clothes[lang]}</Sub>
+        <PinStrip key={os} pins={OUTFIT_PINS[os]} lang={lang} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-          <Btn small kind="outline" title={lang === 'tr' ? 'Bu tarzda kombinler' : 'Outfits in this style'} onPress={() => Linking.openURL(pinterest(OUTFIT_Q[r.venus]))} />
-          {a && r.asc !== r.venus ? <Btn small kind="ghost" title={lang === 'tr' ? `${SIGNS[r.asc!].tr} yükselen tarzı` : `${SIGNS[r.asc!].en} rising style`} onPress={() => Linking.openURL(pinterest(OUTFIT_Q[r.asc!]))} /> : null}
+          <Btn small kind="outline" title={lang === 'tr' ? "Pinterest'te daha fazlası" : 'More on Pinterest'} onPress={() => Linking.openURL(pinterest(OUTFIT_Q[os]))} />
         </View>
       </Section>
 
