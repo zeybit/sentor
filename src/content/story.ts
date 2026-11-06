@@ -7,6 +7,7 @@ import { PLANET_HOUSE } from './houseTexts';
 import { natalAspectText } from './aspectPairs';
 import { SIGN_RULERS } from '../engine/astro';
 import * as N from './lillyNatal';
+import { lilithChapter } from './lilith';
 
 type Lang = 'tr' | 'en';
 type K = BodyId | 'asc' | 'mc';
@@ -292,6 +293,9 @@ export function natalStory(ch: Chart, lang: Lang): Chapter[] {
     'Uranüs, Neptün ve Plüton gökyüzünde çok yavaş ilerler, bu yüzden burçları bütün bir kuşakta ortaktır. Asıl kişisel anlamları, haritanda hangi evde durduklarından gelir.',
     'Uranus, Neptune and Pluto move very slowly, so their signs are shared by a whole generation. Their personal meaning comes from the house they occupy in your chart.'),
     paras: (['uranus', 'neptune', 'pluto'] as BodyId[]).map(id => planetPara(ch, id, lang, { aspects: 0 }, used)) });
+
+  const lil = lilithChapter(ch, lang);
+  if (lil) chapters.push(lil);
 
   // 8. Hayat yolu
   if (P.node) chapters.push({ id: 'path', title: L2('Hayat yolun', 'Your life path'), intro: L2(
