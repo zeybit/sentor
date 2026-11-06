@@ -38,10 +38,10 @@ export const HAIR: HairLook[] = [
   { name: l('Deniz kızı dalgaları', 'Mermaid waves'), length: 4, texture: 'wavy', up: 'none', bangs: false, color: '#C9A66B', q: 'mermaid waves blonde' },
 ];
 
-export type Piece = 'blazer' | 'jacket' | 'trench' | 'knit' | 'tee' | 'blouse' | 'dress' | 'slip' | 'trousers' | 'jeans' | 'skirt' | 'sneakers' | 'boots' | 'heels' | 'loafers' | 'bag' | 'chain' | 'pearls' | 'hoops' | 'watch' | 'scarf' | 'sunglasses';
+export type Piece = 'blazer' | 'jacket' | 'trench' | 'knit' | 'tee' | 'shirt' | 'blouse' | 'dress' | 'slip' | 'trousers' | 'jeans' | 'skirt' | 'sneakers' | 'boots' | 'heels' | 'loafers' | 'bag' | 'chain' | 'pearls' | 'hoops' | 'watch' | 'scarf' | 'sunglasses';
 export const PIECE_NAME: Record<Piece, L> = {
   blazer: l('Blazer', 'Blazer'), jacket: l('Deri ceket', 'Leather jacket'), trench: l('Trençkot', 'Trench coat'), knit: l('Triko', 'Knit'), tee: l('Tişört', 'Tee'),
-  blouse: l('Bluz', 'Blouse'), dress: l('Elbise', 'Dress'), slip: l('Saten elbise', 'Slip dress'), trousers: l('Bol paça pantolon', 'Wide-leg trousers'), jeans: l('Kot', 'Jeans'),
+  shirt: l('Gömlek', 'Shirt'), blouse: l('Bluz', 'Blouse'), dress: l('Elbise', 'Dress'), slip: l('Saten elbise', 'Slip dress'), trousers: l('Bol paça pantolon', 'Wide-leg trousers'), jeans: l('Kot', 'Jeans'),
   skirt: l('Etek', 'Skirt'), sneakers: l('Sneaker', 'Sneakers'), boots: l('Bot', 'Boots'), heels: l('Topuklu', 'Heels'), loafers: l('Loafer', 'Loafers'),
   bag: l('Çanta', 'Bag'), chain: l('Kalın zincir', 'Chunky chain'), pearls: l('İnci kolye', 'Pearls'), hoops: l('Halka küpe', 'Hoops'), watch: l('Saat', 'Watch'),
   scarf: l('Eşarp', 'Scarf'), sunglasses: l('Güneş gözlüğü', 'Sunglasses'),

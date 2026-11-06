@@ -145,12 +145,7 @@ function SpouseBlock() {
         {L('Haritanda evlilik ve uzun süreli ilişkileri anlatan yedinci ev, onun gezegeni ve aşk gezegeni Venüs birlikte okunduğunda, hayatına girecek ciddi partnerin hakkında bir portre çıkar. Her bölümün altında bunun haritanın neresinden geldiğini görebilirsin.',
           'Reading your seventh house (marriage and long-term bonds), its planet and Venus, the planet of love, together gives a portrait of the serious partner who will enter your life. Under each part you can see where in your chart it comes from.')}
       </Text>
-      <View style={[st.panel, { marginBottom: 20, paddingVertical: 14 }]}>
-        <Text style={{ fontFamily: F.sansMed, fontSize: 15, color: C.ink, marginBottom: 4 }}>{L('Haritanda eşi temsil eden gezegen cinsiyete göre değişir', 'The planet that represents a spouse depends on gender')}</Text>
-        <Sub style={{ marginBottom: 8 }}>{L('Klasik astrolojide kadın haritasında Güneş, erkek haritasında Ay eşi anlatır. Seçimin bu kişi için kaydedilir.', 'In classical astrology the Sun describes the spouse in a woman’s chart and the Moon in a man’s. Your choice is saved for this person.')}</Sub>
-        <Chips items={[{ key: 'f', label: L('Kadın', 'Woman') }, { key: 'm', label: L('Erkek', 'Man') }, { key: 'x', label: L('Belirtmek istemiyorum', 'Prefer not to say') }]}
-          value={gender ?? 'x'} onChange={v => profile && setProfile({ ...profile, gender: v === 'x' ? undefined : (v as 'f' | 'm') })} />
-      </View>
+      {gender ? null : <Sub style={{ marginBottom: 16 }}>{L('Eşini anlatan gezegen cinsiyete göre değişir. Ayarlar’da kişinin bilgilerini düzenleyip cinsiyet eklersen bu bölüm daha ayrıntılı olur.', 'The planet describing your partner depends on gender. Add it by editing this person in Settings for a more detailed reading.')}</Sub>}
       {prof ? prof.map(x => (
         <View key={x.id} style={{ marginBottom: 20 }}>
           <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{x.title[lang]}</Text>

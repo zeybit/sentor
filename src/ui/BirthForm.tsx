@@ -3,10 +3,10 @@ import { Pressable, Switch, Text, View } from 'react-native';
 import cityTz from 'city-timezones';
 import type { BirthInput } from '../engine/astro';
 import { useStore } from '../store';
-import { Btn, Field, P, Sub, st } from './kit';
+import { Btn, Chips, Field, P, Sub, st } from './kit';
 import { C } from '../theme';
 
-export interface BirthFormValue { name: string; place: string; birth: BirthInput }
+export interface BirthFormValue { name: string; place: string; birth: BirthInput; gender?: 'f' | 'm' }
 export interface Place { label: string; lat: number; lon: number; tz: string }
 
 export async function searchPlaces(q: string, lang: string): Promise<Place[]> {
@@ -34,6 +34,7 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
   const { s, lang } = useStore();
   const b = initial?.birth;
   const [name, setName] = useState(initial?.name ?? '');
+  const [gender, setGender] = useState<'f' | 'm' | 'x'>(initial?.gender ?? 'x');
   const [date, setDate] = useState(b ? `${pad(b.day)}.${pad(b.month)}.${b.year}` : '');
   const [time, setTime] = useState(b && b.timeKnown ? `${pad(b.hour)}:${pad(b.minute)}` : '');
   const [unknown, setUnknown] = useState(b ? !b.timeKnown : false);
@@ -76,12 +77,15 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
     }
     if (!p) return setErr(s.errPlace);
     setErr('');
-    onSubmit({ name: name.trim(), place: p.label, birth: { year, month, day, hour, minute, timeKnown: !unknown, lat: p.lat, lon: p.lon, tz: p.tz } });
+    onSubmit({ name: name.trim(), place: p.label, gender: gender === 'x' ? undefined : gender, birth: { year, month, day, hour, minute, timeKnown: !unknown, lat: p.lat, lon: p.lon, tz: p.tz } });
   };
 
   return (
     <View>
       <Field label={nameLabel ?? s.name} value={name} onChangeText={setName} />
+      <Text style={[st.label, { marginBottom: 6 }]}>{lang === 'tr' ? 'Cinsiyet' : 'Gender'}</Text>
+      <Chips items={[{ key: 'f', label: lang === 'tr' ? 'Kadın' : 'Woman' }, { key: 'm', label: lang === 'tr' ? 'Erkek' : 'Man' }, { key: 'x', label: lang === 'tr' ? 'Belirtmek istemiyorum' : 'Prefer not to say' }]} value={gender} onChange={v => setGender(v as 'f' | 'm' | 'x')} />
+      <Sub style={{ marginTop: 4, marginBottom: 14 }}>{lang === 'tr' ? 'Stil önerileri (kıyafet, saç, makyaj ya da bakım) ve eş yorumları buna göre hazırlanır.' : 'Style suggestions (clothing, hair, makeup or grooming) and partner readings are tailored to this.'}</Sub>
       <Field label={s.birthDate} value={date} onChangeText={setDate} placeholder="14.03.2003" keyboardType="numbers-and-punctuation" />
       {!unknown && <Field label={s.birthTime} value={time} onChangeText={setTime} placeholder="09:30" keyboardType="numbers-and-punctuation" />}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>

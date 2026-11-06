@@ -63,6 +63,7 @@ export function PieceArt({ piece, color, size = 64, ink }: { piece: Piece; color
       case 'trench': return <><Path d="M20 8 L30 6 L34 6 L44 8 L52 24 L54 58 L10 58 L12 24 Z" {...s} /><Line x1={12} y1={34} x2={52} y2={34} stroke={ink} strokeWidth={2.2} /><Line x1={32} y1={8} x2={32} y2={58} stroke={ink} strokeWidth={0.8} /></>;
       case 'knit': return <><Path d="M20 12 Q32 18 44 12 L56 22 L52 32 L48 30 L48 54 L16 54 L16 30 L12 32 L8 22 Z" {...s} />{[20, 26, 32, 38, 44].map(x => <Line key={x} x1={x} y1={50} x2={x} y2={54} stroke={ink} strokeWidth={0.8} />)}</>;
       case 'tee': return <Path d="M22 12 Q32 18 42 12 L54 20 L50 28 L44 26 L44 54 L20 54 L20 26 L14 28 L10 20 Z" {...s} />;
+      case 'shirt': return <><Path d="M22 10 L32 16 L42 10 L56 22 L50 32 L46 30 L46 56 L18 56 L18 30 L14 32 L8 22 Z" {...s} /><Path d="M22 10 L28 20 L32 16 L36 20 L42 10" fill="none" stroke={ink} strokeWidth={1} /><Line x1={32} y1={16} x2={32} y2={56} stroke={ink} strokeWidth={0.8} />{[26, 34, 42, 50].map(y => <Circle key={y} cx={34} cy={y} r={0.9} fill={ink} />)}</>;
       case 'blouse': return <><Path d="M22 12 Q32 22 42 12 L54 24 L48 32 L46 30 L46 54 L18 54 L18 30 L16 32 L10 24 Z" {...s} /><Path d="M26 14 Q32 26 38 14" fill="none" stroke={ink} strokeWidth={1} /></>;
       case 'dress': return <Path d="M24 8 L40 8 L42 22 L54 58 L10 58 L22 22 Z" {...s} />;
       case 'slip': return <><Path d="M24 14 L40 14 L42 24 L50 58 L14 58 L22 24 Z" {...s} /><Line x1={24} y1={14} x2={24} y2={6} stroke={ink} /><Line x1={40} y1={14} x2={40} y2={6} stroke={ink} /></>;

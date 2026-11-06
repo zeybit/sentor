@@ -8,6 +8,7 @@ import { H1, P, Row, Section, Segmented, Sub, st } from '../ui/kit';
 import TrendsScreen from './TrendsScreen';
 import { takePendingKind } from '../nav';
 import StyleScreen from './StyleScreen';
+import { STYLE_M } from '../content/looksMale';
 import LoveScreen from './LoveScreen';
 import { C, serif } from '../theme';
 
@@ -32,6 +33,9 @@ function Report() {
   if (!chart || !pf) return null;
   const t = s.pf;
   const { aura, beauty, spouse, core } = pf;
+  const male = profile?.gender === 'm';
+  const venusS = chart.positions.venus.sign, ascS = chart.asc !== null ? Math.floor(chart.asc / 30) : null;
+  const wardrobe = male ? [STYLE_M[ascS ?? venusS].clothes, ...(ascS !== null && ascS !== venusS ? [STYLE_M[venusS].clothes] : []), STYLE_M[venusS].accessories] : aura.wardrobe;
 
   return (
     <View>
@@ -40,7 +44,7 @@ function Report() {
         <Row label={t.aesthetic}>{aura.aesthetic[lang]}</Row>
         <Row label={t.body}>{aura.body[lang]}</Row>
         {aura.lilly.length ? <Row label={t.lillyBody}>{aura.lilly.map(x => x[lang]).join('\n\n')}</Row> : null}
-        <Row label={t.wardrobe}>{aura.wardrobe.map(w => w[lang]).join('\n\n')}</Row>
+        <Row label={t.wardrobe}>{wardrobe.map(w => w[lang]).join('\n\n')}</Row>
         {aura.firstHouse.length ? <Row label={t.firstHouse}>{aura.firstHouse.map(f => f[lang]).join('\n\n')}</Row> : null}
         <View style={st.row}>
           <Text style={st.rowLabel}>{t.palette}</Text>
@@ -49,14 +53,16 @@ function Report() {
         </View>
       </Section>
 
-      <Section title={t.s2}>
+      <Section title={male ? (lang === 'tr' ? '2. Bakım, saç ve görünüm' : '2. Grooming, hair and look') : t.s2}>
+        {male ? <Row label={lang === 'tr' ? 'Bakım' : 'Grooming'}>{STYLE_M[venusS].grooming[lang]}</Row> : <>
         <Row label={t.makeup}>{`${beauty.trend[lang]}. ${beauty.makeup[lang]}`}</Row>
-        <Row label={t.finish}>{beauty.finish[lang]}</Row>
+        <Row label={t.finish}>{beauty.finish[lang]}</Row></>}
         {beauty.feature ? <Row label={t.feature}>{beauty.feature[lang]}</Row> : null}
+        {male ? <Row label={t.hairCut}>{STYLE_M[ascS ?? venusS].hair[lang]}</Row> : <>
         <View style={st.row}><Text style={st.rowLabel}>{t.lip}</Text><Swatches lang={lang} items={beauty.lip} /></View>
         <View style={st.row}><Text style={st.rowLabel}>{t.blush}</Text><Swatches lang={lang} items={beauty.blush} /></View>
         {beauty.hairCut ? <Row label={t.hairCut}>{beauty.hairCut[lang]}</Row> : null}
-        <Row label={t.hairColor}>{beauty.hairColor[lang]}</Row>
+        <Row label={t.hairColor}>{beauty.hairColor[lang]}</Row></>}
         {beauty.venusMods.length ? <Row label={t.venusMods}>{beauty.venusMods.map(v => v[lang]).join('\n\n')}</Row> : null}
       </Section>
 

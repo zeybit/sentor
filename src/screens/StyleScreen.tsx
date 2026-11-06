@@ -6,11 +6,13 @@ import { SIGNS } from '../content/base';
 import { Btn, Chips, H2, P, Row, Section, Sub, useLayout } from '../ui/kit';
 import { HAIR, MAKEUP, OUTFIT, OUTFIT_PINS, OUTFIT_Q, MAKEUP_PINS, HAIR_PINS, PIECE_NAME, pinterest } from '../content/looks';
 import { PieceArt } from '../ui/LookArt';
+import { GROOM_NAME, GROOM_PINS_M, GROOM_Q, HAIR_M, HAIR_PINS_M, OUTFIT_M, OUTFIT_PINS_M, OUTFIT_Q_M, STYLE_M } from '../content/looksMale';
 import { PinStrip } from '../ui/PinStrip';
 import { C, serif } from '../theme';
 
 export default function StyleScreen() {
-  const { chart, s, lang } = useStore();
+  const { chart, s, lang, profile } = useStore();
+  const male = profile?.gender === 'm';
   const narrow = useLayout().inner(1180) < 560;
   const r = useMemo(() => chart && buildStyleReport(chart), [chart]);
   const [side, setSide] = useState<'venus' | 'asc'>('venus');
@@ -42,14 +44,17 @@ export default function StyleScreen() {
 
 
       <Section title={lang === 'tr' ? 'Sana yakışan görünüm' : 'The look that suits you'}
-        sub={lang === 'tr' ? 'Makyaj ve saç önerilerine en uyan örnekleri Pinterest\'ten seçtik. Kaydırarak gez, beğendiğini Pinterest\'te aç.' : 'We picked the Pinterest examples closest to your makeup and hair suggestions. Swipe through and open the one you like.'}>
-        {[{ k: r.venus, t: lang === 'tr' ? 'İmza görünümün' : 'Your signature look', why: lang === 'tr' ? `Venüs ${SIGNS[r.venus].tr}: kendini en güzel hissettiğin hâl` : `Venus in ${SIGNS[r.venus].en}: when you feel most beautiful` },
+        sub={lang === 'tr' ? `${male ? 'Bakım' : 'Makyaj'} ve saç önerilerine en uyan örnekleri Pinterest'ten seçtik. Kaydırarak gez, beğendiğini Pinterest'te aç.` : `We picked the Pinterest examples closest to your ${male ? 'grooming' : 'makeup'} and hair suggestions. Swipe through and open the one you like.`}>
+        {[{ k: r.venus, t: lang === 'tr' ? 'İmza görünümün' : 'Your signature look', why: lang === 'tr' ? `Venüs ${SIGNS[r.venus].tr}: kendini en iyi hissettiğin hâl` : `Venus in ${SIGNS[r.venus].en}: when you feel your best` },
           ...(r.asc !== null && r.asc !== r.venus ? [{ k: r.asc, t: lang === 'tr' ? 'İlk izlenim görünümün' : 'Your first-impression look', why: lang === 'tr' ? `Yükselen ${SIGNS[r.asc].tr}: insanların seni ilk gördüğü hâl` : `${SIGNS[r.asc].en} Rising: how people first see you` }] : [])]
           .map((x, xi) => (
             <View key={x.t} style={{ marginTop: xi ? 26 : 4 }}>
               <Text style={{ fontFamily: serif, fontSize: 21, color: C.ink }}>{x.t}</Text>
               <Sub style={{ marginBottom: 12 }}>{x.why}</Sub>
-              {([
+              {(male ? [
+                ['m', lang === 'tr' ? 'Bakım' : 'Grooming', GROOM_NAME[x.k][lang], [] as string[], GROOM_PINS_M[x.k % 4], GROOM_Q[x.k % 4]],
+                ['h', lang === 'tr' ? 'Saç' : 'Hair', HAIR_M[x.k].name[lang], [HAIR_M[x.k].color], HAIR_PINS_M[x.k], HAIR_M[x.k].q],
+              ] as const : [
                 ['m', lang === 'tr' ? 'Makyaj' : 'Makeup', MAKEUP[x.k].name[lang], [MAKEUP[x.k].shadow, MAKEUP[x.k].lip, MAKEUP[x.k].blush], MAKEUP_PINS[x.k], MAKEUP[x.k].q],
                 ['h', lang === 'tr' ? 'Saç' : 'Hair', HAIR[x.k].name[lang], [HAIR[x.k].color], HAIR_PINS[x.k], HAIR[x.k].q],
               ] as const).map(([key, lab, val, sw, pins, q]) => (
@@ -61,7 +66,7 @@ export default function StyleScreen() {
                     <View style={{ flex: 1 }} />
                     <Btn small kind="ghost" title={lang === 'tr' ? 'Daha fazla' : 'More'} onPress={() => Linking.openURL(pinterest(q))} />
                   </View>
-                  <PinStrip pins={pins.map(id => ({ id, t: val }))} lang={lang} />
+                  <PinStrip key={`${key}${x.k}${male}`} pins={pins.map(id => ({ id, t: val }))} lang={lang} />
                 </View>
               ))}
             </View>
@@ -75,42 +80,42 @@ export default function StyleScreen() {
           { key: 'asc', label: lang === 'tr' ? `${SIGNS[r.asc!].tr} (Yükselen): ${STYLE[r.asc!].aesthetic.tr}` : `${SIGNS[r.asc!].en} (Rising): ${STYLE[r.asc!].aesthetic.en}` },
         ]} value={side} onChange={setSide} /></View> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {OUTFIT[os].map(({ piece, c }) => {
+          {(male ? OUTFIT_M : OUTFIT)[os].map(({ piece, c }) => {
             const col = typeof c === 'number' ? (STYLE[os].colors[c]?.hex ?? '#999') : c;
             return (
               <View key={piece} style={{ width: narrow ? '30%' : 100, alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 10 }}>
                 <PieceArt piece={piece} color={col} ink={C.ink} size={60} />
-                <Text style={{ fontSize: 12, color: C.ink, marginTop: 4, textAlign: 'center' }}>{PIECE_NAME[piece][lang]}</Text>
+                <Text style={{ fontSize: 12, color: C.ink, marginTop: 4, textAlign: 'center' }}>{male && piece === 'trousers' ? (lang === 'tr' ? 'Kumaş pantolon' : 'Trousers') : PIECE_NAME[piece][lang]}</Text>
               </View>
             );
           })}
         </View>
         <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginTop: 18, marginBottom: 2 }}>{lang === 'tr' ? `${STYLE[os].aesthetic.tr}: Pinterest'ten 5 kombin` : `${STYLE[os].aesthetic.en}: 5 outfits from Pinterest`}</Text>
-        <Sub style={{ marginBottom: 10 }}>{STYLE[os].clothes[lang]}</Sub>
-        <PinStrip key={os} pins={OUTFIT_PINS[os]} lang={lang} />
+        <Sub style={{ marginBottom: 10 }}>{(male ? STYLE_M[os] : STYLE[os]).clothes[lang]}</Sub>
+        <PinStrip key={`${os}${male}`} pins={male ? OUTFIT_PINS_M[os].map(id => ({ id, t: STYLE[os].aesthetic[lang] })) : OUTFIT_PINS[os]} lang={lang} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-          <Btn small kind="outline" title={lang === 'tr' ? "Pinterest'te daha fazlası" : 'More on Pinterest'} onPress={() => Linking.openURL(pinterest(OUTFIT_Q[os]))} />
+          <Btn small kind="outline" title={lang === 'tr' ? "Pinterest'te daha fazlası" : 'More on Pinterest'} onPress={() => Linking.openURL(pinterest(male ? OUTFIT_Q_M[os] : OUTFIT_Q[os]))} />
         </View>
       </Section>
 
       <Section title={s.styleSig} sub={`${s.styleSigSub} (${SIGNS[r.venus][lang]})`}>
-        <Row label={s.clothes}>{v.clothes[lang]}</Row>
-        <Row label={s.makeup}>{v.makeup[lang]}</Row>
-        <Row label={s.accessories}>{v.accessories[lang]}</Row>
+        <Row label={s.clothes}>{(male ? STYLE_M[r.venus] : v).clothes[lang]}</Row>
+        <Row label={male ? (lang === 'tr' ? 'Bakım' : 'Grooming') : s.makeup}>{male ? STYLE_M[r.venus].grooming[lang] : v.makeup[lang]}</Row>
+        <Row label={s.accessories}>{(male ? STYLE_M[r.venus] : v).accessories[lang]}</Row>
         <Row label={s.scent}>{v.scent[lang]}</Row>
         <Row label={s.avoid}>{v.avoid[lang]}</Row>
       </Section>
 
       {a ? (
         <Section title={s.firstImpression} sub={`${s.firstImpressionSub}, ${SIGNS[r.asc!][lang]}`}>
-          <Row label={s.clothes}>{a.clothes[lang]}</Row>
-          <Row label={s.hair}>{a.hair[lang]}</Row>
-          <Row label={s.makeup}>{a.makeup[lang]}</Row>
+          <Row label={s.clothes}>{(male ? STYLE_M[r.asc!] : a).clothes[lang]}</Row>
+          <Row label={s.hair}>{(male ? STYLE_M[r.asc!] : a).hair[lang]}</Row>
+          <Row label={male ? (lang === 'tr' ? 'Bakım' : 'Grooming') : s.makeup}>{male ? STYLE_M[r.asc!].grooming[lang] : a.makeup[lang]}</Row>
         </Section>
       ) : (
         <Section title={s.firstImpression}>
           <P>{s.needsTime}</P>
-          <Row label={s.hair}>{v.hair[lang]}</Row>
+          <Row label={s.hair}>{(male ? STYLE_M[r.venus] : v).hair[lang]}</Row>
         </Section>
       )}
 
