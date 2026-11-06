@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { chartAt } from '../engine/astro';
 import {
@@ -14,7 +14,8 @@ import { Cartography, Finder } from '../ui/Tools';
 import FutureScreen, { ActiveWindows } from './FutureScreen';
 import { takePendingKind } from '../nav';
 import { Chips, H1, Segmented, Sub, st, useLayout } from '../ui/kit';
-import { C } from '../theme';
+import { C, serif } from '../theme';
+import { KIND_INFO } from '../content/kindInfo';
 import { fmtLocal, tzOffsetMinutes } from '../util';
 
 type Kind = ChartKind | 'timeline' | 'cartography' | 'finder';
@@ -62,6 +63,8 @@ export default function ChartScreen() {
         <Chips items={kinds.map(k => ({ key: k, label: t.kinds[k] }))} value={kind} onChange={k => setKind(k as Kind)} />
       </ScrollView>
 
+      <KindAbout kind={kind} lang={lang} />
+
       {kind === 'timeline' ? <FutureScreen embedded />
         : kind === 'cartography' ? <Cartography natal={chart} t={t} lang={lang} />
         : kind === 'finder' ? <Finder natal={chart} t={t} lang={lang} tz={tz} />
@@ -97,6 +100,27 @@ export default function ChartScreen() {
             </View>
           ) : <>{left}{right}</>;
         })()}
+    </View>
+  );
+}
+
+
+function KindAbout({ kind, lang }: { kind: string; lang: 'tr' | 'en' }) {
+  const info = KIND_INFO[kind];
+  const [open, setOpen] = useState(true);
+  if (!info) return null;
+  const tr = lang === 'tr';
+  return (
+    <View style={{ marginTop: 14, marginBottom: 6, borderLeftWidth: 3, borderLeftColor: C.gold, backgroundColor: C.card, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(o => !o)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ flex: 1, fontFamily: serif, fontSize: 17, color: C.ink }}>{tr ? 'Bu harita ne işe yarar?' : 'What is this chart for?'}</Text>
+        <Text style={{ fontSize: 13, color: C.rose, fontWeight: '600' }}>{open ? (tr ? 'Gizle' : 'Hide') : (tr ? 'Göster' : 'Show')}</Text>
+      </Pressable>
+      {open ? <>
+        <Text style={[st.p, { marginTop: 6 }]}>{info.what[lang]}</Text>
+        <Text style={[st.p, { marginTop: 8 }]}><Text style={{ fontWeight: '700' }}>{tr ? 'Ne zaman bakmalı: ' : 'When to use it: '}</Text>{info.when[lang]}</Text>
+        <Text style={[st.p, { marginTop: 6, color: C.sub, fontStyle: 'italic' }]}>{tr ? 'Cevap verdiği soru: ' : 'Answers: '}“{info.ask[lang]}”</Text>
+      </> : null}
     </View>
   );
 }
