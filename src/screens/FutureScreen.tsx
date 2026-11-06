@@ -24,6 +24,7 @@ export const TOPIC_INFO: Record<Topic, { name: { tr: string; en: string }; color
     tip: { tr: 'Hayatını gözden geçirme dönemi; eskiyi bırakıp yeni bir sayfa açmaya hazırlan.', en: 'A time to review your life; get ready to let go of the old and turn a new page.' } },
 };
 
+const techOfId = (id: string): 'transit' | 'progression' | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E)/.test(id) ? 'other' : 'transit');
 const fmtMonth = (d: Date, lang: Lang) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long', year: 'numeric' }).format(d);
 export const fmtRange = (w: Window, lang: Lang) => {
   const a = fmtMonth(w.start, lang), b = fmtMonth(new Date(w.end.getTime() - 15 * 864e5), lang);
@@ -48,9 +49,16 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
         </View>
       </View>
       <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginTop: 2 }}>{fmtRange(w, lang)}</Text>
-      <Text style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, marginTop: 6 }}>
-        {w.reasons.slice(0, 3).map(r => r.text[lang]).join(' ')}
-      </Text>
+      {(['transit', 'progression', 'other'] as const).map(g => {
+        const rs = w.reasons.filter(r => techOfId(r.id) === g).slice(0, 2);
+        if (!rs.length) return null;
+        const lbl = g === 'transit' ? tx('Transit', 'Transit', lang) : g === 'progression' ? tx('Progresyon', 'Progression', lang) : tx('Yaşın teması ve tutulmalar', 'Age theme and eclipses', lang);
+        return (
+          <Text key={g} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, marginTop: 6 }}>
+            <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{lbl}: </Text>{rs.map(r => r.text[lang]).join(' ')}
+          </Text>
+        );
+      })}
       {showTip ? <Text style={{ fontFamily: F.sans, fontSize: 14, lineHeight: 22, color: C.sub, marginTop: 6 }}>{t.tip[lang]}</Text> : null}
     </View>
   );
@@ -93,7 +101,7 @@ function TimelineChart({ ch, list, lang, width }: { ch: Chart; list: Window[]; l
   );
 }
 
-export default function FutureScreen() {
+export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) {
   const { chart, lang, profile } = useStore();
   const { inner } = useLayout();
   const [list, setList] = useState<Window[] | null>(null);
@@ -115,9 +123,9 @@ export default function FutureScreen() {
 
   return (
     <View>
-      <H1>{tx('Hayat takvimin', 'Your life calendar', lang)}</H1>
+      {embedded ? null : <H1>{tx('Hayat takvimin', 'Your life calendar', lang)}</H1>}
       <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 18, maxWidth: 640 }}>
-        {tx('Burada hayatında aşk, kariyer, ev, yolculuk ve büyük değişimler için öne çıkan dönemleri görürsün. Astrolojide tek bir yönteme güvenmek yerine birkaç yöntemin aynı zamana işaret ettiği dönemlere bakılır: yaşının teması, Jüpiter ve Satürn’ün geçişleri, tutulmalar ve haritanın yıllar içinde ilerleyişi. Bunlar ne kadar çok üst üste gelirse dönem o kadar güçlü olur.',
+        {tx('Burada hayatında aşk, kariyer, ev, yolculuk ve büyük değişimler için öne çıkan dönemleri görürsün. Zamanlama için tek bir teknik yeterli değildir: transitler (gezegenlerin bugünkü geçişleri) ve progresyon (haritanın yıllar içinde ilerleyişi) birlikte kullanılır, yanına yaşının teması ve tutulmalar eklenir. Bunlar aynı döneme ne kadar çok işaret ederse o dönem o kadar güçlü olur. Her dönemin altında hangi tekniğin ne söylediğini görebilirsin.',
           'Here you see the periods that stand out for love, career, home, travel and major changes. Rather than trusting a single method, astrology looks for times when several methods point to the same moment: the theme of your age, the passages of Jupiter and Saturn, eclipses, and your chart’s progress over the years. The more they overlap, the stronger the period.', lang)}
       </Text>
       {noTime ? <View style={[st.panel, { backgroundColor: C.goldSoft, borderColor: C.goldSoft, marginBottom: 20 }]}><P>{tx('Doğum saatin bilinmediği için evler ve köşeler hesaplanamıyor; takvim yalnızca gezegen geçişlerine dayanıyor ve daha az ayrıntılı. Saatini eklersen çok daha isabetli olur.', 'Your birth time is unknown, so houses and angles can’t be used; the calendar relies only on planet passages and is less detailed. Adding your time makes it far more accurate.', lang)}</P></View> : null}
@@ -146,6 +154,38 @@ export default function FutureScreen() {
           <Sub style={{ marginBottom: 20, maxWidth: 640 }}>{tx('Bu tarihler kesin olayları değil, belirli konuların öne çıktığı dönemleri gösterir. Kararlarını yalnızca bunlara göre verme.', 'These dates show periods when certain themes come forward, not fixed events. Don’t base decisions on them alone.', lang)}</Sub>
         </>
       )}
+    </View>
+  );
+}
+
+/** Transit ya da Progresyon ekranında: seçili tarihte etkin olan dönemlere o tekniğin katkısı */
+export type Tech = 'transit' | 'progression';
+const techOf = (id: string): Tech | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E)/.test(id) ? 'other' : 'transit');
+export function ActiveWindows({ ch, date, tech, lang, onOpen }: { ch: Chart; date: Date; tech: Tech; lang: Lang; onOpen: () => void }) {
+  const [list, setList] = useState<Window[] | null>(null);
+  useEffect(() => { const id = setTimeout(() => setList(lifeTimeline(ch, { fromAge: 16, toAge: 75 })), 30); return () => clearTimeout(id); }, [ch]);
+  if (!list) return null;
+  const t = date.getTime();
+  const near = list.filter(w => w.start.getTime() - 45 * 864e5 <= t && w.end.getTime() + 45 * 864e5 >= t);
+  const label = tech === 'transit' ? tx('transitlerin', 'transits', lang) : tx('progresyonun', 'progressions', lang);
+  return (
+    <View style={[st.panel, { marginBottom: 24 }]}>
+      <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{tx('Bu tarihteki önemli dönemler', 'Key periods around this date', lang)}</Text>
+      {near.length ? near.map((w, i) => {
+        const mine = w.reasons.filter(r => techOf(r.id) === tech);
+        const others = w.reasons.filter(r => techOf(r.id) !== tech);
+        return (
+          <View key={i} style={{ marginTop: 10 }}>
+            <Text style={{ fontFamily: F.serif, fontSize: 20, color: C.ink }}><Text style={{ color: TOPIC_INFO[w.topic].color() }}>● </Text>{TOPIC_INFO[w.topic].name[lang]}, {fmtRange(w, lang)}</Text>
+            {mine.length ? <P style={{ marginTop: 2 }}>{mine.map(r => r.text[lang]).join(' ')}</P>
+              : <Sub style={{ marginTop: 2 }}>{tx(`Bu dönemde ${label} doğrudan bir katkısı yok; dönemi diğer teknikler belirliyor.`, `${label === 'transits' ? 'Transits do' : 'Progressions do'} not contribute directly here; other techniques define this period.`, lang)}</Sub>}
+            {others.length ? <Sub style={{ marginTop: 2 }}>{tx('Diğer teknikler de destekliyor: ', 'Other techniques agree: ', lang)}{others.map(r => r.text[lang]).join(' ')}</Sub> : null}
+          </View>
+        );
+      }) : <P style={{ marginTop: 4 }}>{tx('Seçili tarihte öne çıkan bir dönem yok. Tarihi ileri alarak bakabilirsin.', 'No standout period at the selected date. Move the date forward to look.', lang)}</P>}
+      <Pressable onPress={onOpen} accessibilityRole="button" style={{ marginTop: 10 }}>
+        <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{tx('Bütün önemli dönemleri gör', 'See all key periods', lang)}</Text>
+      </Pressable>
     </View>
   );
 }

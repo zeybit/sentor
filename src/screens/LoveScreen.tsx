@@ -193,7 +193,7 @@ function SpouseBlock() {
             {wins.map((w, i) => <WindowCard key={i} w={w} lang={lang} showTip={false} />)}
           </>
         ) : <P>{L('Önümüzdeki yıllarda belirgin bir dönem çıkmadı.', 'No marked period found for the coming years.')}</P>}
-      <Pressable onPress={() => nav('future')} accessibilityRole="link" style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
+      <Pressable onPress={() => nav('chart:timeline')} accessibilityRole="link" style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
         <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{L('Bütün hayat takvimini aç', 'Open your full life calendar')}</Text>
       </Pressable>
     </Section>

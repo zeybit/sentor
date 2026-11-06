@@ -24,7 +24,7 @@ export default function NextPeriod() {
   if (!next || !next.length) return null;
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   return (
-    <Pressable onPress={() => nav('future')} accessibilityRole="link" accessibilityLabel={L('Hayat takvimini aç', 'Open life calendar')}
+    <Pressable onPress={() => nav('chart:timeline')} accessibilityRole="link" accessibilityLabel={L('Hayat takvimini aç', 'Open life calendar')}
       style={({ hovered }: any) => [st.panel, { marginBottom: 32 }, hovered && { borderColor: C.sub }]}>
       <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{L('Hayat takvimin', 'Your life calendar')}</Text>
       <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 8 }}>{L('Sıradaki önemli dönemlerin', 'Your next important periods')}</Text>

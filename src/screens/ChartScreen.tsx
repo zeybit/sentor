@@ -11,11 +11,13 @@ import DateBar from '../ui/DateBar';
 import Tables from '../ui/Tables';
 import { NatalReading, KindReading } from '../ui/Readings';
 import { Cartography, Finder } from '../ui/Tools';
+import FutureScreen, { ActiveWindows } from './FutureScreen';
+import { takePendingKind } from '../nav';
 import { Chips, H1, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C } from '../theme';
 import { fmtLocal, tzOffsetMinutes } from '../util';
 
-type Kind = ChartKind | 'cartography' | 'finder';
+type Kind = ChartKind | 'timeline' | 'cartography' | 'finder';
 const DATED: Kind[] = ['transit', 'progressed', 'solarArc', 'solarReturn', 'lunarReturn', 'now'];
 const BIWHEEL: Kind[] = ['transit', 'progressed', 'solarArc'];
 
@@ -23,7 +25,7 @@ export default function ChartScreen() {
   const { chart, s, lang, profile, opts, showAsteroids, location } = useStore();
   const t = T2S[lang];
   const { inner, twoCol, wide } = useLayout();
-  const [kind, setKind] = useState<Kind>('natal');
+  const [kind, setKind] = useState<Kind>(() => (takePendingKind() as Kind) || 'natal');
   const [view, setView] = useState<'readings' | 'tables'>('readings');
   const [date, setDate] = useState(() => new Date());
 
@@ -48,7 +50,7 @@ export default function ChartScreen() {
   const wheelChart = kind === 'natal' || BIWHEEL.includes(kind) || kind === 'antiscia' ? chart : other!;
   const outer = BIWHEEL.includes(kind) ? other : kind === 'antiscia' ? other : null;
   const shown = kind === 'natal' || kind === 'antiscia' ? chart : other;
-  const kinds: Kind[] = ['natal', 'transit', 'progressed', 'solarArc', 'solarReturn', 'lunarReturn', 'antiscia', 'now', 'cartography', 'finder'];
+  const kinds: Kind[] = ['natal', 'transit', 'progressed', 'timeline', 'solarArc', 'solarReturn', 'lunarReturn', 'antiscia', 'now', 'cartography', 'finder'];
 
   return (
     <View>
@@ -60,13 +62,15 @@ export default function ChartScreen() {
         <Chips items={kinds.map(k => ({ key: k, label: t.kinds[k] }))} value={kind} onChange={k => setKind(k as Kind)} />
       </ScrollView>
 
-      {kind === 'cartography' ? <Cartography natal={chart} t={t} lang={lang} />
+      {kind === 'timeline' ? <FutureScreen embedded />
+        : kind === 'cartography' ? <Cartography natal={chart} t={t} lang={lang} />
         : kind === 'finder' ? <Finder natal={chart} t={t} lang={lang} tz={tz} />
         : (() => {
           const wheelSize = twoCol ? 460 : Math.min(inner(wide ? 1180 : 760), 520);
           const left = (
             <View>
               {DATED.includes(kind) ? <DateBar date={date} onChange={setDate} t={t} lang={lang} tzOffsetMin={tzOffsetMinutes(tz, date)} /> : null}
+              {kind === 'transit' || kind === 'progressed' ? <ActiveWindows ch={chart} date={date} tech={kind === 'transit' ? 'transit' : 'progression'} lang={lang} onOpen={() => setKind('timeline')} /> : null}
               {(kind === 'solarReturn' || kind === 'lunarReturn') && other ? <Sub style={{ marginBottom: 6 }}>{t.returnAt}: {fmtLocal(other.utc, tz)}, {loc?.label}</Sub> : null}
               <View style={{ alignItems: 'center', marginVertical: 12 }}>
                 <Wheel chart={wheelChart} outer={outer} cross={cross} size={wheelSize} asteroids={showAsteroids} />
