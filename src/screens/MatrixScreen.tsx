@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { useStore } from '../store';
 import { destinyMatrix, compatMatrix, healthMap, ageMap, Matrix } from '../engine/matrix';
-import { COUPLE, COUPLE_INTRO, COUPLE_POS, CouplePos, coupleStory } from '../content/coupleArcana';
+import { COUPLE, COUPLE_INTRO, COUPLE_POS, buildCouple } from '../content/coupleArcana';
 import { ARCANA, POS, CHAKRA, MxPos, mxStory, SECTION_INTRO, ADVICE } from '../content/arcana';
 import { Chips, Expand, H1, H3, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
@@ -182,39 +182,33 @@ export default function MatrixScreen() {
     </View>
   );
 
-  const CItem = ({ pos, n }: { pos: CouplePos; n: number }) => (
-    <View style={{ marginBottom: 22 }}>
-      <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{COUPLE_POS[pos].title[lang]}</Text>
-      <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(n)}</H3>
-      <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>{coupleStory(pos, n)[lang]}</Text>
-    </View>
-  );
-  const coupleReading = (
+  const cr = partner ? buildCouple(m as any) : null;
+  const coupleReading = cr ? (
     <View>
       <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 18, maxWidth: 640 }}>{COUPLE_INTRO[lang]}</Text>
-      <Section title={tx('İlişkinizin temeli', 'The foundation of your relationship', lang)}>
-        <CItem pos="E" n={m.E} /><CItem pos="A" n={m.A} /><CItem pos="B" n={m.B} /><CItem pos="C" n={m.C} /><CItem pos="D" n={m.D} />
-      </Section>
-      <Section title={tx('Aşk ve para', 'Love and money', lang)}>
-        <CItem pos="love" n={m.love} /><CItem pos="money" n={m.money} /><CItem pos="X" n={m.X} />
-      </Section>
-      <Section title={tx('İlişkinin karmik düğümü', 'The karmic knot of the relationship', lang)}>
-        <Text style={{ fontFamily: F.serif, fontSize: 34, color: C.danger, marginBottom: 8 }}>{m.tail[2]}-{m.tail[1]}-{m.tail[0]}</Text>
-        <CItem pos="tail1" n={m.D1} /><CItem pos="tail2" n={m.D2} /><CItem pos="tail3" n={m.D} />
-      </Section>
-      <Section title={tx('Birlikte parladığınız yer', 'Where you shine together', lang)}>
-        <CItem pos="talent1" n={m.B2} /><CItem pos="talent2" n={m.B1} />
-      </Section>
-      <Section title={tx('Bu ilişkinin amacı', 'The purpose of this relationship', lang)}>
-        <CItem pos="personal" n={m.personal} /><CItem pos="social" n={m.social} /><CItem pos="spiritual" n={m.spiritual} />
-      </Section>
+      {cr.summary ? (
+        <View style={[st.panel, { marginBottom: 24, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
+          <Text style={{ fontFamily: F.serif, fontSize: 22, color: C.ink, marginBottom: 6 }}>{tx('İlişkinizin ana teması', 'The main theme of your relationship', lang)}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.summary[lang]}</Text>
+        </View>
+      ) : null}
+      {cr.sections.map(sec => (
+        <Section key={sec.title.tr} title={sec.title[lang]}>
+          {sec.title.tr === 'İlişkinin karmik düğümü' ? <Text style={{ fontFamily: F.serif, fontSize: 34, color: C.danger, marginBottom: 8 }}>{m.tail[2]}-{m.tail[1]}-{m.tail[0]}</Text> : null}
+          {sec.items.map(it => (
+            <View key={it.pos} style={{ marginBottom: 22 }}>
+              <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{COUPLE_POS[it.pos].title[lang]}</Text>
+              <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(it.n)}{it.repeat ? <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub }}>{tx('  · tekrar eden enerji', '  · repeated energy', lang)}</Text> : null}</H3>
+              <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>{it.text[lang]}</Text>
+            </View>
+          ))}
+        </Section>
+      ))}
       <Section title={tx('Ailelerinizin ilişkiye etkisi', 'Your families’ influence on the relationship', lang)}>
-        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{lang === 'tr'
-          ? `İki ailenin birleşen enerjisi ilişkinize iki şekilde yansır. Baba taraflarınızdan gelen çizgi ${an(m.male)}: ${lowFirstTr(COUPLE[m.male].bond.tr)} Anne taraflarınızdan gelen çizgi ${an(m.female)}: ${lowFirstTr(COUPLE[m.female].bond.tr)} Ailelerle ilgili dikkat etmeniz gereken nokta: ${lowFirstTr(COUPLE[m.male].risk.tr)}`
-          : `The combined energy of your two families reaches your relationship in two ways. The line from your fathers’ sides is ${an(m.male)}: ${COUPLE[m.male].bond.en} The line from your mothers’ sides is ${an(m.female)}: ${COUPLE[m.female].bond.en} Something to watch with families: ${COUPLE[m.male].risk.en}`}</Text>
+        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.families[lang]}</Text>
       </Section>
     </View>
-  );
+  ) : null;
 
   const health = (
     <Section title={tx('Enerji haritası', 'Energy map', lang)}>
