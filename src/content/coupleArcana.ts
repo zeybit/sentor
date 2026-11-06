@@ -263,11 +263,16 @@ export const FACET: Record<number, Record<Facet, L>> = {
     purpose: l('Birbirinize hayatı hafife almadan hafif yaşamayı öğretmek için bir aradasınız.', 'You are together to teach each other to live lightly without taking life lightly.') },
 };
 
-export const FACET_OF: Record<CouplePos, Facet> = {
-  E: 'purpose', A: 'spark', B: 'gift', C: 'world', D: 'test', love: 'love', money: 'money', X: 'love',
-  tail1: 'test', tail2: 'test', tail3: 'purpose', talent1: 'gift', talent2: 'gift', personal: 'purpose', social: 'world', spiritual: 'purpose',
+/** Her konum kendine ait tek bir bakış açısıyla yorumlanır; iki konum aynı metni paylaşmaz. */
+export const FACET_OF: Record<CouplePos, string> = {
+  E: 'core', A: 'spark', B: 'gift', C: 'world', D: 'test', love: 'love', money: 'money', X: 'balance',
+  tail1: 'past', tail2: 'now', tail3: 'resolve', talent1: 'natural', talent2: 'grow', personal: 'purpose', social: 'give', spiritual: 'soul',
 };
-export const facetText = (pos: CouplePos, n: number): L => FACET[n][FACET_OF[pos]];
+export const facetText = (pos: CouplePos, n: number): L => {
+  const k = FACET_OF[pos];
+  if (k === 'core') return COUPLE[n].bond;
+  return (FACET[n] as any)[k] ?? (FACET2[n] as any)[k];
+};
 
 const WHERE: Record<CouplePos, L> = {
   E: l('ilişkinizin özünde', 'the core of your relationship'), A: l('sizi birbirinize çeken şeyde', 'what drew you together'), B: l('birlikte açılan yeteneğinizde', 'the gift you share'),
@@ -302,23 +307,23 @@ export function buildCouple(m: { [k: string]: any }): { summary: L | null; secti
       const a = ARCANA[n], c = COUPLE[n], f = facetText(pos, n), p = COUPLE_POS[pos];
       let text: L;
       if (!prev.length) {
+        const bond = pos === 'E' ? null : c.bond;
         text = {
-          tr: `${p.what.tr} Sizde burada ${a.name.tr} var. ${c.bond.tr} ${f.tr} Dikkat etmeniz gereken: ${lowTr(c.risk.tr)} ${c.tip.tr}`,
-          en: `${p.what.en} Here you have ${a.name.en}. ${c.bond.en} ${f.en} What to watch: ${lowEn(c.risk.en)} ${c.tip.en}`,
+          tr: `${p.what.tr} Sizde burada ${a.name.tr} var. ${f.tr}${bond ? ' ' + bond.tr.split('. ')[0].replace(/\.$/, '') + '.' : ''} Dikkat etmeniz gereken: ${lowTr(c.risk.tr)} ${c.tip.tr}`,
+          en: `${p.what.en} Here you have ${a.name.en}. ${f.en}${bond ? ' ' + bond.en.split('. ')[0].replace(/\.$/, '') + '.' : ''} What to watch: ${lowEn(c.risk.en)} ${c.tip.en}`,
         };
       } else {
+        const k = prev.length + 1;
+        const ordTr = ['', '', 'ikinci', 'üçüncü', 'dördüncü', 'beşinci', 'altıncı', 'yedinci', 'sekizinci'][k] ?? `${k}.`;
+        const ordEn = ['', '', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'][k] ?? `${k}th`;
         const wTr = joinTr(prev.map(q => WHERE[q].tr)), wEn = joinEn(prev.map(q => WHERE[q].en));
-        const first = prev.find(q => FACET_OF[q] !== FACET_OF[pos]) ?? prev[0]; const ff = facetText(first, n);
-        const same = FACET_OF[first] === FACET_OF[pos];
-        const lead = prev.length >= 2
-          ? { tr: `${a.name.tr} bu matriste artık bir tesadüf değil, ilişkinizin omurgası; daha önce ${wTr} karşımıza çıkmıştı.`, en: `${a.name.en} is no coincidence in this matrix any more; it is the backbone of your relationship, having already appeared in ${wEn}.` }
-          : { tr: `Burada yine ${a.name.tr} çıkıyor; ${wTr} gördüğümüz enerjinin aynısı.`, en: `${a.name.en} appears here again, the same energy as in ${wEn}.` };
-        text = same ? {
-          tr: `${p.what.tr} ${lead.tr} Anlamı burada değişmiyor, güçleniyor: ${lowTr(f.tr)} Aynı mesajın iki ayrı yerden gelmesi, bunun ilişkinizin pazarlık edilemez bir parçası olduğunu gösteriyor.`,
-          en: `${p.what.en} ${lead.en} Its meaning does not change here, it grows stronger: ${lowEn(f.en)} The same message coming from two places shows it is a non-negotiable part of your relationship.`,
-        } : {
-          tr: `${p.what.tr} ${lead.tr} ${cap(WHERE[first].tr)} bunun anlamı şuydu: ${lowTr(ff.tr)} ${cap(WHERE[pos].tr)} ise şöyle yaşanıyor: ${lowTr(f.tr)} Yani ${WHERE[first].tr} olan biten, ${WHERE[pos].tr} aynen hissedilir; birini beslediğinizde diğeri de güçlenir, birini ihmal ettiğinizde ikisi birden zayıflar.`,
-          en: `${p.what.en} ${lead.en} In ${WHERE[first].en} it meant: ${lowEn(ff.en)} In ${WHERE[pos].en} it plays out like this: ${lowEn(f.en)} So whatever happens in ${WHERE[first].en} is felt just as much in ${WHERE[pos].en}; feed one and the other grows, neglect one and both weaken.`,
+        const link = k === 2
+          ? { tr: ` Bunu ${WHERE[prev[0]].tr} gördüğümüzle birlikte okuyun: ${a.key.tr} teması ilişkinizin tek bir köşesinde değil, birden fazla katında çalışıyor.`, en: ` Read this together with ${WHERE[prev[0]].en}: the theme of ${a.key.en} works on more than one level of your relationship.` }
+          : k === 3 ? { tr: ` Üç ayrı noktada çıkması, bunun artık bir tesadüf değil ilişkinizin omurgası olduğunu gösteriyor.`, en: ` Appearing in three places shows it is no coincidence but the backbone of your relationship.` }
+          : { tr: '', en: '' };
+        text = {
+          tr: `${p.what.tr} ${a.name.tr} burada ${ordTr} kez çıkıyor (daha önce: ${wTr}). Bu noktada anlamı başka: ${lowTr(f.tr)}${link.tr}`,
+          en: `${p.what.en} ${a.name.en} appears here for the ${ordEn} time (before: ${wEn}). At this point it means something else: ${lowEn(f.en)}${link.en}`,
         };
       }
       seen.set(n, [...prev, pos]);
@@ -350,3 +355,184 @@ export function buildCouple(m: { [k: string]: any }): { summary: L | null; secti
         en: `The line from your fathers' sides is ${fm} ${ARCANA[fm].name.en}: ${lowEn(FACET[fm].world.en)} The line from your mothers' sides is ${ff} ${ARCANA[ff].name.en}: ${lowEn(FACET[ff].world.en)} Two family styles meet in your relationship; when you find the middle way between ${ARCANA[fm].key.en} and ${ARCANA[ff].key.en}, the families support you too.` };
   return { summary, sections, families };
 }
+
+type Facet2 = 'balance' | 'past' | 'now' | 'resolve' | 'natural' | 'grow' | 'give' | 'soul';
+/** Kalan konumlar için ayrı bakış açıları: her konum kendi sorusuna cevap verir */
+export const FACET2: Record<number, Record<Facet2, L>> = {
+  1: { balance: l('Para konuşmaları sizi geren değil, harekete geçiren bir konu; ortak bir iş fikri aşkınızı da canlandırır.', 'Money talk energises rather than strains you; a shared business idea revives your love too.'),
+    past: l('Geçmişte söz verip tutmamak ya da sözlerle birini yönlendirmek bu bağa bir düğüm bırakmış.', 'Broken promises, or steering someone with words, left a knot on this bond in the past.'),
+    now: l('Bugün bu, kimin son sözü söyleyeceği tartışmalarında ortaya çıkıyor.', 'Today it shows up in arguments over who gets the last word.'),
+    resolve: l('Düğüm çözüldüğünde sözünüz birbirinize güvence olur; ne söylerseniz yaparsınız.', 'Once untied, your word becomes each other\'s guarantee; what you say, you do.'),
+    natural: l('Hiç çaba harcamadan birbirinizi güldürür, birbirinizi ikna edersiniz.', 'Without effort you make each other laugh and talk each other into things.'),
+    grow: l('Emek verdikçe birlikte konuşan, yazan, öğreten bir çifte dönüşürsünüz.', 'With effort you become a couple who speaks, writes and teaches together.'),
+    give: l('Çevrenize cesaret ve "hadi başlayalım" enerjisi verirsiniz.', 'You give the people around you courage and a "let\'s start" energy.'),
+    soul: l('Ruhunuz bu bağda yaratmayı öğreniyor: düşündüğünüzü birlikte gerçeğe dönüştürmeyi.', 'Your souls are learning to create here: turning what you think into reality together.') },
+  2: { balance: l('Duygular ile para arasında sessiz bir denge var; ikiniz de maddi konuları açıkça konuşmakta zorlanabilirsiniz.', 'There is a quiet balance between feelings and money; you may both find it hard to talk money openly.'),
+    past: l('Geçmişte saklanan bir sır ya da söylenmeyen bir duygu bu bağa yük olmuş.', 'A secret kept, or a feeling left unsaid, weighed on this bond in the past.'),
+    now: l('Bugün bu, birbirinizin aklından geçeni tahmin etmeye çalışmanızda yaşanıyor.', 'Today it shows in trying to guess what is on each other\'s mind.'),
+    resolve: l('Çözüldüğünde aranızda kelimeye gerek kalmayan bir güven oluşur.', 'Once resolved, a trust forms between you that needs no words.'),
+    natural: l('Birbirinizi bakışlardan anlamak size kolay gelir.', 'Reading each other from a glance comes easily to you.'),
+    grow: l('Zamanla birbirinizin en güvendiği danışmana dönüşürsünüz.', 'Over time you become each other\'s most trusted counsel.'),
+    give: l('Çevrenize sakinlik ve sır tutabilen bir güven verirsiniz.', 'You give others calm and the safety of people who keep secrets.'),
+    soul: l('Ruhunuz bu bağda iç sese güvenmeyi öğreniyor.', 'Your souls are learning here to trust the inner voice.') },
+  3: { balance: l('Sevgiyi maddi olarak göstermek ikinize de doğal gelir; hediye, ev ve konfor aşkın dili olur.', 'Showing love materially comes naturally to you both; gifts, home and comfort become love\'s language.'),
+    past: l('Geçmişte biriniz kendini ihmal edip hep başkasına bakmış olabilir.', 'In the past one of you may have neglected yourself, always caring for others.'),
+    now: l('Bugün bu, kimin daha çok emek verdiği hesabında hissediliyor.', 'Today it is felt in counting who puts in more effort.'),
+    resolve: l('Çözüldüğünde ikiniz de birbirinizi eşit şekilde şımartmayı öğrenirsiniz.', 'Once resolved, you both learn to pamper each other equally.'),
+    natural: l('Birlikte bir yeri hemen güzelleştirir, evi yuvaya çevirirsiniz.', 'Together you instantly make a place beautiful and turn a house into a home.'),
+    grow: l('Emekle birlikte bir şeyler büyütürsünüz: bir bahçe, bir iş ya da bir aile.', 'With effort you grow something together: a garden, a business or a family.'),
+    give: l('Çevrenize bolluk, ikram ve sıcaklık verirsiniz; eviniz herkesin uğrak yeri olur.', 'You give abundance, hospitality and warmth; your home becomes everyone\'s stop.'),
+    soul: l('Ruhunuz bu bağda kendi değerini bilmeyi öğreniyor.', 'Your souls are learning here to know their own worth.') },
+  4: { balance: l('Aşk ile para arasında kurallar var; ortak bütçe ve net anlaşmalar ilişkiyi rahatlatır.', 'There are rules between love and money; a shared budget and clear agreements ease the relationship.'),
+    past: l('Geçmişte katı bir otorite ya da baskıcı bir düzen bu bağa iz bırakmış.', 'A rigid authority or a controlling order left a mark on this bond in the past.'),
+    now: l('Bugün bu, kimin karar vereceği konusundaki sessiz çekişmede görülüyor.', 'Today it shows in the quiet struggle over who decides.'),
+    resolve: l('Çözüldüğünde birlikte kurduğunuz düzen ikinizi de özgürleştirir.', 'Once resolved, the order you build together frees you both.'),
+    natural: l('Birlikte plan yapmak ve onu uygulamak size zahmetsiz gelir.', 'Making a plan together and carrying it out feels effortless.'),
+    grow: l('Zamanla kalıcı bir şey inşa edersiniz: bir ev, bir şirket ya da bir gelenek.', 'Over time you build something lasting: a home, a company or a tradition.'),
+    give: l('Çevrenize güven ve dayanılacak bir omuz verirsiniz.', 'You give others trust and a shoulder to lean on.'),
+    soul: l('Ruhunuz bu bağda gücü korumak için kullanmayı öğreniyor.', 'Your souls are learning here to use power to protect.') },
+  5: { balance: l('Para konusunda ikinizin de değerleri belirleyici; neye harcadığınız neye inandığınızı gösterir.', 'Your values shape money for both of you; what you spend on shows what you believe in.'),
+    past: l('Geçmişte ailelerden ya da inançlardan gelen katı kurallar bu bağa düğüm atmış.', 'Strict rules from families or beliefs tied a knot on this bond in the past.'),
+    now: l('Bugün bu, birbirinize akıl verme ve "doğrusu bu" tartışmalarında yaşanıyor.', 'Today it shows in advising each other and "this is the right way" debates.'),
+    resolve: l('Çözüldüğünde kendi gelenek ve inancınızı birlikte kurarsınız.', 'Once resolved, you build your own traditions and beliefs together.'),
+    natural: l('Birbirinize bir şey öğretmek ve birbirinizden öğrenmek size kolay gelir.', 'Teaching and learning from each other comes easily.'),
+    grow: l('Zamanla başkalarına yol gösteren, örnek alınan bir çift olursunuz.', 'Over time you become a couple who guides others and sets an example.'),
+    give: l('Çevrenize değer, bilgi ve doğru yol gösterme verirsiniz.', 'You give others values, knowledge and guidance.'),
+    soul: l('Ruhunuz bu bağda kendi doğrusunu bulmayı öğreniyor.', 'Your souls are learning here to find their own truth.') },
+  6: { balance: l('Aşk ve para birbirine bağlı; ilişki iyi gittiğinde para da akar, kırgınlık olduğunda maddi işler de takılır.', 'Love and money are linked; when the relationship flows, so does money, and when you are hurt, finances stall too.'),
+    past: l('Geçmişte zor bir seçim, bir aldatma ya da iki kişi arasında kalmak bu bağa iz bırakmış.', 'A hard choice, a betrayal or being torn between two people left a mark in the past.'),
+    now: l('Bugün bu, kıskançlık ya da "beni gerçekten seçti mi" kuşkusunda yaşanıyor.', 'Today it shows as jealousy or doubt about "did they really choose me".'),
+    resolve: l('Çözüldüğünde birbirinizi koşulsuz seçmiş, kuşkusuz iki insan olursunuz.', 'Once resolved, you become two people who chose each other without doubt.'),
+    natural: l('Birbirinize çekici gelmek ve romantik anlar yaratmak hiç zor değil.', 'Attracting each other and creating romantic moments is effortless.'),
+    grow: l('Emek verdikçe aşkınız tutkudan derin bir ortaklığa dönüşür.', 'With effort your love turns from passion into a deep partnership.'),
+    give: l('Çevrenize aşka inanmayı ve güzelliği verirsiniz.', 'You give others faith in love and a sense of beauty.'),
+    soul: l('Ruhunuz bu bağda gerçek bir seçim yapmayı ve arkasında durmayı öğreniyor.', 'Your souls are learning here to make a real choice and stand by it.') },
+  7: { balance: l('Para hedeflerinizin aracıdır; ortak bir amaç için biriktirdiğinizde aşkınız da güçlenir.', 'Money is the vehicle for your goals; saving for a shared aim strengthens your love too.'),
+    past: l('Geçmişte yarım kalan bir hedef ya da hep kaçılan bir yer bu bağa düğüm olmuş.', 'An unfinished goal or a place always fled from became a knot in the past.'),
+    now: l('Bugün bu, birinizin hep yolda, diğerinin beklemede olmasında hissediliyor.', 'Today it is felt when one of you is always on the road and the other always waiting.'),
+    resolve: l('Çözüldüğünde aynı yöne bakan ve birlikte varan iki insan olursunuz.', 'Once resolved, you are two people looking the same way and arriving together.'),
+    natural: l('Birlikte yolculuk etmek, taşınmak, yer değiştirmek size kolay gelir.', 'Travelling, moving and relocating together come easily.'),
+    grow: l('Zamanla birlikte büyük bir hedefe ulaşırsınız: bir başarı, bir göç ya da bir atılım.', 'Over time you reach a big goal together: a success, a move abroad or a leap.'),
+    give: l('Çevrenize motivasyon ve "yapılabilir" inancı verirsiniz.', 'You give others motivation and the belief that it can be done.'),
+    soul: l('Ruhunuz bu bağda iradeyi birlikte yönlendirmeyi öğreniyor.', 'Your souls are learning here to steer will together.') },
+  8: { balance: l('Aşk ile para arasında hakkaniyet önemli; kimin ne kadar katkı verdiği açık olmalı.', 'Fairness matters between love and money; who contributes what should be clear.'),
+    past: l('Geçmişte bir haksızlık, bir dava ya da ödenmemiş bir borç bu bağa iz bırakmış.', 'An injustice, a dispute or an unpaid debt left a mark on this bond in the past.'),
+    now: l('Bugün bu, "ben bunu yaptım, sen ne yaptın" hesaplaşmalarında yaşanıyor.', 'Today it shows in "I did this, what did you do" reckonings.'),
+    resolve: l('Çözüldüğünde aranızda hesap değil güven kalır.', 'Once resolved, trust remains between you instead of accounts.'),
+    natural: l('Bir anlaşmazlığı mantıkla çözmek size kolay gelir.', 'Solving a disagreement with reason comes easily.'),
+    grow: l('Zamanla adil, dengeli ve herkesin danıştığı bir çift olursunuz.', 'Over time you become a fair, balanced couple others consult.'),
+    give: l('Çevrenize adalet duygusu ve tarafsız bir bakış verirsiniz.', 'You give others a sense of justice and a neutral view.'),
+    soul: l('Ruhunuz bu bağda sorumluluk almayı ve sonuçlarına katlanmayı öğreniyor.', 'Your souls are learning here to take responsibility and bear the consequences.') },
+  9: { balance: l('Para sizin için güvenlik demek, gösteriş değil; sade yaşamak ikinize de huzur verir.', 'Money means security for you, not show; living simply brings you both peace.'),
+    past: l('Geçmişte yalnız kalmak, dışlanmak ya da kendini kapatmak bu bağa düğüm olarak gelmiş.', 'Being left alone, shut out or closing yourself off came to this bond as a knot from the past.'),
+    now: l('Bugün bu, sorun çıktığında ikinizin de konuşmak yerine içine çekilmesinde görülüyor.', 'Today it shows when, faced with a problem, you both withdraw instead of talking.'),
+    resolve: l('Çözüldüğünde yalnızlık yerini birlikte sessiz kalabilmenin huzuruna bırakır.', 'Once resolved, loneliness gives way to the peace of being quiet together.'),
+    natural: l('Birlikte uzun sohbetler etmek ve derin konulara dalmak size zahmetsiz gelir.', 'Long talks and diving into deep topics together feel effortless.'),
+    grow: l('Zamanla birlikte bir alanda uzmanlaşır, bilgi biriktirirsiniz.', 'Over time you specialise in a field and build knowledge together.'),
+    give: l('Çevrenize bilgelik ve dinlenmeye değer sakin bir bakış verirsiniz.', 'You give others wisdom and a calm view worth listening to.'),
+    soul: l('Ruhunuz bu bağda yalnızlıktan korkmadan yakın olmayı öğreniyor.', 'Your souls are learning here to be close without fearing solitude.') },
+  10: { balance: l('Para ve aşk dönemsel; iyi dönemlerde ikisi birden gelir, durgun dönemlerde sabır gerekir.', 'Money and love come in cycles; in good times both arrive, in quiet times patience is needed.'),
+    past: l('Geçmişte tekrar eden bir döngü, hep aynı yere dönen bir hikâye bu bağa taşınmış.', 'A repeating cycle, a story that kept returning to the same place, carried over to this bond.'),
+    now: l('Bugün bu, aynı tartışmanın farklı kılıklarda tekrar etmesinde görülüyor.', 'Today it shows as the same argument repeating in different guises.'),
+    resolve: l('Çözüldüğünde döngüyü kırar, şansınızı birlikte yönetmeyi öğrenirsiniz.', 'Once resolved, you break the cycle and learn to steer your luck together.'),
+    natural: l('Birlikte doğru zamanda doğru yerde olmak size kendiliğinden olur.', 'Being in the right place at the right time happens naturally for you.'),
+    grow: l('Zamanla fırsatları önceden sezip değerlendiren bir çift olursunuz.', 'Over time you become a couple who senses and seizes opportunities early.'),
+    give: l('Çevrenize umut ve "her şey değişebilir" inancı verirsiniz.', 'You give others hope and the belief that everything can change.'),
+    soul: l('Ruhunuz bu bağda akışa teslim olmayı öğreniyor.', 'Your souls are learning here to surrender to the flow.') },
+  11: { balance: l('Para kazanmak için ikinizin de çok çalışması gerekir; emek ortaklığı aşkınızı da güçlendirir.', 'You both have to work hard for money; partnership in effort strengthens your love too.'),
+    past: l('Geçmişte bir güç savaşı ya da bastırılmış öfke bu bağa düğüm atmış.', 'A power struggle or suppressed anger tied a knot on this bond in the past.'),
+    now: l('Bugün bu, ikinizin de geri adım atmak istemediği inatlaşmalarda yaşanıyor.', 'Today it shows in stand-offs where neither wants to step back.'),
+    resolve: l('Çözüldüğünde gücünüzü birbirinize karşı değil birlikte kullanırsınız.', 'Once resolved, you use your strength together, not against each other.'),
+    natural: l('Zor bir işe birlikte girişmek size enerji verir.', 'Taking on a hard task together energises you.'),
+    grow: l('Emek verdikçe her krizi atlatabilen dayanıklı bir çifte dönüşürsünüz.', 'With effort you become a resilient couple who survives any crisis.'),
+    give: l('Çevrenize güç, cesaret ve koruma verirsiniz.', 'You give others strength, courage and protection.'),
+    soul: l('Ruhunuz bu bağda tutkuyu sevgiyle evcilleştirmeyi öğreniyor.', 'Your souls are learning here to tame passion with love.') },
+  12: { balance: l('Para konusunda biriniz fazla fedakârlık yapabilir; kimin neyden vazgeçtiği görünür olmalı.', 'One of you may sacrifice too much over money; who gives up what should be visible.'),
+    past: l('Geçmişte karşılıksız bir fedakârlık ya da bekleyişle geçen yıllar bu bağa taşınmış.', 'An unreturned sacrifice or years spent waiting carried over to this bond.'),
+    now: l('Bugün bu, birinizin "ben hep idare ediyorum" hissinde yaşanıyor.', 'Today it shows in one of you feeling "I am always the one who makes do".'),
+    resolve: l('Çözüldüğünde fedakârlık değil, gönülden vermek kalır.', 'Once resolved, what remains is giving from the heart, not sacrifice.'),
+    natural: l('Birbirinizin bakış açısına geçmek size kolay gelir.', 'Seeing from each other\'s perspective comes easily.'),
+    grow: l('Zamanla birlikte başkalarına yardım eden, gönüllü işler yapan bir çift olursunuz.', 'Over time you become a couple who helps others and volunteers.'),
+    give: l('Çevrenize empati ve farklı bir bakış açısı verirsiniz.', 'You give others empathy and a different point of view.'),
+    soul: l('Ruhunuz bu bağda bırakmayı ve teslim olmayı öğreniyor.', 'Your souls are learning here to let go and surrender.') },
+  13: { balance: l('Ortak hayatınızda aşk da para da büyük dönüşümlerden geçer; bir kayıp ardından yeni bir başlangıç getirir.', 'In your shared life both love and money go through big changes; a loss brings a new start after it.'),
+    past: l('Geçmişte yaşanmış bir ayrılık ya da yas bu bağa düğüm olarak gelmiş.', 'A past separation or grief came to this bond as a knot.'),
+    now: l('Bugün bu, bitmesi gereken bir şeye tutunmakta hissediliyor.', 'Today it is felt in clinging to something that needs to end.'),
+    resolve: l('Çözüldüğünde ilişkiniz her dönemde yeniden doğabilen bir bağa dönüşür.', 'Once resolved, your relationship becomes a bond that can be reborn in every season.'),
+    natural: l('Birlikte bir şeyi bitirip yenisine geçmek size zor gelmez.', 'Ending something and moving on together is not hard for you.'),
+    grow: l('Emekle birlikte hayatınızı kökten değiştirecek bir dönüşümü başarırsınız.', 'With effort you achieve a transformation that changes your life at the root.'),
+    give: l('Çevrenize değişimden korkmamayı öğretirsiniz.', 'You teach others not to fear change.'),
+    soul: l('Ruhunuz bu bağda bitişlerin de bir armağan olduğunu öğreniyor.', 'Your souls are learning here that endings are gifts too.') },
+  14: { balance: l('Aşk ve para ölçülü; ikiniz de aşırılıktan hoşlanmazsınız, dengeli bir hayat sizi mutlu eder.', 'Love and money are measured; neither of you likes excess, a balanced life makes you happy.'),
+    past: l('Geçmişte bir aşırılık, bağımlılık ya da sağlık sorunu bu bağa taşınmış.', 'An excess, an addiction or a health issue carried over to this bond from the past.'),
+    now: l('Bugün bu, sorunları büyütmemek için konuşmaktan kaçınmanızda görülüyor.', 'Today it shows in avoiding talks so as not to make things bigger.'),
+    resolve: l('Çözüldüğünde birbirinize gerçekten şifa veren iki insan olursunuz.', 'Once resolved, you become two people who truly heal each other.'),
+    natural: l('Birbirinizi sakinleştirmek ve gerginliği yumuşatmak size kendiliğinden gelir.', 'Calming each other and softening tension comes naturally.'),
+    grow: l('Zamanla sağlık, denge ve iyi yaşam konusunda birlikte ustalaşırsınız.', 'Over time you master health, balance and good living together.'),
+    give: l('Çevrenize huzur ve arabuluculuk verirsiniz.', 'You give others peace and mediation.'),
+    soul: l('Ruhunuz bu bağda ölçüyü ve sabrı öğreniyor.', 'Your souls are learning measure and patience here.') },
+  15: { balance: l('Para ve tutku iç içe; lüks, keyif ve harcama ilişkinizde güçlü bir yer tutar.', 'Money and passion are entwined; luxury, pleasure and spending hold a strong place in your relationship.'),
+    past: l('Geçmişte bağımlı bir ilişki, kontrol ya da ayartılma bu bağa düğüm atmış.', 'A dependent relationship, control or temptation tied a knot on this bond in the past.'),
+    now: l('Bugün bu, kıskançlık ya da birbirinizi kontrol etme isteğinde ortaya çıkıyor.', 'Today it shows as jealousy or the urge to control each other.'),
+    resolve: l('Çözüldüğünde tutkunuz bağımlılıktan özgür bir arzuya dönüşür.', 'Once resolved, your passion turns from dependence into free desire.'),
+    natural: l('Birbirinizi etkilemek ve cezbetmek size hiç zor gelmez.', 'Charming and seducing each other is never hard.'),
+    grow: l('Emek verdikçe bu çekimi birlikte güçlü bir iş ya da yaratıcı bir projeye dönüştürürsünüz.', 'With effort you turn this pull into a strong business or creative project.'),
+    give: l('Çevrenize çekicilik, cesaret ve yasakları sorgulama verirsiniz.', 'You give others charisma, boldness and the questioning of taboos.'),
+    soul: l('Ruhunuz bu bağda sevgiyle sahiplenme arasındaki farkı öğreniyor.', 'Your souls are learning here the difference between love and possession.') },
+  16: { balance: l('Para ve aşk ani değişimlere açık; bir kriz ikisini birden sarsabilir, ama yeniden kurmak da sizin elinizde.', 'Money and love are open to sudden change; a crisis may shake both, but rebuilding is in your hands.'),
+    past: l('Geçmişte yıkılan bir düzen, bir iflas ya da ani bir kopuş bu bağa taşınmış.', 'A collapsed order, a bankruptcy or a sudden break carried over to this bond.'),
+    now: l('Bugün bu, küçük bir kıvılcımın büyük bir tartışmaya dönüşmesinde görülüyor.', 'Today it shows as a small spark turning into a big fight.'),
+    resolve: l('Çözüldüğünde yıkılanın yerine çok daha sağlam bir şey inşa edersiniz.', 'Once resolved, you build something far stronger where the old fell.'),
+    natural: l('Birlikte bir krize hızla tepki vermek ve yeni bir yol bulmak size kolay gelir.', 'Reacting fast to a crisis and finding a new way together comes easily.'),
+    grow: l('Zamanla eskiyi yıkıp yenisini kurmakta usta bir ekip olursunuz.', 'Over time you become a team skilled at tearing down and rebuilding.'),
+    give: l('Çevrenize sahte olanı görme ve gerçeği söyleme cesareti verirsiniz.', 'You give others the courage to see what is false and say what is true.'),
+    soul: l('Ruhunuz bu bağda kontrolü bırakıp gerçeğe teslim olmayı öğreniyor.', 'Your souls are learning here to let go of control and accept reality.') },
+  17: { balance: l('Para hayallerinizin hizmetinde; birlikte bir hayali gerçekleştirmek için biriktirmek aşkınızı da besler.', 'Money serves your dreams; saving to make a dream real together feeds your love too.'),
+    past: l('Geçmişte kırılan bir umut ya da gerçekleşmeyen bir hayal bu bağa düğüm olmuş.', 'A broken hope or an unfulfilled dream became a knot on this bond.'),
+    now: l('Bugün bu, birbirinizi fazla idealleştirip sonra hayal kırıklığına uğramanızda yaşanıyor.', 'Today it shows in idealising each other and then being disappointed.'),
+    resolve: l('Çözüldüğünde birbirinizin gerçek hâline âşık olursunuz; hayal ile gerçek buluşur.', 'Once resolved, you fall for each other\'s real selves; dream and reality meet.'),
+    natural: l('Birbirinize ilham vermek ve yaratıcı fikirler üretmek size kolay gelir.', 'Inspiring each other and generating creative ideas comes easily.'),
+    grow: l('Emekle birlikte görünür ve ilham veren bir eser ortaya koyarsınız.', 'With effort you create something visible and inspiring together.'),
+    give: l('Çevrenize umut ve güzellik verirsiniz.', 'You give others hope and beauty.'),
+    soul: l('Ruhunuz bu bağda kendine inanmayı öğreniyor.', 'Your souls are learning here to believe in themselves.') },
+  18: { balance: l('Para konusunda belirsizlik ve kaygı olabilir; açık bir bütçe ikinizi de rahatlatır.', 'There may be uncertainty and worry about money; a clear budget eases you both.'),
+    past: l('Geçmişte bir aldatılma korkusu, bir yalan ya da kaygı bu bağa taşınmış.', 'A fear of betrayal, a lie or anxiety carried over to this bond.'),
+    now: l('Bugün bu, birbirinizin niyetinden kuşkulanmanızda ve kafanızda senaryolar kurmanızda yaşanıyor.', 'Today it shows in doubting each other\'s intentions and building scenarios in your heads.'),
+    resolve: l('Çözüldüğünde sezgileriniz korkunun değil güvenin aracı olur.', 'Once resolved, your intuition becomes a tool of trust, not fear.'),
+    natural: l('Birbirinizin duygusunu söylemeden hissetmek size zahmetsiz gelir.', 'Feeling each other\'s mood without words is effortless.'),
+    grow: l('Zamanla birlikte sanat, psikoloji ya da şifa alanında derinleşirsiniz.', 'Over time you deepen together in art, psychology or healing.'),
+    give: l('Çevrenize sezgi, hayal gücü ve duygusal derinlik verirsiniz.', 'You give others intuition, imagination and emotional depth.'),
+    soul: l('Ruhunuz bu bağda korkularla yüzleşmeyi öğreniyor.', 'Your souls are learning here to face their fears.') },
+  19: { balance: l('Aşk ve para neşeyle akar; birlikte eğlendikçe bolluk da artar.', 'Love and money flow with joy; the more fun you have together, the more abundance grows.'),
+    past: l('Geçmişte görülmemek, takdir edilmemek ya da gölgede kalmak bu bağa düğüm atmış.', 'Not being seen, appreciated or being left in the shadow tied a knot in the past.'),
+    now: l('Bugün bu, ilgi ve takdir için yarışmanızda görülüyor.', 'Today it shows in competing for attention and praise.'),
+    resolve: l('Çözüldüğünde ikiniz de birbirinizin ışığıyla daha çok parlarsınız.', 'Once resolved, you both shine brighter in each other\'s light.'),
+    natural: l('Birlikte güldürmek, eğlendirmek ve ortamı ısıtmak size kendiliğinden gelir.', 'Making people laugh and warming up a room comes naturally to you together.'),
+    grow: l('Zamanla çocuklar, öğrenciler ya da bir ekip için örnek bir çift olursunuz.', 'Over time you become a role-model couple for children, students or a team.'),
+    give: l('Çevrenize neşe, enerji ve özgüven verirsiniz.', 'You give others joy, energy and confidence.'),
+    soul: l('Ruhunuz bu bağda koşulsuz sevinmeyi öğreniyor.', 'Your souls are learning here to rejoice unconditionally.') },
+  20: { balance: l('Para ve aşk aileyle bağlantılı; aile desteği ya da aile sorumlulukları bütçenizi etkiler.', 'Money and love are tied to family; family support or duties affect your budget.'),
+    past: l('Geçmişte aileler arası bir küslük ya da çözülmemiş bir aile meselesi bu bağa taşınmış.', 'A rift between families or an unresolved family matter carried over to this bond.'),
+    now: l('Bugün bu, ailelerin beklentileri ile kendi isteğiniz arasında kalmanızda yaşanıyor.', 'Today it shows in being caught between your families\' expectations and your own wishes.'),
+    resolve: l('Çözüldüğünde iki ailenin yarasını iyileştiren yeni bir aile kurarsınız.', 'Once resolved, you build a new family that heals both families\' wounds.'),
+    natural: l('Birbirinizin ailesine uyum sağlamak ve aile toplantılarını güzelleştirmek size kolay gelir.', 'Fitting into each other\'s families and making gatherings lovely comes easily.'),
+    grow: l('Zamanla kuşaklar arasında köprü olan bir aile kurarsınız.', 'Over time you build a family that bridges generations.'),
+    give: l('Çevrenize aidiyet ve aile sıcaklığı verirsiniz.', 'You give others belonging and family warmth.'),
+    soul: l('Ruhunuz bu bağda geçmişi affetmeyi öğreniyor.', 'Your souls are learning here to forgive the past.') },
+  21: { balance: l('Para ve aşk sınır tanımaz; yurt dışı, seyahat ve farklı kültürler ikisini de besler.', 'Money and love know no borders; abroad, travel and other cultures feed both.'),
+    past: l('Geçmişte uzaklık, göç ya da sıkışmışlık hissi bu bağa düğüm olmuş.', 'Distance, migration or feeling trapped became a knot on this bond.'),
+    now: l('Bugün bu, birinizin özgürlük, diğerinizin bağlılık istemesinde yaşanıyor.', 'Today it shows when one wants freedom and the other wants commitment.'),
+    resolve: l('Çözüldüğünde hem özgür hem bağlı olmayı başaran nadir bir çift olursunuz.', 'Once resolved, you become a rare couple who is both free and committed.'),
+    natural: l('Birlikte yeni yerlere uyum sağlamak ve farklı insanlarla kaynaşmak size kolay gelir.', 'Adapting to new places and mixing with different people comes easily.'),
+    grow: l('Zamanla birlikte dünyanın farklı yerlerinde iz bırakırsınız.', 'Over time you leave your mark in different parts of the world together.'),
+    give: l('Çevrenize geniş bir bakış ve dünyaya açılma cesareti verirsiniz.', 'You give others a wide view and the courage to open up to the world.'),
+    soul: l('Ruhunuz bu bağda bütünlüğü ve tamamlanmayı öğreniyor.', 'Your souls are learning wholeness and completion here.') },
+  22: { balance: l('Para ve aşk kendiliğinden; plan yapmadan yaşamak hoş ama küçük bir güvence ikinizi de rahatlatır.', 'Money and love are spontaneous; living without plans is fun, but a small safety net eases you both.'),
+    past: l('Geçmişte sorumsuzluk, kaçış ya da bitmemiş bir çocukluk bu bağa taşınmış.', 'Irresponsibility, escape or an unfinished childhood carried over to this bond.'),
+    now: l('Bugün bu, ciddi konuları erteleyip "sonra konuşuruz" demenizde yaşanıyor.', 'Today it shows in postponing serious matters with "we\'ll talk later".'),
+    resolve: l('Çözüldüğünde hem hafif hem güvenilir bir ilişki kurarsınız.', 'Once resolved, you build a relationship that is both light and reliable.'),
+    natural: l('Birlikte maceraya atılmak ve anı yaşamak size hiç zor gelmez.', 'Jumping into adventure and living in the moment is never hard for you.'),
+    grow: l('Emekle merakınızı birlikte yeni bir hayat tarzına dönüştürürsünüz.', 'With effort you turn your curiosity into a new way of life together.'),
+    give: l('Çevrenize özgürlük ve hayatı fazla ciddiye almama hafifliği verirsiniz.', 'You give others freedom and the lightness of not taking life too seriously.'),
+    soul: l('Ruhunuz bu bağda güvenle yeni başlangıçlara atlamayı öğreniyor.', 'Your souls are learning here to leap into new beginnings with trust.') },
+};
