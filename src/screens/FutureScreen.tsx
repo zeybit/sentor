@@ -124,10 +124,7 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
   return (
     <View>
       {embedded ? null : <H1>{tx('Hayat takvimin', 'Your life calendar', lang)}</H1>}
-      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 18, maxWidth: 640 }}>
-        {tx('Burada hayatında aşk, kariyer, ev, yolculuk ve büyük değişimler için öne çıkan dönemleri görürsün. Zamanlama için tek bir teknik yeterli değildir: transitler (gezegenlerin bugünkü geçişleri) ve progresyon (haritanın yıllar içinde ilerleyişi) birlikte kullanılır, yanına yaşının teması ve tutulmalar eklenir. Bunlar aynı döneme ne kadar çok işaret ederse o dönem o kadar güçlü olur. Her dönemin altında hangi tekniğin ne söylediğini görebilirsin.',
-          'Here you see the periods that stand out for love, career, home, travel and major changes. Rather than trusting a single method, astrology looks for times when several methods point to the same moment: the theme of your age, the passages of Jupiter and Saturn, eclipses, and your chart’s progress over the years. The more they overlap, the stronger the period.', lang)}
-      </Text>
+      <View style={{ height: 14 }} />
       {noTime ? <View style={[st.panel, { backgroundColor: C.goldSoft, borderColor: C.goldSoft, marginBottom: 20 }]}><P>{tx('Doğum saatin bilinmediği için evler ve köşeler hesaplanamıyor; takvim yalnızca gezegen geçişlerine dayanıyor ve daha az ayrıntılı. Saatini eklersen çok daha isabetli olur.', 'Your birth time is unknown, so houses and angles can’t be used; the calendar relies only on planet passages and is less detailed. Adding your time makes it far more accurate.', lang)}</P></View> : null}
 
       <Chips items={[{ key: 'all', label: tx('Tümü', 'All', lang) }, ...TOPICS.map(t => ({ key: t, label: TOPIC_INFO[t].name[lang] }))]} value={topic} onChange={v => setTopic(v as any)} />
