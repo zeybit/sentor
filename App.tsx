@@ -29,7 +29,7 @@ const LABEL: Record<Tab, { tr: string; en: string }> = {
   matrix: { tr: 'Matris', en: 'Matrix' }, ask: { tr: 'Soru sor', en: 'Ask' },
   settings: { tr: 'Ayarlar', en: 'Settings' }, help: { tr: 'Terimler', en: 'Glossary' },
 };
-const WIDE_SCREENS: Tab[] = ['chart', 'matrix'];
+const WIDE_SCREENS: Tab[] = ['chart', 'matrix', 'today', 'portfolio', 'ask'];
 
 /** Etkin kişiyi gösterir ve kişiler arasında hızlı geçiş sağlar */
 function PersonSwitch({ onManage, compact }: { onManage: () => void; compact?: boolean }) {

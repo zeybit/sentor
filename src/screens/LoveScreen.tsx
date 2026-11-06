@@ -32,7 +32,7 @@ export default function LoveScreen() {
   const { chart, s, lang, opts, people, profile, addPerson, chartOf, showAsteroids } = useStore();
   const t = T2S[lang];
   const { inner } = useLayout();
-  const width = inner(760) + 32;
+  const width = inner(1180) + 32;
   const others = people.filter(p => p.id !== profile?.id);
   const [pid, setPid] = useState<string | null>(others[0]?.id ?? null);
   const [adding, setAdding] = useState(others.length === 0);

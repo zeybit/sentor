@@ -11,7 +11,7 @@ import { C, serif } from '../theme';
 
 export default function StyleScreen() {
   const { chart, s, lang } = useStore();
-  const narrow = useLayout().inner(760) < 560;
+  const narrow = useLayout().inner(1180) < 560;
   const r = useMemo(() => chart && buildStyleReport(chart), [chart]);
   const [side, setSide] = useState<'venus' | 'asc'>('venus');
   if (!chart || !r) return null;

@@ -27,7 +27,7 @@ export default function TodayScreen() {
       <H1>{profile?.name ? `${profile.name}, ${s.todayFor.toLocaleLowerCase(lang)}` : s.todayFor}</H1>
 
       <View style={{ marginTop: 8, marginBottom: 32 }}>
-        <SkyBand natal={chart} width={inner(760)} lang={lang} />
+        <SkyBand natal={chart} width={inner(1180)} lang={lang} />
       </View>
       <NextPeriod />
 
