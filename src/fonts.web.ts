@@ -12,6 +12,7 @@ export function useAppFonts(): boolean {
     // Yazı tipi verilmemiş tüm metinler Hanken Grotesk ile çizilir; satır içi stiller önceliğini korur.
     style.textContent = `#root [dir="auto"], #root input, #root textarea { font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif; }
 #root :focus-visible { outline: 2px solid #C98A1E; outline-offset: 2px; border-radius: 6px; }
+#root * { font-variant-ligatures: no-common-ligatures; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }`;
     document.head.append(pre, link, style);
   }

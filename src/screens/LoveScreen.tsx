@@ -10,7 +10,7 @@ import { synastry, SYN_LABEL } from '../content/forecast';
 import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import { HARMONY } from '../content/techniqueTexts';
-import { spouseProfile, marriageWindows } from '../content/spouse';
+import { spouseProfile, marriageWindows, spouseArchetype, spouseJob } from '../content/spouse';
 import { WindowCard } from './FutureScreen';
 import { useNav } from '../nav';
 import { F } from '../theme';
@@ -113,8 +113,9 @@ export default function LoveScreen() {
 
 /** Gelecekteki eş tahmini ve evlilik zamanı */
 function SpouseBlock() {
-  const { chart, lang, s } = useStore();
+  const { chart, lang, s, profile, setProfile } = useStore();
   const nav = useNav();
+  const gender = profile?.gender ?? null;
   const [wins, setWins] = useState<Window[] | null>(null);
   useEffect(() => {
     setWins(null);
@@ -123,7 +124,14 @@ function SpouseBlock() {
     return () => clearTimeout(id);
   }, [chart]);
   if (!chart) return null;
-  const prof = spouseProfile(chart, lang);
+  const base = spouseProfile(chart, lang) ?? [];
+  const job = spouseJob(chart);
+  const prof = chart.cusps.length || gender ? [
+    ...(gender ? [spouseArchetype(chart, gender)] : []),
+    ...base.filter(x => x.id !== 'life'),
+    ...(job ? [job] : []),
+    ...base.filter(x => x.id === 'life'),
+  ] : null;
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   const P_ = chart.positions;
   return (
@@ -132,6 +140,12 @@ function SpouseBlock() {
         {L('Haritanda evlilik ve uzun süreli ilişkileri anlatan yedinci ev, onun gezegeni ve aşk gezegeni Venüs birlikte okunduğunda, hayatına girecek ciddi partnerin hakkında bir portre çıkar. Her bölümün altında bunun haritanın neresinden geldiğini görebilirsin.',
           'Reading your seventh house (marriage and long-term bonds), its planet and Venus, the planet of love, together gives a portrait of the serious partner who will enter your life. Under each part you can see where in your chart it comes from.')}
       </Text>
+      <View style={[st.panel, { marginBottom: 20, paddingVertical: 14 }]}>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 15, color: C.ink, marginBottom: 4 }}>{L('Haritanda eşi temsil eden gezegen cinsiyete göre değişir', 'The planet that represents a spouse depends on gender')}</Text>
+        <Sub style={{ marginBottom: 8 }}>{L('Klasik astrolojide kadın haritasında Güneş, erkek haritasında Ay eşi anlatır. Seçimin bu kişi için kaydedilir.', 'In classical astrology the Sun describes the spouse in a woman’s chart and the Moon in a man’s. Your choice is saved for this person.')}</Sub>
+        <Chips items={[{ key: 'f', label: L('Kadın', 'Woman') }, { key: 'm', label: L('Erkek', 'Man') }, { key: 'x', label: L('Belirtmek istemiyorum', 'Prefer not to say') }]}
+          value={gender ?? 'x'} onChange={v => profile && setProfile({ ...profile, gender: v === 'x' ? undefined : (v as 'f' | 'm') })} />
+      </View>
       {prof ? prof.map(x => (
         <View key={x.id} style={{ marginBottom: 20 }}>
           <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{x.title[lang]}</Text>

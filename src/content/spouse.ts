@@ -107,7 +107,7 @@ export function spouseProfile(ch: Chart, lang: Lang): SpouseSection[] | null {
     why: l('Görünüş tarifleri eğilim gösterir; gerçek kişi bunlardan bazılarını taşır, hepsini değil.', 'Appearance descriptions show tendencies; the real person will carry some of these traits, not all.') });
 
   // 3. Hayatı ve işi
-  if (rp.house) out.push({ id: 'life', title: l('Hayatı ve işi', 'Their life and work'),
+  if (rp.house) out.push({ id: 'life', title: l('Hayat tarzı', 'Their way of life'),
     text: RULER_HOUSE[rp.house - 1].life,
     why: l(`Partnerini temsil eden gezegen (${name(r7).tr}) haritanın ${rp.house}. evinde duruyor.`, `The planet that represents your partner (${name(r7).en}) sits in house ${rp.house} of your chart.`) });
 
@@ -137,4 +137,84 @@ export function spouseProfile(ch: Chart, lang: Lang): SpouseSection[] | null {
     why: l(`Yedinci evdeki gezegenler${in7.length ? ` (${in7.map(p => name(p).tr).join(', ')})` : ''}, Satürn ve Jüpiter bağlantıları ile Juno’nun burcu.`, `Planets in the seventh house${in7.length ? ` (${in7.map(p => name(p).en).join(', ')})` : ''}, Saturn and Jupiter links, and Juno’s sign.`) });
 
   return out;
+}
+
+// ---------------- Eş arketipi: kadın haritasında Güneş, erkek haritasında Ay ----------------
+// Klasik astrolojide eşi temsil eden "ışık" kadın haritasında Güneş, erkek haritasında Ay'dır.
+// Burcu eşin karakterini ve meslek eğilimlerini, evi ise eşin hayatının hangi alanında etkili olacağını anlatır.
+export const SPOUSE_ARCH: { char: L; jobs: L }[] = [
+  { char: l('cesur, girişken ve rekabetçi; kararlarını hızlı veren, korumacı ve lider ruhlu biri', 'brave, enterprising and competitive; quick to decide, protective and a natural leader'),
+    jobs: l('spor, askerlik veya güvenlik, mühendislik, cerrahi, acil sağlık hizmetleri ya da kendi işini kurmak', 'sport, the military or security, engineering, surgery, emergency services or running their own business') },
+  { char: l('sakin, sadık ve güven veren; maddi güvenliğe önem veren, keyif ve konforu seven biri', 'calm, loyal and reassuring; values financial security and enjoys comfort'),
+    jobs: l('bankacılık, finans, gayrimenkul, tarım, gastronomi, mimari, güzellik ya da sanatla ilgili işler', 'banking, finance, real estate, farming, food, architecture, beauty or the arts') },
+  { char: l('zeki, konuşkan ve meraklı; esprili, hareketli ve çok yönlü biri', 'clever, talkative and curious; witty, lively and versatile'),
+    jobs: l('medya, iletişim, satış, pazarlama, eğitim, yazarlık, ulaşım ya da teknoloji', 'media, communications, sales, marketing, teaching, writing, transport or technology') },
+  { char: l('duygusal, korumacı, ailesine düşkün ve şefkatli; sevdiklerine sahip çıkan, ilişkide güven ve aidiyet arayan biri', 'emotional, protective, devoted to family and caring; stands by loved ones and seeks trust and belonging'),
+    jobs: l('aile işletmeleri, gayrimenkul, gastronomi, psikoloji, sağlık, otelcilik ya da emlak', 'family businesses, real estate, food, psychology, health, hospitality or property') },
+  { char: l('karizmatik, cömert ve gururlu; sevgisini büyük jestlerle gösteren, girdiği ortamda fark edilen biri', 'charismatic, generous and proud; shows love with grand gestures and stands out in any room'),
+    jobs: l('yöneticilik, sahne ve eğlence sektörü, sanat, moda, organizasyon, çocuklarla çalışma ya da kendi markası', 'management, stage and entertainment, art, fashion, events, working with children or their own brand') },
+  { char: l('düzenli, çalışkan ve yardımsever; sevgisini küçük ama anlamlı işlerle gösteren, detaycı biri', 'orderly, hard-working and helpful; shows love through small but meaningful acts, detail-minded'),
+    jobs: l('sağlık, eczacılık, beslenme, muhasebe, analiz, editörlük, idari işler ya da teknik uzmanlık', 'health, pharmacy, nutrition, accounting, analysis, editing, administration or technical expertise') },
+  { char: l('zarif, nazik ve uyumlu; adaleti önemseyen, estetik zevki gelişmiş ve kavgadan hoşlanmayan biri', 'graceful, kind and agreeable; values fairness, has refined taste and avoids conflict'),
+    jobs: l('hukuk, diplomasi, danışmanlık, tasarım, moda, güzellik, insan kaynakları ya da halkla ilişkiler', 'law, diplomacy, consulting, design, fashion, beauty, human resources or public relations') },
+  { char: l('yoğun, tutkulu ve kararlı; az konuşan ama çok hisseden, sadakati her şeyin üstünde tutan biri', 'intense, passionate and determined; says little but feels deeply, putting loyalty above all'),
+    jobs: l('finans, yatırım, psikoloji, araştırma, cerrahi, güvenlik, sigortacılık ya da kriz yönetimi', 'finance, investment, psychology, research, surgery, security, insurance or crisis management') },
+  { char: l('iyimser, özgür ruhlu ve maceracı; seyahati, öğrenmeyi ve hayatın anlamını konuşmayı seven biri', 'optimistic, free-spirited and adventurous; loves travel, learning and talking about life'),
+    jobs: l('akademi, eğitim, hukuk, yayıncılık, turizm, dış ticaret, spor ya da yurt dışıyla bağlantılı işler', 'academia, teaching, law, publishing, tourism, foreign trade, sport or work linked to abroad') },
+  { char: l('ciddi, hırslı ve sorumluluk sahibi; hedefleri olan, güven veren ve zamanla daha da değerlenen biri', 'serious, ambitious and responsible; goal-driven, reassuring and growing in worth over time'),
+    jobs: l('yöneticilik, kamu kurumları, mühendislik, inşaat, finans, hukuk ya da köklü şirketlerde kariyer', 'management, public institutions, engineering, construction, finance, law or a career in established firms') },
+  { char: l('özgün, bağımsız ve arkadaş canlısı; sıra dışı fikirleri olan, özgürlüğüne düşkün biri', 'original, independent and friendly; full of unusual ideas and fond of freedom'),
+    jobs: l('teknoloji, yazılım, bilim, havacılık, sosyal girişimcilik, sivil toplum ya da dijital medya', 'technology, software, science, aviation, social enterprise, non-profits or digital media') },
+  { char: l('hassas, romantik ve sezgisel; empati yeteneği yüksek, sanata ya da maneviyata yakın biri', 'sensitive, romantic and intuitive; highly empathetic, close to art or spirituality'),
+    jobs: l('sağlık, psikoloji, müzik, sinema, fotoğraf, denizcilik, yardım kuruluşları ya da şifa alanları', 'health, psychology, music, film, photography, maritime work, charities or healing fields') },
+];
+const ARCH_HOUSE: L[] = [
+  l('Eşin kimliğini ve dış görünüşünü güçlü biçimde etkiler; çevren sizi bir bütün olarak görür.', 'Your spouse strongly shapes your identity and image; people see you as a unit.'),
+  l('Eşin maddi hayatında belirleyici olur; birlikte birikim yapmak ve güvence kurmak öne çıkar.', 'Your spouse plays a decisive role in your finances; building savings and security together comes first.'),
+  l('Eşinle iletişim çok önemli olur; yakın çevre, okul ya da günlük hayat üzerinden hayatına girer.', 'Communication with your spouse matters a lot; they enter your life through your circle, school or daily routine.'),
+  l('Eşin ev ve aile hayatının merkezinde olur; yuva kurmak ilişkinin ana amacıdır.', 'Your spouse is at the heart of your home life; building a home is the relationship’s main aim.'),
+  l('Eşin hayatına neşe, romantizm ve yaratıcılık getirir; çocuklar konusu ilişkide önemli yer tutar.', 'Your spouse brings joy, romance and creativity; children may play an important role.'),
+  l('Eşin günlük düzenini ve iş hayatını etkiler; iş ortamında ya da rutinin içinde tanışabilirsiniz.', 'Your spouse affects your daily routine and work; you may meet at work or in your routine.'),
+  l('Evlilik hayatında çok belirleyici bir yer tutar; ortaklık ve eşitlik ilişkinin temeli olur.', 'Marriage holds a defining place in your life; partnership and equality are the foundation.'),
+  l('Eşinle derin ve dönüştürücü bir bağ kurarsın; ortak para ve güven konuları öne çıkar.', 'You form a deep, transforming bond; shared money and trust matter.'),
+  l('Eşin ufkunu genişletir; farklı bir şehirden ya da kültürden olabilir, birlikte seyahat edebilirsiniz.', 'Your spouse widens your horizons; they may come from another city or culture, and you may travel together.'),
+  l('Eşin kariyerini ve toplumdaki yerini etkiler; statülü biri olabilir ya da iş çevrende tanışabilirsiniz.', 'Your spouse influences your career and standing; they may have status, or you may meet through work.'),
+  l('Eşin arkadaşın gibi olur; arkadaş çevresi ya da online ortamlar üzerinden tanışabilirsiniz.', 'Your spouse is also your friend; you may meet through friends or online.'),
+  l('Eşinle ruhsal bir bağ kurarsın; ilişki başta sessiz ya da gizli ilerleyebilir.', 'You form a spiritual bond; the relationship may move quietly or privately at first.'),
+];
+
+/** Eş arketipi: kadınsa Güneş, erkekse Ay */
+export function spouseArchetype(ch: Chart, gender: 'f' | 'm'): SpouseSection {
+  const id: BodyId = gender === 'f' ? 'sun' : 'moon';
+  const p = ch.positions[id];
+  const a = SPOUSE_ARCH[p.sign];
+  const planet = gender === 'f' ? l('Güneş', 'the Sun') : l('Ay', 'the Moon');
+  const house = p.house ? ARCH_HOUSE[p.house - 1] : null;
+  return {
+    id: 'arch', title: l('Eşinin karakteri ve mesleği', 'Your spouse’s character and work'),
+    text: l(`Eşin büyük ihtimalle ${a.char.tr} olacak. Mesleği ${a.jobs.tr} gibi alanlarda olabilir.${house ? ' ' + house.tr : ''}`,
+      `Your spouse is likely to be ${a.char.en}. They may work in fields like ${a.jobs.en}.${house ? ' ' + house.en : ''}`),
+    why: l(`Klasik astrolojide ${gender === 'f' ? 'kadın' : 'erkek'} haritasında eşi ${planet.tr} temsil eder. Senin ${planet.tr}${gender === 'f' ? '’in' : '’ın'} ${SIGNS[p.sign].tr} burcunda${p.house ? ` ve ${p.house}. evde` : ''}.`,
+      `In classical astrology ${planet.en} represents the spouse in a ${gender === 'f' ? 'woman’s' : 'man’s'} chart. Yours is in ${SIGNS[p.sign].en}${p.house ? `, house ${p.house}` : ''}.`),
+  };
+}
+
+/** Eşin mesleği: eşin 10. evi, türetilmiş ev tekniğiyle senin 4. evindir (7. evden 10 ev ileri) */
+export function spouseJob(ch: Chart): SpouseSection | null {
+  if (!ch.cusps.length) return null;
+  const s4 = Math.floor(ch.cusps[3] / 30);
+  const in4 = (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'] as BodyId[]).filter(p => ch.positions[p].house === 4);
+  const JOB_PLANET: Partial<Record<BodyId, L>> = {
+    sun: l('yöneticilik veya görünür bir pozisyon', 'management or a visible role'), moon: l('halkla ilişkiler, gıda, bakım veya ev ile ilgili işler', 'public-facing work, food, care or home-related work'),
+    mercury: l('iletişim, ticaret, yazı veya eğitim', 'communication, trade, writing or teaching'), venus: l('sanat, güzellik, tasarım veya moda', 'art, beauty, design or fashion'),
+    mars: l('mühendislik, spor, güvenlik veya teknik işler', 'engineering, sport, security or technical work'), jupiter: l('hukuk, akademi, eğitim veya yurt dışıyla bağlantılı işler', 'law, academia, teaching or work linked to abroad'),
+    saturn: l('kamu kurumları, inşaat, yönetim veya uzun soluklu bir kariyer', 'public institutions, construction, management or a long career'),
+  };
+  const extra = in4.map(p => JOB_PLANET[p]!).filter(Boolean);
+  return {
+    id: 'job', title: l('Eşinin mesleği', 'Your spouse’s profession'),
+    text: l(`Eşinin kariyerine bakmak için haritanın dördüncü evine bakılır, çünkü yedinci evden on ev ileri saydığında eşinin kariyer evine ulaşırsın. Senin dördüncü evin ${SIGNS[s4].tr} burcunda başlıyor; bu, eşinin ${SPOUSE_ARCH[s4].jobs.tr} gibi alanlarda çalışabileceğini gösterir.${extra.length ? ` Bu evdeki gezegenler ${extra.map(x => x.tr).join(', ')} ihtimalini de ekliyor.` : ''}`,
+      `To see your spouse’s career, astrology looks at your fourth house: counting ten houses on from the seventh lands on your spouse’s career house. Your fourth house begins in ${SIGNS[s4].en}, suggesting your spouse may work in fields like ${SPOUSE_ARCH[s4].jobs.en}.${extra.length ? ` Planets in this house add ${extra.map(x => x.en).join(', ')}.` : ''}`),
+    why: l('Türetilmiş evler tekniği: bir kişinin evlerini, o kişiyi temsil eden evden başlayarak sayarsın.', 'Derived houses: you count a person’s houses starting from the house that represents them.'),
+  };
 }
