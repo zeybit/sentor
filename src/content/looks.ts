@@ -68,3 +68,20 @@ export const OUTFIT_Q: string[] = [
   'boho outfit', 'quiet luxury outfit', 'futuristic avant garde outfit', 'ethereal dreamy outfit',
 ];
 export const pinterest = (q: string) => `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(q)}`;
+
+/** Her burç tarzı için Pinterest'ten seçilmiş 5 pin (Pinterest'in resmi gömme aracıyla gösterilir; görseller Pinterest'te kalır). */
+export const OUTFIT_PINS: { id: string; t: string }[][] = [
+  [{ id: '611152611979624008', t: 'Leather jacket' }, { id: '512143788888410577', t: 'Sporty chic' }, { id: '458733912063979322', t: 'Leather & sneakers' }, { id: '353743745740602544', t: 'Sweats & leather' }, { id: '231794712066622050', t: 'Black casual' }],
+  [{ id: '1083326885404736616', t: 'Camel, cream, brown' }, { id: '5840674510394848', t: 'Old money neutrals' }, { id: '531354456060602617', t: 'Timeless' }, { id: '603200943872825351', t: 'Old money' }, { id: '1058627456151057528', t: 'Old money style' }],
+  [{ id: '728738783507078425', t: 'Eclectic' }, { id: '756182593729873482', t: 'Eclectic style' }, { id: '730286895912436660', t: 'Maximalist' }, { id: '23081016836225074', t: 'Colorful casual' }, { id: '269582727690458138', t: 'Colorful' }],
+  [{ id: '884816658048253516', t: 'Soft vintage' }, { id: '66428163251169999', t: 'Poetcore' }, { id: '83668505565632166', t: 'Feminine vintage' }, { id: '60376451250007656', t: 'Poetcore' }, { id: '231794712067061823', t: 'Vintage look' }],
+  [{ id: '580119995797679158', t: 'Gold' }, { id: '775745104606109622', t: 'Glittering gold' }, { id: '695806211220687753', t: 'Golden glamour' }, { id: '447545281713701558', t: 'Black & gold' }, { id: '554576141594745901', t: 'Glamorous gold' }],
+  [{ id: '21603273208213976', t: 'Clean girl' }, { id: '400538960625111376', t: 'Minimal' }, { id: '703687510560473388', t: 'Clean girl' }, { id: '649503577525266000', t: 'Clean minimal' }, { id: '761038037066760282', t: 'Clean girl' }],
+  [{ id: '495818240254137217', t: 'Elegant feminine' }, { id: '187884615702909961', t: 'Elegant pastel' }, { id: '596515913178199329', t: 'Pastel pink' }, { id: '315181673943159863', t: 'Feminine' }, { id: '12525705208153878', t: 'Romantic' }],
+  [{ id: '852376667000051999', t: 'Black dress' }, { id: '857583954074662224', t: 'Dark feminine' }, { id: '988258711980027772', t: 'Dark feminine' }, { id: '701717185736984057', t: 'Dark feminine' }, { id: '636485359883265835', t: 'Sophisticated black' }],
+  [{ id: '318207529945931101', t: 'Boho summer' }, { id: '966725876267183806', t: 'Boho festival' }, { id: '1068901292803153995', t: 'Boho' }, { id: '202662051976891828', t: 'Boho hippie' }, { id: '850969292125756232', t: 'Fall boho' }],
+  [{ id: '22518066879691827', t: 'Quiet luxury' }, { id: '681943568606438309', t: 'Quiet luxury' }, { id: '104919866312394337', t: 'Quiet luxury' }, { id: '389350330300402338', t: 'Quiet luxury' }, { id: '401172279326405544', t: 'Summer quiet luxury' }],
+  [{ id: '22799541858576574', t: 'Avant-garde' }, { id: '449445237834233508', t: 'Futuristic' }, { id: '387591111661651118', t: 'Robot sleeves' }, { id: '730286895912436660', t: 'Maximalist' }, { id: '728738783507078425', t: 'Eclectic' }],
+  [{ id: '656610820707378990', t: 'Fairycore' }, { id: '453245150021739122', t: 'Dreamy ethereal' }, { id: '37295503133821072', t: 'Ethereal' }, { id: '10555380371267020', t: 'Ethereal' }, { id: '532972937172968090', t: 'Dreamy' }],
+];
+export const pinUrl = (id: string) => `https://www.pinterest.com/pin/${id}/`;

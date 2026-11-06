@@ -4,8 +4,9 @@ import { useStore } from '../store';
 import { STYLE, buildStyleReport } from '../content/style';
 import { SIGNS } from '../content/base';
 import { Btn, H2, P, Row, Section, Sub, useLayout } from '../ui/kit';
-import { HAIR, MAKEUP, OUTFIT, OUTFIT_Q, PIECE_NAME, pinterest } from '../content/looks';
+import { HAIR, MAKEUP, OUTFIT, OUTFIT_PINS, OUTFIT_Q, PIECE_NAME, pinterest } from '../content/looks';
 import { FaceArt, PieceArt } from '../ui/LookArt';
+import { PinStrip } from '../ui/PinStrip';
 import { C, serif } from '../theme';
 
 export default function StyleScreen() {
@@ -81,6 +82,9 @@ export default function StyleScreen() {
             );
           })}
         </View>
+        <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginTop: 18, marginBottom: 2 }}>{lang === 'tr' ? 'Pinterest\'ten 5 kombin' : '5 outfits from Pinterest'}</Text>
+        <Sub style={{ marginBottom: 10 }}>{lang === 'tr' ? 'Tarzına en uyan örnekler. Kaydırarak gez, beğendiğini Pinterest\'te aç.' : 'Examples closest to your style. Swipe through and open the one you like.'}</Sub>
+        <PinStrip pins={OUTFIT_PINS[r.venus]} lang={lang} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
           <Btn small kind="outline" title={lang === 'tr' ? 'Bu tarzda kombinler' : 'Outfits in this style'} onPress={() => Linking.openURL(pinterest(OUTFIT_Q[r.venus]))} />
           {a && r.asc !== r.venus ? <Btn small kind="ghost" title={lang === 'tr' ? `${SIGNS[r.asc!].tr} yükselen tarzı` : `${SIGNS[r.asc!].en} rising style`} onPress={() => Linking.openURL(pinterest(OUTFIT_Q[r.asc!]))} /> : null}
