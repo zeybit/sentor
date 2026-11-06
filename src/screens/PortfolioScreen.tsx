@@ -5,6 +5,8 @@ import { buildPortfolio } from '../content/portfolio';
 import { SIGNS, HOUSES } from '../content/base';
 import { ord } from '../content/life';
 import { H1, P, Row, Section, Segmented, Sub, st } from '../ui/kit';
+import TrendsScreen from './TrendsScreen';
+import { takePendingKind } from '../nav';
 import StyleScreen from './StyleScreen';
 import LoveScreen from './LoveScreen';
 import { C, serif } from '../theme';
@@ -106,18 +108,18 @@ function Report() {
   );
 }
 
-type Part = 'report' | 'style' | 'love';
+type Part = 'report' | 'style' | 'love' | 'trends';
 export default function PortfolioScreen() {
   const { s, lang, profile } = useStore();
-  const [part, setPart] = useState<Part>('report');
+  const [part, setPart] = useState<Part>(() => (takePendingKind() as Part) || 'report');
   const t = s.pf;
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   return (
     <View>
       <H1>{t.title}</H1>
       <Sub style={{ marginBottom: 18, maxWidth: 620 }}>{profile?.name ? `${profile.name}. ` : ''}{t.method}</Sub>
-      <Segmented<Part> items={[{ key: 'report', label: L('Rapor', 'Report') }, { key: 'style', label: L('Stil ayrıntıları', 'Style details') }, { key: 'love', label: L('Aşk ve uyum', 'Love and compatibility') }]} value={part} onChange={setPart} />
-      {part === 'report' ? <Report /> : part === 'style' ? <StyleScreen /> : <LoveScreen />}
+      <Segmented<Part> items={[{ key: 'report', label: L('Rapor', 'Report') }, { key: 'style', label: L('Stil ve görünüm', 'Style and looks') }, { key: 'love', label: L('Aşk ve uyum', 'Love and compatibility') }, { key: 'trends', label: L('Trendler', 'Trends') }]} value={part} onChange={setPart} />
+      {part === 'report' ? <Report /> : part === 'style' ? <StyleScreen /> : part === 'love' ? <LoveScreen /> : <TrendsScreen embedded />}
     </View>
   );
 }

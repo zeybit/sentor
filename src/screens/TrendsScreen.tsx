@@ -7,7 +7,7 @@ import { BODIES, SIGNS, HOUSES } from '../content/base';
 import { Chips, H1, P, Section, Sub, st } from '../ui/kit';
 import { C, serif } from '../theme';
 
-export default function TrendsScreen() {
+export default function TrendsScreen({ embedded }: { embedded?: boolean }) {
   const { chart, s, lang } = useStore();
   const [cat, setCat] = useState<'all' | TrendCat>('all');
   const matched = useMemo(() => (chart ? TRENDS.filter(t => t.match(chart)) : []), [chart]);
@@ -34,7 +34,7 @@ export default function TrendsScreen() {
 
   return (
     <View>
-      <H1>{s.trendsTitle}</H1>
+      {embedded ? null : <H1>{s.trendsTitle}</H1>}
       <Sub style={{ marginBottom: 14 }}>{s.trendsSub}</Sub>
       <Chips items={cats} value={cat} onChange={setCat} />
       {list.length === 0 ? <P>{s.noTrends}</P> : list.map(tr => (
