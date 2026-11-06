@@ -3,11 +3,12 @@ import { ScrollView, Text, View } from 'react-native';
 import type { BodyId, Chart } from '../engine/astro';
 import { PLANETS, fmtDeg } from '../engine/astro';
 import type { CrossAspect } from '../engine/techniques';
-import { ASPECT_INFO, BODIES, SIGNS, SIGN_GLYPHS, L } from '../content/base';
+import { ASPECT_INFO, BODIES, HOUSES, SIGNS, SIGN_GLYPHS, L } from '../content/base';
 import { synPair } from '../content/techniqueTexts';
 import { relPlacementTitle, relPlacementText, relAscText, relAspectTitle, relAspectText, relName, synTitle, synLongText, synWhy } from '../content/relationship';
 import { score, areas, summary, questions, intimacy, topAspects, BAND, INTIMACY, Intimacy, Scored, synOrb } from '../content/synastryAreas';
 import { Expand, P, Section, Sub, st } from './kit';
+import { overlays, overlaySummary, trForms, OverlayRow } from '../content/overlays';
 import { strength } from './Readings';
 import { C, F, serif } from '../theme';
 
@@ -28,6 +29,8 @@ function Item({ title, body, meta }: { title: string; body: string; meta?: strin
     </View>
   );
 }
+/** Önemli yerleşimler önce: aşk/evlilik evleri ve kişisel gezegenler */
+const rank = (r: OverlayRow) => ([7, 5, 8, 1].includes(r.house) ? 10 : [4, 10, 12].includes(r.house) ? 5 : 0) + ((({ venus: 6, sun: 5, moon: 5, mars: 5, jupiter: 3, saturn: 3, pluto: 2 } as any)[r.body]) || 0);
 const orbStr = (o: number) => `(Orb: ${o.toFixed(2)})`;
 const deg = (lon: number) => `${SIGN_GLYPHS[Math.floor(lon / 30)]} ${fmtDeg(lon)}`;
 const lonOf = (c: Chart, k: K) => (k === 'asc' ? c.asc : k === 'mc' ? c.mc : c.positions[k]?.lon ?? null);
@@ -77,16 +80,42 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
         ))}
       </Section>
 
-      <Section title={tx('Alanlara Göre Uyum Analizi', 'Compatibility by Area', lang)} sub={tx('Puan tek başına kesin hüküm değildir; hangi konularda akış, hangi konularda emek olduğunu gösterir.', 'A score is not a verdict; it shows where things flow and where effort is needed.', lang)}>
-        {data.ar.map(a => (
-          <View key={a.def.id} style={st.row}>
-            <Head>{a.def.title[lang]}</Head>
-            <Text style={[st.sub, { marginTop: 2 }]}><Text style={{ color: a.band === 'veryGood' || a.band === 'good' ? C.air : a.band === 'balanced' ? C.gold : C.fire, fontWeight: '700' }}>{BAND[a.band].name[lang]}</Text>, {tx('Puan', 'Score', lang)}: {a.score}</Text>
-            <P style={{ marginTop: 4 }}>{BAND[a.band].text[lang]}</P>
-            {a.sup.length ? <><Text style={[st.rowLabel, { marginTop: 6 }]}>{tx('Destekleyen göstergeler', 'Supporting indicators', lang)}</Text>{a.sup.map((s, i) => <P key={i}>• <Text style={{ fontWeight: '600' }}>{line(s)}</Text>: {a.def.sup[lang]}.</P>)}</> : null}
-            {a.cha.length ? <><Text style={[st.rowLabel, { marginTop: 6 }]}>{tx('Dikkat isteyen göstergeler', 'Indicators needing care', lang)}</Text>{a.cha.map((s, i) => <P key={i}>• <Text style={{ fontWeight: '600' }}>{line(s)}</Text>: {a.def.cha[lang]}.</P>)}</> : null}
-          </View>
-        ))}
+      <Section title={tx('Sinastri Açıları', 'Synastry Aspects', lang)}>
+        <Expand more={tx('Tümünü göster', 'Show all', lang)} less={tx('Daha az', 'Less', lang)} initial={12} items={shown.map((x, i) => (
+          <Item key={i} title={synTitle(x.b, x.a, x.type, theirName)[lang]} meta={strength(x.orb, lang)} body={synLongText(x.b, x.a, x.type, theirName, synPair(x.b, x.a, x.type))[lang]} />
+        ))} />
+      </Section>
+
+      <Section title={tx('Birbirinizin evlerine düşen gezegenler', 'Planets in each other’s houses', lang)} sub={tx('Bir kişinin gezegeni diğerinin hangi evine düşüyorsa, o kişi karşısındakinin hayatında tam o alana dokunur.', 'Where one person’s planet falls in the other’s chart shows which area of the other’s life they touch.', lang)}>
+        {([[them, me, theirName, myName], [me, them, myName, theirName]] as [Chart, Chart, string, string][]).map(([o, h, on, hn], gi) => {
+          const rows = overlays(o, h, on || tx('Partner', 'Partner', lang), hn || tx('Sen', 'You', lang));
+          const sum = overlaySummary(rows, on || 'Partner', hn || 'Sen');
+          const title = lang === 'tr' ? `${trForms(on || 'Partner').gen} gezegenleri → ${trForms(hn || 'Sen').gen} evleri` : `${on || 'Partner'}’s planets → ${hn || 'your'} houses`;
+          return (
+            <View key={gi} style={{ marginBottom: 28 }}>
+              <Head>{title}</Head>
+              {!rows.length ? <Sub style={{ marginTop: 6 }}>{tx(`${hn || 'Bu kişi'} için doğum saati bilinmediğinden evler hesaplanamıyor.`, `Houses can’t be calculated without ${hn || 'this person'}’s birth time.`, lang)}</Sub> : <>
+                <View style={{ marginTop: 10, borderWidth: 1, borderColor: C.line, borderRadius: 10, overflow: 'hidden' }}>
+                  <View style={{ flexDirection: 'row', backgroundColor: C.roseSoft, paddingVertical: 8, paddingHorizontal: 10 }}>
+                    <Text style={[st.sub, { flex: 1.3, fontWeight: '700' }]}>{tx('Gezegen', 'Planet', lang)}</Text>
+                    <Text style={[st.sub, { flex: 1.5, fontWeight: '700' }]}>{tx('Burç', 'Sign', lang)}</Text>
+                    <Text style={[st.sub, { flex: 2.2, fontWeight: '700' }]}>{lang === 'tr' ? `${trForms(hn || 'Sen').gen} evi` : `${hn || 'Your'} house`}</Text>
+                  </View>
+                  {rows.map(r => (
+                    <View key={r.body} style={{ flexDirection: 'row', paddingVertical: 7, paddingHorizontal: 10, borderTopWidth: 1, borderTopColor: C.line, backgroundColor: [5, 7, 8].includes(r.house) ? C.goldSoft : 'transparent' }}>
+                      <Text style={{ flex: 1.3, fontSize: 14, color: C.ink }}>{BODIES[r.body].glyph} {BODIES[r.body].name[lang]}</Text>
+                      <Text style={{ flex: 1.5, fontSize: 14, color: C.ink }}>{SIGN_GLYPHS[r.sign]} {SIGNS[r.sign][lang]} {Math.floor(r.lon % 30)}°</Text>
+                      <Text style={{ flex: 2.2, fontSize: 14, color: C.ink }}><Text style={{ fontWeight: '700' }}>{r.house}.</Text> {HOUSES[r.house - 1].short[lang]}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Sub style={{ marginTop: 6 }}>{tx('Sarı satırlar: aşk, evlilik ve yakınlık evleri (5, 7, 8).', 'Highlighted rows: houses of romance, marriage and intimacy (5, 7, 8).', lang)}</Sub>
+                {sum ? <P style={{ marginTop: 10, fontWeight: '600' }}>{sum[lang]}</P> : null}
+                <Expand more={tx('Tüm yorumları göster', 'Show all readings', lang)} less={tx('Daha az', 'Less', lang)} initial={5} items={[...rows].sort((x, y) => rank(y) - rank(x)).map(r => <Item key={r.body} title={r.title[lang]} body={r.text[lang]} />)} />
+              </>}
+            </View>
+          );
+        })}
       </Section>
 
       <Section title={tx('Yakınlık Dili ve İlişki Ritmi', 'Intimacy Language and Rhythm', lang)}>
@@ -112,11 +141,6 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
         <Sub style={{ marginTop: 6 }}>{tx('Zorlayıcı açılar ilişkiyi bitirmek zorunda değildir; doğru farkındalıkla tarafların birbirini daha iyi anlamasına yardım eder.', 'Challenging aspects need not end a relationship; with awareness they help you understand each other better.', lang)}</Sub>
       </Section>
 
-      <Section title={tx('Sinastri Açıları', 'Synastry Aspects', lang)}>
-        <Expand more={tx('Tümünü göster', 'Show all', lang)} less={tx('Daha az', 'Less', lang)} initial={12} items={shown.map((x, i) => (
-          <Item key={i} title={synTitle(x.b, x.a, x.type, theirName)[lang]} meta={strength(x.orb, lang)} body={synLongText(x.b, x.a, x.type, theirName, synPair(x.b, x.a, x.type))[lang]} />
-        ))} />
-      </Section>
     </View>
   );
 }
