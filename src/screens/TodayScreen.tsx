@@ -8,7 +8,7 @@ import SkyBand from '../ui/SkyBand';
 import NextPeriod from '../ui/NextPeriod';
 import { strength } from '../ui/Readings';
 import { YearCard } from '../ui/LillyBlocks';
-import { MonthlyTransits, LunarCalendar, PlanetaryHours } from '../ui/TodayExtras';
+import { MonthlyTransits, LunarCalendar, PlanetaryHours, VoidMoon } from '../ui/TodayExtras';
 import { T2S } from '../i18n2';
 import { C, serif } from '../theme';
 
@@ -60,13 +60,14 @@ export default function TodayScreen() {
         )}
       </Section>
 
+      <VoidMoon lang={lang} tz={location?.tz ?? chart.input.tz} />
       {location ? <PlanetaryHours t={t2} lang={lang} lat={location.lat} lon={location.lon} tz={location.tz} /> : null}
 
       <MonthlyTransits natal={chart} t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} />
 
       <YearCard chart={chart} lang={lang} />
 
-      <LunarCalendar t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} />
+      <LunarCalendar t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} natal={chart} />
 
       <Section title={s.retrogrades}>
         <P>{daily.retrogrades.length ? daily.retrogrades.map(r => `${BODIES[r].glyph} ${BODIES[r].name[lang]}`).join('   ') : s.none}</P>

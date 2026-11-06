@@ -5,9 +5,30 @@ import { transitsBetween, lunations, moonSignIngresses, planetaryHours } from '.
 import { BODIES, SIGNS, ASPECT_INFO } from '../content/base';
 import { transitText, HOUR_USE, ptName } from '../content/techniqueTexts';
 import { Expand, P, Section, Sub, st } from './kit';
-import { C, serif } from '../theme';
+import { C, F, serif } from '../theme';
 import type { T2 } from '../i18n2';
 import { fmtLocal, fmtTime, tzOffsetMinutes } from '../util';
+import { houseOf, norm } from '../engine/astro';
+import { lunationHouseText } from '../content/loveExtras';
+import { voidOfCourse } from '../engine/techniques';
+
+/** Boşlukta Ay: yeni işlere başlamak için uygun olmayan saatler */
+export function VoidMoon({ lang, tz }: { lang: Lang; tz: string }) {
+  const now = new Date();
+  const v = useMemo(() => voidOfCourse(new Date(now.getTime() - 2 * 864e5)), [now.toDateString()]);
+  const next = useMemo(() => (v && v.end < now ? voidOfCourse(now) : v), [v]);
+  if (!next) return null;
+  const active = now >= next.start && now < next.end;
+  const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
+  return (
+    <Section title={L('Boşlukta Ay', 'Void-of-course Moon')}>
+      <P style={{ fontFamily: F.sansMed }}>{active
+        ? L(`Ay şu an boşlukta. ${fmtLocal(next.end, tz)} saatinde ${SIGNS[next.sign].tr} burcuna geçene kadar sürecek.`, `The Moon is void right now, until it enters ${SIGNS[next.sign].en} at ${fmtLocal(next.end, tz)}.`)
+        : L(`Sıradaki boşluk: ${fmtLocal(next.start, tz)} – ${fmtLocal(next.end, tz)}`, `Next void period: ${fmtLocal(next.start, tz)} – ${fmtLocal(next.end, tz)}`)}</P>
+      <Sub style={{ marginTop: 4, maxWidth: 640 }}>{L('Ay burç değiştirmeden önce başka hiçbir gezegenle açı yapmadığında “boşlukta” sayılır. Bu saatlerde başlayan işlerin genellikle beklenen sonucu vermediği kabul edilir; önemli kararları, imzaları ve yeni başlangıçları ertelemek, bunun yerine dinlenmek ve toparlanmak iyi gelir.', 'The Moon is “void” when it makes no aspects before changing sign. Things started then are said to rarely turn out as expected; it’s better to postpone big decisions, signatures and new starts and use the time to rest.')}</Sub>
+    </Section>
+  );
+}
 
 type Lang = 'tr' | 'en';
 
@@ -63,7 +84,7 @@ export function MonthlyTransits({ natal, t, lang, tz }: { natal: Chart; t: T2; l
   );
 }
 
-export function LunarCalendar({ t, lang, tz }: { t: T2; lang: Lang; tz: string }) {
+export function LunarCalendar({ t, lang, tz, natal }: { t: T2; lang: Lang; tz: string; natal?: Chart }) {
   const now = new Date();
   const [month, setMonth] = useState(() => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)));
   const data = useMemo(() => {
@@ -80,6 +101,7 @@ export function LunarCalendar({ t, lang, tz }: { t: T2; lang: Lang; tz: string }
           <View style={{ flex: 1 }}>
             <Text style={[st.p, { fontWeight: '600' }]}>{t.phaseNames[x.kind]} — {SIGNS[Math.floor(x.lon / 30)][lang]} {Math.floor(x.lon % 30)}°</Text>
             <Sub>{fmtLocal(x.date, tz)}</Sub>
+            {natal && natal.cusps.length && (x.kind === 'new' || x.kind === 'full') ? <P style={{ marginTop: 2 }}>{lunationHouseText(x.kind, houseOf(norm(x.lon - natal.ayanamsa), natal.cusps))[lang]}</P> : null}
           </View>
         </View>
       ))}

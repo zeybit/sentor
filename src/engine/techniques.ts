@@ -424,3 +424,39 @@ export function cartography(natal: Chart, cities: { name: string; country: strin
 }
 
 export { findAspects, PLANETS, ASTEROIDS, mcFrom };
+
+// ---------------- Boşlukta Ay (void of course) ----------------
+/** Ay'ın burç değiştirmeden önceki son majör açısından burca girişine kadar geçen süre */
+export function voidOfCourse(from: Date): { start: Date; end: Date; sign: number } | null {
+  const ing = moonSignIngresses(new Date(from.getTime() - 3 * DAY), new Date(from.getTime() + 3.5 * DAY));
+  const PL: BodyId[] = ['sun', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+  const ASP = [0, 60, 90, 120, 180];
+  const lastAspect = (end: Date): Date => {
+    const step = 10 * 60000;
+    const f = (t: number) => {
+      const m = bodyLon('moon', new Date(t));
+      return PL.map(p => { const d = angleDiff(m, bodyLon(p, new Date(t))); return ASP.map(a => d - a); });
+    };
+    let prev = f(end.getTime());
+    for (let t = end.getTime() - step; t > end.getTime() - 2.6 * DAY; t -= step) {
+      const cur = f(t);
+      for (let i = 0; i < PL.length; i++) for (let j = 0; j < ASP.length; j++) {
+        if (Math.sign(cur[i][j]) !== Math.sign(prev[i][j]) && Math.abs(cur[i][j]) < 3) {
+          let lo = t, hi = t + step;
+          const g = (x: number) => angleDiff(bodyLon('moon', new Date(x)), bodyLon(PL[i], new Date(x))) - ASP[j];
+          const sLo = Math.sign(g(lo));
+          for (let k = 0; k < 14; k++) { const mid = (lo + hi) / 2; if (Math.sign(g(mid)) === sLo) lo = mid; else hi = mid; }
+          return new Date(hi);
+        }
+      }
+      prev = cur;
+    }
+    return new Date(end.getTime() - 2.6 * DAY);
+  };
+  for (const x of ing) {
+    if (x.date < from) continue;
+    const start = lastAspect(x.date);
+    return { start, end: x.date, sign: x.sign };
+  }
+  return null;
+}

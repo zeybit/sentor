@@ -11,6 +11,7 @@ import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import { HARMONY } from '../content/techniqueTexts';
 import { spouseProfile, marriageWindows, spouseArchetype, spouseJob } from '../content/spouse';
+import { derivedSpouse, junoRules, VENUS_ADMIRED, attractionText } from '../content/loveExtras';
 import { WindowCard } from './FutureScreen';
 import { useNav } from '../nav';
 import { F } from '../theme';
@@ -76,6 +77,10 @@ export default function LoveScreen() {
 
       {data && partner ? (
         <>
+          <View style={[st.panel, { marginBottom: 18 }]}>
+            <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 4 }}>{lang === 'tr' ? `${partner.name || 'O'} neyden etkilenir?` : `What attracts ${partner.name || 'them'}?`}</Text>
+            <P>{attractionText(pc!, partner.name, lang)}</P>
+          </View>
           <Chips items={(['synastry', 'composite', 'davison'] as Rel[]).map(k => ({ key: k, label: t.relKinds[k] }))} value={rel} onChange={v => setRel(v as Rel)} />
           <View style={{ alignItems: 'center', marginBottom: 10 }}>
             {rel === 'synastry' ? <Wheel chart={chart} outer={pc} cross={data.wheelCross} size={Math.min(width - 32, 460)} asteroids={showAsteroids} /> : <Wheel chart={relChart!} size={Math.min(width - 32, 460)} asteroids={showAsteroids} />}
@@ -153,12 +158,32 @@ function SpouseBlock() {
           <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
         </View>
       )) : <P>{s.needsTime}</P>}
+      {junoRules(chart).length ? (
+        <View style={{ marginBottom: 20 }}>
+          <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Juno’nun ipuçları', 'Clues from Juno')}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{junoRules(chart).map(x => x[lang]).join(' ')}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: Juno, evlilik ve bağlılığı anlatan asteroittir; yakın durduğu gezegenler ve bulunduğu ev eşin hakkında ek bilgi verir.', 'Why: Juno is the asteroid of marriage and commitment; the planets it sits close to and its house add details about your spouse.')}</Text>
+        </View>
+      ) : null}
+      {derivedSpouse(chart).length ? (
+        <View style={{ marginBottom: 20 }}>
+          <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Eşinin hayatından ayrıntılar', 'Details of your spouse’s life')}</Text>
+          <Sub style={{ marginTop: 2, marginBottom: 8, maxWidth: 640 }}>{L('Yedinci ev eşini temsil ettiği için, evleri yedinci evden başlayarak saydığında eşinin hayatının diğer alanlarını da okuyabilirsin. Buna türetilmiş evler denir.', 'Because the seventh house is your spouse, counting houses from it lets you read other parts of their life. This is called derived houses.')}</Sub>
+          {derivedSpouse(chart).map((d, i) => (
+            <View key={i} style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink }}>{d.title[lang]}</Text>
+              <Text style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, maxWidth: 660 }}>{d.text[lang]}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       <View style={{ marginBottom: 20 }}>
         <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Nasıl seversin, nasıl çekersin?', 'How you love and attract')}</Text>
         <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>
           {L(`Venüs’ün ${SIGNS[P_.venus.sign].tr} burcunda. ${VENUS[P_.venus.sign].tr} Mars’ın da ${SIGNS[P_.mars.sign].tr} burcunda. ${MARS_DESIRE[P_.mars.sign].tr}`,
             `Your Venus is in ${SIGNS[P_.venus.sign].en}: ${VENUS[P_.venus.sign].en} Your Mars is in ${SIGNS[P_.mars.sign].en}: ${MARS_DESIRE[P_.mars.sign].en}`)}
         </Text>
+        {P_.venus.house ? <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 8, maxWidth: 660 }}>{L(`Venüs’ün ${P_.venus.house}. evinde, bu yüzden insanlar seni en çok şu yanınla beğenir: `, `Your Venus is in house ${P_.venus.house}, so people admire you most for this: `)}{(lang === 'tr' ? (x: string) => x.charAt(0).toLocaleLowerCase('tr') + x.slice(1) : (x: string) => x.charAt(0).toLowerCase() + x.slice(1))(VENUS_ADMIRED[P_.venus.house - 1][lang])}</Text> : null}
       </View>
       <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 8 }}>{L('Ne zaman?', 'When?')}</Text>
       {wins === null ? <ActivityIndicator color={C.rose} style={{ alignSelf: 'flex-start', marginVertical: 12 }} />
