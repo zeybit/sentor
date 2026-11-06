@@ -11,6 +11,7 @@ import { C, F, onThemeChange } from './src/theme';
 import { useAppFonts } from './src/fonts';
 import TodayScreen from './src/screens/TodayScreen';
 import ChartScreen from './src/screens/ChartScreen';
+import LoveScreen from './src/screens/LoveScreen';
 import PortfolioScreen from './src/screens/PortfolioScreen';
 import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -18,18 +19,18 @@ import MatrixScreen from './src/screens/MatrixScreen';
 import HelpScreen from './src/screens/HelpScreen';
 import { NavCtx, setPendingKind } from './src/nav';
 
-type Main = 'today' | 'chart' | 'portfolio' | 'matrix' | 'ask';
+type Main = 'today' | 'chart' | 'portfolio' | 'love' | 'matrix' | 'ask';
 type Tab = Main | 'settings' | 'help';
 const MAIN: { key: Main; icon: IconName }[] = [
-  { key: 'today', icon: 'today' }, { key: 'chart', icon: 'chart' }, { key: 'portfolio', icon: 'portfolio' },
+  { key: 'today', icon: 'today' }, { key: 'chart', icon: 'chart' }, { key: 'portfolio', icon: 'portfolio' }, { key: 'love', icon: 'love' },
   { key: 'matrix', icon: 'matrix' }, { key: 'ask', icon: 'ask' },
 ];
 const LABEL: Record<Tab, { tr: string; en: string }> = {
-  today: { tr: 'Bugün', en: 'Today' }, chart: { tr: 'Harita', en: 'Chart' }, portfolio: { tr: 'Portföy', en: 'Portfolio' },
+  today: { tr: 'Bugün', en: 'Today' }, chart: { tr: 'Harita', en: 'Chart' }, portfolio: { tr: 'Portföy', en: 'Portfolio' }, love: { tr: 'Aşk', en: 'Love' },
   matrix: { tr: 'Matris', en: 'Matrix' }, ask: { tr: 'Soru sor', en: 'Ask' },
   settings: { tr: 'Ayarlar', en: 'Settings' }, help: { tr: 'Terimler', en: 'Glossary' },
 };
-const WIDE_SCREENS: Tab[] = ['chart', 'matrix', 'today', 'portfolio', 'ask'];
+const WIDE_SCREENS: Tab[] = ['chart', 'matrix', 'today', 'portfolio', 'love', 'ask'];
 
 /** Etkin kişiyi gösterir ve kişiler arasında hızlı geçiş sağlar */
 function PersonSwitch({ onManage, compact }: { onManage: () => void; compact?: boolean }) {
@@ -112,7 +113,7 @@ function Shell() {
     );
   }
 
-  const Screen = { today: TodayScreen, portfolio: PortfolioScreen, ask: HoraryScreen, chart: ChartScreen, matrix: MatrixScreen, help: HelpScreen, settings: null }[tab];
+  const Screen = { today: TodayScreen, portfolio: PortfolioScreen, love: LoveScreen, ask: HoraryScreen, chart: ChartScreen, matrix: MatrixScreen, help: HelpScreen, settings: null }[tab];
   const maxW = wide && WIDE_SCREENS.includes(tab) ? 1180 : 760;
   const content = (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

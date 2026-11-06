@@ -23,7 +23,7 @@ import { T2S } from '../i18n2';
 import BirthForm from '../ui/BirthForm';
 import Wheel from '../ui/Wheel';
 import Tables from '../ui/Tables';
-import { Bar, Btn, Chips, P, Row, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
+import { Bar, Btn, Chips, H1, P, Row, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, serif } from '../theme';
 
 type Rel = 'synastry' | 'composite' | 'davison';
@@ -38,6 +38,7 @@ export default function LoveScreen() {
   const [adding, setAdding] = useState(others.length === 0);
   const [rel, setRel] = useState<Rel>('synastry');
   const [view, setView] = useState<'readings' | 'tables'>('readings');
+  const [part, setPart] = useState<'spouse' | 'compat'>('spouse');
   const partner = others.find(p => p.id === pid) ?? null;
   const pc = useMemo(() => (partner ? chartOf(partner) : null), [partner, opts]);
   const data = useMemo(() => {
@@ -61,7 +62,10 @@ export default function LoveScreen() {
 
   return (
     <View>
-      <SpouseBlock />
+      <H1>{lang === 'tr' ? 'Aşk ve uyum' : 'Love and compatibility'}</H1>
+      <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{lang === 'tr' ? 'Haritana göre hayatına girecek partner, evlilik zamanı ve seçtiğin biriyle uyumun.' : 'The partner your chart describes, marriage timing, and your compatibility with someone you choose.'}</Sub>
+      <Segmented items={[{ key: 'spouse', label: lang === 'tr' ? 'Gelecekteki eşin' : 'Your future partner' }, { key: 'compat', label: lang === 'tr' ? 'Biriyle uyum' : 'Compatibility' }]} value={part} onChange={v => setPart(v as 'spouse' | 'compat')} />
+      {part === 'spouse' ? <SpouseBlock /> : <>
 
       <Section title={s.compat} sub={s.compatSub}>
         {others.length ? (
@@ -112,6 +116,7 @@ export default function LoveScreen() {
           ) : null}
         </>
       ) : null}
+      </>}
     </View>
   );
 }

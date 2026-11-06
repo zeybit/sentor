@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 
-export type IconName = 'future' | 'today' | 'chart' | 'portfolio' | 'matrix' | 'ask' | 'trends' | 'settings' | 'chevron' | 'help' | 'plus' | 'close';
+export type IconName = 'future' | 'today' | 'chart' | 'portfolio' | 'love' | 'matrix' | 'ask' | 'trends' | 'settings' | 'chevron' | 'help' | 'plus' | 'close';
 
 /** 24×24 çizgi ikonlar; tek kalınlık, uçlar yuvarlak */
 export default function Icon({ name, size = 22, color, filled }: { name: IconName; size?: number; color: string; filled?: boolean }) {
@@ -25,6 +25,9 @@ export default function Icon({ name, size = 22, color, filled }: { name: IconNam
         <Path d="M3 5.5c3-1 6-1 9 .5 3-1.5 6-1.5 9-.5V19c-3-1-6-1-9 .5-3-1.5-6-1.5-9-.5Z" {...p} fill={filled ? color : 'none'} fillOpacity={0.18} />
         <Line x1={12} y1={6} x2={12} y2={19.5} {...p} />
       </>)}
+      {name === 'love' && (
+        <Path d="M12 20s-7.5-4.6-8.8-9.3C2.3 7.4 4.3 4.5 7.4 4.5c2 0 3.5 1.1 4.6 2.8 1.1-1.7 2.6-2.8 4.6-2.8 3.1 0 5.1 2.9 4.2 6.2C19.5 15.4 12 20 12 20Z" {...p} fill={filled ? color : 'none'} fillOpacity={0.18} />
+      )}
       {name === 'matrix' && (<>
         <Rect x={5.5} y={5.5} width={13} height={13} {...p} />
         <Polygon points="12,2.5 21.5,12 12,21.5 2.5,12" {...p} />
