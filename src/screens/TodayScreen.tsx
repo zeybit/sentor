@@ -5,6 +5,7 @@ import { computeDaily, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast
 import { BODIES, MOON_PHASE_TIP, SIGNS, SIGN_GLYPHS } from '../content/base';
 import { H1, Meter, P, Section, Sub, Expand, st, useLayout } from '../ui/kit';
 import SkyBand from '../ui/SkyBand';
+import { strength } from '../ui/Readings';
 import { YearCard } from '../ui/LillyBlocks';
 import { MonthlyTransits, LunarCalendar, PlanetaryHours } from '../ui/TodayExtras';
 import { T2S } from '../i18n2';
@@ -52,7 +53,7 @@ export default function TodayScreen() {
       <Section title={s.activeTransits}>
         {daily.hits.length === 0 ? <P>{s.noTransits}</P> : (
           <Expand more={s.showMore} less={s.showLess} initial={5} items={daily.hits.map((h, i) => (
-            <View key={i} style={st.row}><P>{h.text[lang]}</P><Sub>orb {h.orb.toFixed(1)}°</Sub></View>
+            <View key={i} style={st.row}><P>{h.text[lang]}</P><Sub>{strength(h.orb, lang)}</Sub></View>
           ))} />
         )}
       </Section>

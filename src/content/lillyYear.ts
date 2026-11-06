@@ -44,12 +44,12 @@ export function yearReport(ch: Chart, now = new Date(), lat = ch.input.lat, lon 
   const lines: { label: L; text: L }[] = [];
   const s = lillyScore(ch, lord);
   lines.push({ label: l('Yılın profeksiyonu', 'Annual profection'), text: {
-    tr: `${age}. yaşın: yükselen ${age} burç ilerleyerek ${SIGNS[profSign].tr} burcuna geldi; doğum haritanın ${profHouse}. evi (${HOUSES[profHouse - 1].area.tr}) bu yıl etkin. Yılın efendisi ${BODIES[lord].name.tr} (doğumda ${SIGNS[ch.positions[lord].sign].tr}, ${ch.positions[lord].house}. ev, Lilly puanı ${s.total > 0 ? '+' : ''}${s.total}).`,
-    en: `Age ${age}: the Ascendant has advanced ${age} signs to ${SIGNS[profSign].en}; your natal ${ord(profHouse)} house (${HOUSES[profHouse - 1].area.en}) is activated. Lord of the year: ${BODIES[lord].name.en} (natally in ${SIGNS[ch.positions[lord].sign].en}, ${ord(ch.positions[lord].house)} house, Lilly score ${s.total > 0 ? '+' : ''}${s.total}).`,
+    tr: `${age}. yaşın: yükselen ${age} burç ilerleyerek ${SIGNS[profSign].tr} burcuna geldi; doğum haritanın ${profHouse}. evi (${HOUSES[profHouse - 1].area.tr}) bu yıl etkin. Yılın efendisi ${BODIES[lord].name.tr} (doğumda ${SIGNS[ch.positions[lord].sign].tr}, ${ch.positions[lord].house}. ev, güç puanı ${s.total > 0 ? '+' : ''}${s.total}).`,
+    en: `Age ${age}: the Ascendant has advanced ${age} signs to ${SIGNS[profSign].en}; your natal ${ord(profHouse)} house (${HOUSES[profHouse - 1].area.en}) is activated. Lord of the year: ${BODIES[lord].name.en} (natally in ${SIGNS[ch.positions[lord].sign].en}, ${ord(ch.positions[lord].house)} house, strength score ${s.total > 0 ? '+' : ''}${s.total}).`,
   } });
   lines.push({ label: l('Bu profeksiyon ayı', 'This profectional month'), text: {
-    tr: `Lilly yılı 13 eşit aya böler. Şu an ${monthIdx + 1}. aydasın: ${SIGNS[monthSign].tr} ve efendisi ${BODIES[monthLord].name.tr}; doğum haritanda ${houseOf(monthSign * 30 + 15, ch.cusps)}. ev temaları öne çıkıyor.`,
-    en: `Lilly divides the year into 13 equal months. You are in month ${monthIdx + 1}: ${SIGNS[monthSign].en}, ruled by ${BODIES[monthLord].name.en}; themes of your natal ${ord(houseOf(monthSign * 30 + 15, ch.cusps))} house come forward.`,
+    tr: `Yıl 13 eşit döneme ayrılır. Şu an ${monthIdx + 1}. aydasın: ${SIGNS[monthSign].tr} ve efendisi ${BODIES[monthLord].name.tr}; doğum haritanda ${houseOf(monthSign * 30 + 15, ch.cusps)}. ev temaları öne çıkıyor.`,
+    en: `The year is divided into 13 equal periods. You are in month ${monthIdx + 1}: ${SIGNS[monthSign].en}, ruled by ${BODIES[monthLord].name.en}; themes of your natal ${ord(houseOf(monthSign * 30 + 15, ch.cusps))} house come forward.`,
   } });
 
   // Güneş dönüşü
@@ -61,8 +61,8 @@ export function yearReport(ch: Chart, now = new Date(), lat = ch.input.lat, lon 
   } });
   const confirm = rAsc === profSign || ret.positions[lord].house && ANG.includes(ret.positions[lord].house);
   lines.push({ label: l('Profeksiyon ile dönüşün uyumu', 'Agreement of profection and return'), text: confirm
-    ? { tr: `Yılın efendisi ${BODIES[lord].name.tr} Güneş dönüşünde de öne çıkıyor${rAsc === profSign ? ' (dönüş yükseleni profeksiyon burcuyla aynı)' : ' (köşe evde)'}: Lilly’ye göre profeksiyonun vaat ettikleri bu yıl teyit edilmiş ve güçlü.`, en: `The lord of the year ${BODIES[lord].name.en} is also prominent in the return${rAsc === profSign ? ' (return Ascendant equals the profected sign)' : ' (angular)'}: per Lilly, the profection’s promise is confirmed and strong this year.` }
-    : { tr: 'Güneş dönüşü profeksiyonu doğrudan teyit etmiyor: Lilly’ye göre bu durumda yılın etkileri daha yumuşak ve dağınık yaşanır.', en: 'The return doesn’t directly confirm the profection: per Lilly the year’s effects are milder and more diffuse.' } });
+    ? { tr: `Yılın efendisi ${BODIES[lord].name.tr} Güneş dönüşünde de öne çıkıyor${rAsc === profSign ? ' (dönüş yükseleni profeksiyon burcuyla aynı)' : ' (köşe evde)'}: profeksiyonun vaat ettikleri bu yıl teyit edilmiş ve güçlü.`, en: `The lord of the year ${BODIES[lord].name.en} is also prominent in the return${rAsc === profSign ? ' (return Ascendant equals the profected sign)' : ' (angular)'}: the profection’s promise is confirmed and strong this year.` }
+    : { tr: 'Güneş dönüşü profeksiyonu doğrudan teyit etmiyor: bu durumda yılın etkileri daha yumuşak ve dağınık yaşanır.', en: 'The return doesn’t directly confirm the profection: the year’s effects are milder and more diffuse.' } });
   const angular = CLASSICAL.filter(p => ANG.includes(R[p].house));
   const ben = angular.filter(p => p === 'jupiter' || p === 'venus'), mal = angular.filter(p => p === 'saturn' || p === 'mars');
   if (ben.length) lines.push({ label: l('Dönüşte köşe evlerde iyi gezegenler', 'Benefics angular in the return'), text: { tr: `${ben.map(p => `${BODIES[p].name.tr} ${R[p].house}. evde`).join(', ')}: yıl boyunca destek, fırsat ve koruma; özellikle ${ben.map(p => HOUSES[R[p].house - 1].short.tr.toLocaleLowerCase('tr')).join(' ve ')} alanında.`, en: `${ben.map(p => `${BODIES[p].name.en} in the ${ord(R[p].house)}`).join(', ')}: support, opportunity and protection through the year, especially in ${ben.map(p => HOUSES[R[p].house - 1].short.en.toLowerCase()).join(' and ')}.` } });

@@ -11,14 +11,17 @@ import { natalAspectText, aspectTitle } from '../content/aspectPairs';
 import { transitText, transitHouseText, PROG_MOON_SIGN, progMoonHouse, progSunText, PROG_PHASE, returnTexts, ptName } from '../content/techniqueTexts';
 import { lillyScore, mannersFor, CLASSICAL, Classical } from '../content/lillyDignity';
 import * as N from '../content/lillyNatal';
-import { LordAndTemperament, SectionView, LILLY_NOTE } from './LillyBlocks';
+import { LILLY_NOTE } from './LillyBlocks';
+import { natalStory } from '../content/story';
 import { Expand, P, Section, Sub, st } from './kit';
-import { C, ELEMENT_COLOR, serif } from '../theme';
+import { C, ELEMENT_COLOR, F, serif } from '../theme';
 import type { Strings } from '../i18n';
 import type { T2 } from '../i18n2';
 import type { ChartKind } from '../engine/techniques';
 
 type Lang = 'tr' | 'en';
+/** Orb yerine sade güç ifadesi */
+export const strength = (orb: number, lang: Lang) => orb < 1 ? (lang === 'tr' ? 'Çok güçlü etki' : 'Very strong influence') : orb < 3 ? (lang === 'tr' ? 'Güçlü etki' : 'Strong influence') : orb < 5 ? (lang === 'tr' ? 'Belirgin etki' : 'Noticeable influence') : (lang === 'tr' ? 'Hafif etki' : 'Mild influence');
 type K = BodyId | 'asc' | 'mc';
 const ASTS = ['chiron', 'ceres', 'pallas', 'juno', 'vesta'];
 
@@ -50,89 +53,28 @@ export function angleAspects(c: Chart): { a: K; b: K; type: AspectType; orb: num
   return out.sort((x, y) => x.orb - y.orb);
 }
 
-// ---------------- Doğum haritası ----------------
-export function NatalReading({ chart, s, t, lang, asteroids }: { chart: Chart; s: Strings; t: T2; lang: Lang; asteroids: boolean }) {
-  const P_ = chart.positions;
-  const ascSign = chart.asc !== null ? Math.floor(chart.asc / 30) : null;
-  const lillyAreas = useMemo(() => [N.manners(chart), N.wit(chart), N.wealth(chart), N.marriage(chart), N.profession(chart), N.travel(chart), N.friends(chart)], [chart]);
-  const ids = ALL_BODIES.filter(i => P_[i] && (asteroids || !ASTS.includes(i)));
-  const big3 = [
-    { label: s.sun, sign: P_.sun.sign, text: placementText('sun', P_.sun.sign) },
-    { label: s.moon, sign: P_.moon.sign, text: placementText('moon', P_.moon.sign) },
-    ...(ascSign !== null ? [{ label: s.rising, sign: ascSign, text: ASC[ascSign] }] : []),
-  ];
-  const aspects = [
-    ...chart.aspects.filter(a => !['southNode', 'fortune', 'lilith'].includes(a.a) && !['southNode', 'fortune', 'lilith'].includes(a.b) && (asteroids || (!ASTS.includes(a.a) && !ASTS.includes(a.b)))),
-    ...angleAspects(chart),
-  ].sort((x, y) => (x.orb + (ASTS.includes(x.a) || ASTS.includes(x.b) ? 10 : 0)) - (y.orb + (ASTS.includes(y.a) || ASTS.includes(y.b) ? 10 : 0)));
+// ---------------- Doğum haritası: kitap gibi akıcı anlatım ----------------
+export function NatalReading({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; lang: Lang; asteroids: boolean }) {
+  const chapters = useMemo(() => natalStory(chart, lang), [chart, lang]);
   return (
     <View>
-      <Section title={s.bigThree}>
-        {big3.map(b => (
-          <View key={b.label} style={st.row}>
-            <Text style={{ fontFamily: serif, fontSize: 18, color: C.ink }}>
-              <Text style={{ color: ELEMENT_COLOR[b.sign % 4] }}>{SIGN_GLYPHS[b.sign]} </Text>{b.label}: {SIGNS[b.sign][lang]}
-            </Text>
-            <P style={{ marginTop: 4 }}>{b.text[lang]}</P>
-          </View>
-        ))}
-        {ascSign === null ? <Sub>{s.needsTime}</Sub> : null}
-      </Section>
-
-      <LordAndTemperament chart={chart} lang={lang} />
-
-      <Section title={s.placements}>
-        {ids.map(id => {
-          const p = P_[id];
-          const dig = dignityOf(id, p.sign);
-          const ht = p.house ? (PLANET_HOUSE[id]?.[p.house - 1] ?? planetInHouse(id, p.house)) : null;
-          return (
-            <View key={id} style={st.row}>
-              <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink }}>
-                {BODIES[id].glyph} {BODIES[id].name[lang]} — {SIGNS[p.sign][lang]} {fmtDeg(p.lon)}{p.retro ? ' ℞' : ''}{p.house ? `, ${p.house}. ${s.house.toLocaleLowerCase(lang)}` : ''}
-              </Text>
-              {dig ? <Text style={[st.sub, { color: C.gold }]}>{dig[lang]}</Text> : null}
-              <P style={{ marginTop: 4 }}>{placementText(id, p.sign)[lang]}</P>
-              {ht ? <P style={{ marginTop: 4, color: C.sub }}>{ht[lang]}</P> : null}
-              {p.retro && !['node', 'southNode'].includes(id) ? <P style={{ marginTop: 4, color: C.sub }}>{lang === 'tr' ? `${BODIES[id].name.tr} doğumda retro: bu gezegenin konularını içe dönük, yeniden düşünerek ve kendine özgü bir yoldan yaşarsın.` : `${BODIES[id].name.en} retrograde at birth: you live its themes inwardly, revisiting them in your own way.`}</P> : null}
-              {(CLASSICAL as string[]).includes(id) ? (() => {
-                const sc = lillyScore(chart, id as Classical);
-                return <P style={{ marginTop: 6 }}><Text style={{ fontWeight: '700', color: sc.total >= 0 ? C.earth : C.rose }}>Lilly {sc.total > 0 ? '+' : ''}{sc.total}: </Text>{mannersFor(sc).text[lang]}</P>;
-              })() : null}
-            </View>
-          );
-        })}
-      </Section>
-
-      {lillyAreas.map((sec, i) => <SectionView key={i} sec={sec} lang={lang} />)}
-
-      <Section title={s.houses}>
-        {chart.cusps.length === 0 ? <P>{s.needsTime}</P> : (
-          <Expand more={s.showMore} less={s.showLess} initial={4} items={chart.cusps.map((c, i) => {
-            const sign = Math.floor(c / 30);
-            const inside = ids.filter(id => P_[id].house === i + 1);
-            const rt = houseRulerText(chart, i + 1);
-            return (
-              <View key={i} style={st.row}>
-                <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink }}>{HOUSES[i].name[lang]}</Text>
-                <Sub>{SIGN_GLYPHS[sign]} {SIGNS[sign][lang]} {fmtDeg(c)}, {HOUSES[i].area[lang]}</Sub>
-                <P style={{ marginTop: 4 }}>{lang === 'tr' ? `Bu alana ${SIGNS[sign].tr} enerjisi hâkim: ${SIGN_KEYWORDS[sign].tr.toLocaleLowerCase('tr')}.` : `${SIGNS[sign].en} energy colours this area: ${SIGN_KEYWORDS[sign].en.toLowerCase()}.`}</P>
-                {inside.length ? <P style={{ marginTop: 4 }}>{inside.map(x => `${BODIES[x].glyph} ${BODIES[x].name[lang]}`).join(', ')}</P> : null}
-                {rt ? <Sub style={{ marginTop: 4 }}>{rt[lang]}</Sub> : null}
-              </View>
-            );
-          })} />
-        )}
-      </Section>
-
-      <Section title={s.aspects}>
-        <Expand more={s.showMore} less={s.showLess} initial={10} items={aspects.map((a, i) => {
-          const txt = natalAspectText(a.a, a.b, a.type) ?? ASPECT_INFO[a.type].desc;
-          return <Item key={i} title={`${aspectTitle(a.a, a.b, a.type)[lang]}`} meta={`${ASPECT_INFO[a.type].glyph} orb ${a.orb.toFixed(1)}°`} body={txt[lang]} />;
-        })} />
-      </Section>
+      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 19, lineHeight: 28, color: C.sub, marginBottom: 28, maxWidth: 640 }}>
+        {lang === 'tr'
+          ? 'Bu bölüm haritanı baştan sona, bir kitap okur gibi anlatır. Teknik ayrıntıları (dereceler, açılar, ev başlangıçları) merak edersen yukarıdaki Tablolar sekmesine bakabilirsin.'
+          : 'This section tells your chart from start to finish, like reading a book. If you are curious about the technical details (degrees, aspects, house cusps), see the Tables tab above.'}
+      </Text>
+      {chapters.map((c, i) => (
+        <View key={c.id} style={{ marginBottom: 40 }}>
+          <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{lang === 'tr' ? `Bölüm ${i + 1}` : `Chapter ${i + 1}`}</Text>
+          <Text accessibilityRole="header" style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink, marginBottom: 10 }}>{c.title[lang]}</Text>
+          <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 14, maxWidth: 640 }}>{c.intro[lang]}</Text>
+          {c.paras.map((p, j) => (
+            <Text key={j} style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginBottom: 16, maxWidth: 660 }}>{p[lang]}</Text>
+          ))}
+        </View>
+      ))}
       <Sub style={{ marginBottom: 20 }}>{LILLY_NOTE[lang]}</Sub>
-      {void t}
+      {void s}{void t}
     </View>
   );
 }
@@ -143,8 +85,8 @@ function CrossList({ list, prefix, lang, s }: { list: CrossAspect[]; prefix: { t
   return (
     <Expand more={s.showMore} less={s.showLess} initial={10} items={list.map((x, i) => {
       const r = transitText(x.a, x.b, x.type, prefix);
-      const ap = x.applying === undefined ? '' : x.applying ? (lang === 'tr' ? ', yaklaşıyor' : ', applying') : (lang === 'tr' ? ', uzaklaşıyor' : ', separating');
-      return <Item key={i} title={r.title[lang]} meta={`${ASPECT_INFO[x.type].glyph} orb ${x.orb.toFixed(2)}°${ap}`} body={r.body[lang]} />;
+      const ap = x.applying === undefined ? '' : x.applying ? (lang === 'tr' ? ', etkisi artıyor' : ', building up') : (lang === 'tr' ? ', etkisi azalıyor' : ', fading');
+      return <Item key={i} title={r.title[lang]} meta={`${strength(x.orb, lang)}${ap}`} body={r.body[lang]} />;
     })} />
   );
 }
@@ -185,7 +127,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     const list = crossAspects(other, natal, 1, PLANETS);
     const arc = solarArcDegrees(natal, other.utc);
     return (
-      <Section title={`${t.saTitle}, ${t.arc} ${arc.toFixed(2)}°`}>
+      <Section title={t.saTitle}>
         {list.length ? <CrossList list={list.filter(x => !(x.a === x.b))} prefix={{ tr: 'Solar arc', en: 'Solar arc' }} lang={lang} s={s} /> : <P>{t.noItems}</P>}
       </Section>
     );
@@ -199,7 +141,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
           {items.map((x, i) => <Item key={i} title={x.title[lang]} body={x.body[lang]} />)}
         </Section>
         <Section title={s.aspects}>
-          <Expand more={s.showMore} less={s.showLess} initial={6} items={asp.map((a, i) => <Item key={i} title={aspectTitle(a.a, a.b, a.type)[lang]} meta={`orb ${a.orb.toFixed(1)}°`} body={(natalAspectText(a.a, a.b, a.type) ?? ASPECT_INFO[a.type].desc)[lang]} />)} />
+          <Expand more={s.showMore} less={s.showLess} initial={6} items={asp.map((a, i) => <Item key={i} title={aspectTitle(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={(natalAspectText(a.a, a.b, a.type) ?? ASPECT_INFO[a.type].desc)[lang]} />)} />
         </Section>
       </View>
     );
@@ -218,7 +160,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
         <Sub style={{ marginBottom: 8 }}>{t.antDesc}</Sub>
         {hits.length ? hits.map((h, i) => {
           const txt = natalAspectText(h.a, h.b, h.contra ? 'square' : 'trine') ?? ASPECT_INFO[h.contra ? 'square' : 'trine'].desc;
-          return <Item key={i} title={`${BODIES[h.a].name[lang]} ⇄ ${BODIES[h.b].name[lang]} (${h.contra ? t.contra + ' ' : ''}${t.antContact})`} meta={`orb ${h.orb.toFixed(2)}°`} body={txt[lang]} />;
+          return <Item key={i} title={`${BODIES[h.a].name[lang]} ⇄ ${BODIES[h.b].name[lang]} (${h.contra ? t.contra + ' ' : ''}${t.antContact})`} meta={strength(h.orb, lang)} body={txt[lang]} />;
         }) : <P>{t.noItems}</P>}
       </Section>
     );
@@ -232,7 +174,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
           <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? `Ay ışığı %${Math.round(mp.illum * 100)}` : `Moon illumination ${Math.round(mp.illum * 100)}%`}</Sub>
         </Section>
         <Section title={t.nowAspects}>
-          <Expand more={s.showMore} less={s.showLess} initial={8} items={other.aspects.filter(a => PLANETS.includes(a.a) && PLANETS.includes(a.b)).map((a, i) => <Item key={i} title={aspectTitle(a.a, a.b, a.type)[lang]} meta={`orb ${a.orb.toFixed(1)}°${a.applying === undefined ? '' : a.applying ? ', A' : ', S'}`} body={ASPECT_INFO[a.type].desc[lang]} />)} />
+          <Expand more={s.showMore} less={s.showLess} initial={8} items={other.aspects.filter(a => PLANETS.includes(a.a) && PLANETS.includes(a.b)).map((a, i) => <Item key={i} title={aspectTitle(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={ASPECT_INFO[a.type].desc[lang]} />)} />
         </Section>
         <Section title={t.transitTitle}><CrossList list={crossAspects(other, natal, 2, PLANETS).filter(x => x.a !== 'asc' && x.a !== 'mc')} prefix={{ tr: 'Transit', en: 'Transit' }} lang={lang} s={s} /></Section>
       </View>

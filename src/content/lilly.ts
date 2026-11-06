@@ -1,6 +1,6 @@
 // William Lilly, Christian Astrology, Kitap I (1647) — Bölüm VIII–XVII'den uyarlanmıştır (kamu malı).
 // Görünüm, renk ve meslek tarifleri modern ve nötr bir dille yeniden yazılmıştır.
-// Lilly'nin kişi tarif kuralı (Bölüm XVII): evin burcu + o evin yöneticisinin burcu + Ay birlikte değerlendirilir;
+// Lilly'nin kişi tarif kuralı: evin burcu + o evin yöneticisinin burcu + Ay birlikte değerlendirilir;
 // ağır basan tanıklık belirleyicidir.
 import type { BodyId, Chart } from '../engine/astro';
 import { SIGN_RULERS } from '../engine/astro';
@@ -8,7 +8,7 @@ import { L, SIGNS, BODIES } from './base';
 
 const l = (tr: string, en: string): L => ({ tr, en });
 
-/** Lilly: burcun bedene verdiği şekil (Bölüm XVI) */
+/** Lilly: burcun bedene verdiği şekil */
 export const LILLY_SIGN_FORM: L[] = [
   l('Orta boyu aşmayan, ince ama güçlü kemikli ve sağlam uzuvlu bir yapı; uzunca yüz, koyu kaşlar, uzun boyun, kalın omuzlar, buğday ya da esmer ten.', 'Not above middle height, lean yet strong-boned with sturdy limbs; a longish face, dark brows, a long neck, thick shoulders, a tanned or olive complexion.'),
   l('Kısa ama dolgun, güçlü ve sağlam yapılı; geniş alın, büyük gözler, dolgun yüz, geniş omuzlar, belirgin ağız ve dolgun dudaklar, gür ve koyu saç.', 'Short but full, strong and well set; a broad forehead, large eyes, a full face, broad shoulders, a generous mouth and full lips, thick dark hair.'),
@@ -24,7 +24,7 @@ export const LILLY_SIGN_FORM: L[] = [
   l('Kısa boylu, dolgun ve yumuşak hatlı; büyükçe yüz, solgun ten, başı hafif öne eğik duran bir duruş.', 'Short, full and soft-lined; a fairly large face, pale complexion, often carrying the head slightly forward.'),
 ];
 
-/** Lilly: gezegenin kişiye verdiği görünüm (Bölüm VIII–XV) */
+/** Lilly: gezegenin kişiye verdiği görünüm */
 export const LILLY_PLANET_FORM: Partial<Record<BodyId, L>> = {
   saturn: l('Satürn: orta boy, solgun ya da esmer ten, küçük ve koyu gözler, geniş alın, koyu ve sert saç, geniş omuzlar; ağırbaşlı ve ciddi bir ifade.', 'Saturn: middle height, pale or olive skin, small dark eyes, a broad forehead, dark coarse hair, broad shoulders; a grave, serious expression.'),
   jupiter: l('Jüpiter: dik, düzgün ve uzun boy; pembe-kızıl, sevimli bir ten, oval ve dolgun yüz, yüksek alın, iri gözler, yumuşak kumral saç; ağırbaşlı ve güzel konuşan.', 'Jupiter: upright, straight and tall; a rosy, pleasant complexion, an oval, full face, high forehead, large eyes, soft auburn hair; dignified and well-spoken.'),
@@ -35,7 +35,7 @@ export const LILLY_PLANET_FORM: Partial<Record<BodyId, L>> = {
   moon: l('Ay: orta-uzun boy, açık ve solgun ten, yuvarlak yüz, gri gözler, gür saç, dolgun ve yumuşak bir beden.', 'Moon: fair stature, pale fair skin, a round face, grey eyes, abundant hair, a full, soft body.'),
 };
 
-/** Lilly'nin klasik renkleri (Bölüm XV sonu) */
+/** klasik renkleri */
 export const LILLY_SIGN_COLOUR: L[] = [
   l('beyaz ile karışık kırmızı', 'white mixed with red'), l('beyaz ve limon sarısı', 'white with citrine'), l('beyaz ile karışık kırmızı', 'white mixed with red'),
   l('yeşil ya da kızıl kahve', 'green or russet'), l('kırmızı ya da yeşil', 'red or green'), l('mavi benekli siyah', 'black speckled with blue'),

@@ -10,17 +10,17 @@ import { C, serif } from '../theme';
 type Lang = 'tr' | 'en';
 const T = {
   tr: {
-    title: 'Lilly Analizi', sub: 'William Lilly, Christian Astrology (1647), 3. Kitap: “Doğum Haritalarına Giriş”. Lilly’nin kendi karar sıralarıyla, adım adım.',
-    lord: 'Doğum haritanın efendisi', temp: 'Mizacın', tempHow: 'Lilly mizacı yükselen ve yöneticisi, 1. evdeki gezegenler, Ay ve ona bakan gezegenler, mevsim ve harita efendisinin sıcak–soğuk–nemli–kuru niteliklerini sayarak bulur. Zıt nitelikler birbirini götürür.',
-    secondary: 'İkincil eğilim', balanced: 'Nitelikler birbirine çok yakın: dengeli, karma bir mizaç.', table: 'Lilly güç tablosu (Kitap I, s. 115)', year: 'Bu yılın teması: profeksiyon ve Güneş dönüşü', yearRange: 'Profeksiyon yılın', needsTime: 'Bu bölüm için doğum saati gerekli.',
-    note: 'Lilly’nin metinleri 17. yüzyıl diliyle yazılmıştır; burada bugünün diline, cinsiyetsiz ve saygılı bir biçimde uyarlanmıştır. Ömür, ölüm ve hastalık hükümleri bilinçli olarak dahil edilmemiştir.',
+    title: 'Karakterinin derin katmanları', sub: 'Haritandaki gezegenlerin gücüne ve birbirleriyle ilişkisine bakarak karakterini, zihnini ve hayat alanlarını anlatır.',
+    lord: 'Doğum haritanın efendisi', temp: 'Mizacın', tempHow: 'Mizaç, yükselen ve yöneticisi, 1. evdeki gezegenler, Ay ve ona bakan gezegenler, mevsim ve harita efendisinin sıcak–soğuk–nemli–kuru niteliklerini sayarak bulur. Zıt nitelikler birbirini götürür.',
+    secondary: 'İkincil eğilim', balanced: 'Nitelikler birbirine çok yakın: dengeli, karma bir mizaç.', table: 'Gezegenlerin güç tablosu', year: 'Bu yılın teması: profeksiyon ve Güneş dönüşü', yearRange: 'Profeksiyon yılın', needsTime: 'Bu bölüm için doğum saati gerekli.',
+    note: 'Yorumlar kendini tanıman için yazıldı; kesin hüküm değil, eğilimleri anlatır. Sağlık, ömür ve ölümle ilgili yorum yapılmaz.',
     q: { hot: 'Sıcak', cold: 'Soğuk', moist: 'Nemli', dry: 'Kuru' },
   },
   en: {
-    title: 'Lilly Reading', sub: 'William Lilly, Christian Astrology (1647), Book III: “An Introduction to Nativities”, following Lilly’s own order of judgment, step by step.',
-    lord: 'Lord of your chart', temp: 'Your temperament', tempHow: 'Lilly finds the temperament by counting the hot, cold, moist and dry qualities of the Ascendant and its ruler, planets in the 1st, the Moon and planets aspecting her, the season and the Lord of the Geniture. Contrary qualities cancel out.',
-    secondary: 'Secondary tendency', balanced: 'The qualities are very close: a balanced, mixed temperament.', table: 'Lilly’s table of fortitudes (Book I, p. 115)', year: 'This year’s theme: profection and solar return', yearRange: 'Your profection year', needsTime: 'This section needs your birth time.',
-    note: 'Lilly wrote in 17th-century English; his judgments are adapted here into today’s language, gender-neutral and respectful. Judgments about lifespan, death and disease are deliberately excluded.',
+    title: 'The deeper layers of your character', sub: 'Looks at how strong each planet is and how they relate, to describe your character, mind and life areas.',
+    lord: 'Lord of your chart', temp: 'Your temperament', tempHow: 'Temperament is found by counting the hot, cold, moist and dry qualities of the Ascendant and its ruler, planets in the 1st, the Moon and planets aspecting her, the season and the Lord of the Geniture. Contrary qualities cancel out.',
+    secondary: 'Secondary tendency', balanced: 'The qualities are very close: a balanced, mixed temperament.', table: 'Planet strength table', year: 'This year’s theme: profection and solar return', yearRange: 'Your profection year', needsTime: 'This section needs your birth time.',
+    note: 'These readings are for self-understanding; they describe tendencies, not fixed verdicts. Nothing is said about health, lifespan or death.',
     q: { hot: 'Hot', cold: 'Cold', moist: 'Moist', dry: 'Dry' },
   },
 };

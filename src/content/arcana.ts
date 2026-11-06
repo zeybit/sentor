@@ -185,3 +185,70 @@ export const CHAKRA: Record<string, { name: L; area: L }> = {
   svadhisthana: { name: l('Svadhisthana (sakral)', 'Svadhisthana (sacral)'), area: l('keyif, duygular, yaratıcı enerji', 'pleasure, emotions, creative energy') },
   muladhara: { name: l('Muladhara (kök)', 'Muladhara (root)'), area: l('güven, beden, maddi zemin', 'safety, body, material ground') },
 };
+
+// ---------------- Yeni başlayanlar için: öneri ve sade açıklamalar ----------------
+export const ADVICE: Record<number, L> = {
+  1: l('Bir fikri başlatıp yarım bırakmak yerine küçük ama bitmiş işler üretmek bu enerjiyi en iyi kullanmanın yolu.', 'Finishing small things instead of starting many is the best way to use this energy.'),
+  2: l('Sessiz kalıp gözlemlemek senin gücün; yine de hissettiklerini güvendiğin birine söylemeyi ihmal etme.', 'Quiet observation is your strength; still, share what you sense with someone you trust.'),
+  3: l('Kendine güzellik ve konfor sunmak bencillik değil; dolu bir kap olduğunda çevrene de bereket taşırsın.', 'Treating yourself to beauty and comfort isn’t selfish; when your cup is full, you overflow to others.'),
+  4: l('Her şeyi kontrol etmek yerine güvendiğin insanlara sorumluluk vermek seni hafifletir.', 'Handing responsibility to people you trust lightens you more than controlling everything.'),
+  5: l('Bildiklerini paylaşırken karşındakinin kendi yolunu bulmasına da alan bırak.', 'When you share what you know, leave room for others to find their own way.'),
+  6: l('Karar verirken başkalarının onayını değil, kendi kalbinin sesini ölçü al.', 'When you choose, let your own heart be the measure, not other people’s approval.'),
+  7: l('Hedefine giderken dinlenmeyi de planına koy; durmak da yolun bir parçası.', 'Put rest into your plan on the way to your goal; pausing is part of the road.'),
+  8: l('Adil olmak önce kendine karşı başlar; hatalarını yargılamadan düzeltmeyi dene.', 'Fairness starts with yourself; try correcting mistakes without judging yourself.'),
+  9: l('Yalnızlık seni besler ama kapını tamamen kapatma; bilgeliğin paylaşıldıkça değer kazanır.', 'Solitude feeds you, but don’t close the door entirely; wisdom grows when shared.'),
+  10: l('Değişim geldiğinde direnmek yerine ondan ne öğrenebileceğini sor; akış seni doğru yere taşır.', 'When change comes, ask what it can teach you instead of resisting; the flow carries you right.'),
+  11: l('Gücünü düzenli hareketle ve sakinleştirici alışkanlıklarla dengelemek tükenmeni önler.', 'Balancing your strength with regular movement and calming habits keeps you from burning out.'),
+  12: l('Vermeyi seviyorsun; karşılık beklemeyi ve hayır demeyi öğrenmek seni korur.', 'You love to give; learning to expect something back and to say no protects you.'),
+  13: l('Bitmesi gerekeni bırakmak sana yer açar; yeni başlangıçlar hep bir vedanın ardından gelir.', 'Letting go of what must end makes room; new beginnings always follow a goodbye.'),
+  14: l('Uç noktalara savrulduğunda kendine sor: bunun ortası neresi?', 'When you swing to extremes, ask yourself: where is the middle?'),
+  15: l('Çekiciliğin ve hırsın büyük bir güç; onu dürüstçe ve kimseyi bağımlı kılmadan kullan.', 'Your magnetism and ambition are great powers; use them honestly, without making anyone dependent.'),
+  16: l('Bir şey yıkıldığında suçlu aramak yerine daha sağlamını nasıl kuracağını düşün.', 'When something falls apart, think about building something sounder instead of finding blame.'),
+  17: l('Yeteneğini saklama; görünür olmak sana ve başkalarına ilham verir.', 'Don’t hide your gift; being seen inspires you and others.'),
+  18: l('Kaygı ile sezgiyi ayırmak için hislerini yazmak ve bir süre beklemek işe yarar.', 'Writing down your feelings and waiting a little helps you tell anxiety from intuition.'),
+  19: l('Işığını paylaşırken dinlenmeyi unutma; sürekli parlamak da yorar.', 'While you share your light, remember to rest; shining all the time is tiring too.'),
+  20: l('Aileyle barışık olmak senin için güç kaynağı; geçmişi yargılamadan kabul etmeye çalış.', 'Being at peace with family is a source of strength; try accepting the past without judging it.'),
+  21: l('Kendini tek bir yere ya da role sıkıştırma; dünyayı keşfetmek seni tamamlar.', 'Don’t squeeze yourself into one place or role; exploring the world completes you.'),
+  22: l('Özgürlüğünü korurken verdiğin sözleri tutmak sana hem hafiflik hem güven kazandırır.', 'Keeping your word while protecting your freedom brings you both lightness and trust.'),
+};
+
+/** Her noktanın hiç bilmeyen biri için açıklaması */
+export const EXPLAIN: Partial<Record<MxPos, L>> = {
+  A: l('Matrisin sol köşesi doğduğun günden hesaplanır. Bu sayı, insanların seni ilk tanıdığında gördüğü hâli, yani kişiliğinin en görünür yüzünü anlatır.', 'The left corner of the matrix comes from the day you were born. It describes how people see you when they first meet you, the most visible side of your personality.'),
+  B: l('Üst köşe doğduğun aydan gelir. Seni ruhen besleyen, doğuştan getirdiğin yetenekleri ve ilham kaynağını gösterir.', 'The top corner comes from your birth month. It shows the gifts you were born with and what inspires you.'),
+  C: l('Sağ köşe doğduğun yılın rakamlarından hesaplanır. Para, iş ve maddi dünyayla ilişkini, nasıl kazandığını anlatır.', 'The right corner is calculated from the digits of your birth year. It describes your relationship with money, work and the material world.'),
+  D: l('Alt köşe ilk üç sayının toplamıdır. Bu hayatta üzerinde çalışman beklenen konuyu ve zorlandığında ortaya çıkan gölge tarafını gösterir.', 'The bottom corner is the sum of the first three numbers. It shows the topic you are meant to work on in this life and the shadow side that appears under stress.'),
+  E: l('Merkez, matrisin kalbidir ve dört köşenin toplamından gelir. Kendini en rahat, en “sen” hissettiğin hâli anlatır. Yorulduğunda bu enerjiye dönmek seni toparlar.', 'The centre is the heart of the matrix, made from all four corners. It describes the state in which you feel most at ease and most yourself. Returning to this energy when tired restores you.'),
+  love: l('Aşk noktası, alt köşe ile merkez arasındaki çizgide durur. Partnerinde aradığın enerjiyi ve ilişkilerinde tekrar eden temayı gösterir.', 'The love point sits on the line between the bottom corner and the centre. It shows the energy you look for in a partner and the theme that repeats in your relationships.'),
+  money: l('Para noktası, sağ köşe ile merkez arasındaki çizgide durur. Paranın sana en kolay hangi tür işlerden aktığını gösterir.', 'The money point sits between the right corner and the centre. It shows the kind of work through which money flows to you most easily.'),
+  X: l('Aşk ve para çizgilerinin kesiştiği nokta, içten içe en çok neyi istediğini anlatır. Bu arzuyu tanımak hem aşkta hem işte doğru seçimler yapmanı kolaylaştırır.', 'Where the love and money lines cross describes what you want most deep down. Knowing this desire makes the right choices easier in both love and work.'),
+};
+export const SECTION_INTRO: Record<'core' | 'tail' | 'talent' | 'lovemoney' | 'purpose' | 'ancestry' | 'health' | 'ages', L> = {
+  core: l('Önce matrisin dört köşesine ve merkezine bakıyoruz. Bunlar kişiliğinin temel taşlarıdır: dışarıdan nasıl göründüğün, neyle beslendiğin, nasıl kazandığın ve nerede kendini evinde hissettiğin.', 'First we look at the four corners and the centre. These are the cornerstones of your personality: how you appear, what feeds you, how you earn and where you feel at home.'),
+  tail: l('Karmik kuyruk, matrisin alt ucundaki üç sayıdır. Sistemi kuranlara göre geçmişten taşıdığın ve bu hayatta çözmen beklenen bir tema anlatır. Bunu bir ceza gibi değil, tekrar tekrar karşına çıkan ve çözüldüğünde seni güçlendiren bir ders gibi düşün.', 'The karmic tail is the three numbers at the bottom of the matrix. Its founders describe it as a theme carried from the past, to be resolved in this life. Think of it not as a punishment but as a lesson that keeps returning and makes you stronger once resolved.'),
+  talent: l('Matrisin üst kolu, doğuştan getirdiğin yetenekleri gösterir. Bu alanlarda çok çaba harcamadan iyi olursun; onları fark edip geliştirdiğinde hayatın daha kolay akar.', 'The upper arm of the matrix shows the gifts you were born with. You are good in these areas without much effort; noticing and developing them makes life flow more easily.'),
+  lovemoney: l('Sağ alttaki küçük üçgen, aşk ve para kanalıdır. Burada iki soruya cevap ararız: kiminle mutlu olursun ve paran nereden gelir?', 'The small triangle at the lower right is the love and money channel. It answers two questions: who makes you happy, and where does your money come from?'),
+  purpose: l('Amaçlar, hayatının farklı dönemlerinde öne çıkan görevlerdir. Gençlikte kendini bulmak, orta yaşta topluma bir şey vermek, ileri yaşta ise hayatına anlam katmak gibi düşünebilirsin.', 'Purposes are the tasks that stand out at different stages of life: finding yourself when young, giving to society in mid-life, and giving meaning to your life later on.'),
+  ancestry: l('Çapraz karenin köşeleri ailenden gelen enerjileri anlatır. Sol üst ve sağ alt baba tarafını, sağ üst ve sol alt anne tarafını temsil eder. Bunlar hem soyundan aldığın güçleri hem de taşıdığın yükleri gösterir.', 'The corners of the diagonal square describe the energies from your family. Top-left and bottom-right represent your father’s side, top-right and bottom-left your mother’s. They show both the strengths you inherited and the burdens you carry.'),
+  health: l('Enerji haritası, matristeki sayıları yedi çakraya, yani geleneksel olarak bedenin enerji merkezleri sayılan yedi noktaya yerleştirir. Her satırda üç sayı vardır: “beden” fiziksel tarafı, “enerji” zihinsel ve ruhsal tarafı, “duygu” ise ikisinin toplamını gösterir. Bu tablo kendini tanımak içindir, tıbbi bilgi değildir; sağlıkla ilgili her konuda bir hekime danış.', 'The energy map places the matrix numbers on the seven chakras, traditionally the body’s energy centres. Each row has three numbers: “body” for the physical side, “energy” for the mental and spiritual side, and “emotion” for the two combined. This table is for self-reflection, not medical information; consult a doctor about any health matter.'),
+  ages: l('Matrisin dış çemberi bir saat gibi okunur: sol köşe doğduğun yıl, saat yönünde her köşe 10 yıl ileridir. Her 10 yıllık dönem sekiz küçük döneme bölünür ve her birinin kendi enerjisi vardır. Böylece hayatının hangi yaşında hangi temanın öne çıktığını görebilirsin.', 'The outer ring of the matrix is read like a clock: the left corner is the year you were born, and each corner clockwise is 10 years later. Each decade splits into eight smaller periods, each with its own energy, so you can see which theme stands out at which age.'),
+};
+
+const lowFirst = (s: string, lang: 'tr' | 'en') => (lang === 'tr' ? (s[0] === 'İ' ? 'i' : s[0] === 'I' ? 'ı' : s[0].toLocaleLowerCase('tr')) + s.slice(1) : s[0].toLowerCase() + s.slice(1));
+
+/** Bir matris noktasını akıcı bir paragraf olarak anlatır */
+export function mxStory(pos: MxPos, n: number, opts: { explain?: boolean } = {}): L {
+  const a = ARCANA[n];
+  if (!a) return l('', '');
+  const intro = opts.explain === false ? null : EXPLAIN[pos] ?? POS[pos]?.what;
+  const main = pos === 'love' ? a.love : pos === 'money' ? a.money : pos === 'tail' || pos === 'D' ? a.karma : a.plus;
+  const make = (lang: 'tr' | 'en') => [
+    intro?.[lang],
+    lang === 'tr' ? `Senin bu noktandaki sayı ${n}: ${a.name.tr}. Bu arkana ${a.key.tr} demektir.` : `Your number here is ${n}: ${a.name.en}. This arcana stands for ${a.key.en}.`,
+    main[lang],
+    pos !== 'love' && pos !== 'money' ? null : a.plus[lang],
+    lang === 'tr' ? `Bunun bir de gölge tarafı var: ${lowFirst(a.minus.tr.replace(/^(Gölgede|Dengesizlikte)\s+/, ''), 'tr')}` : `It also has a shadow side: ${lowFirst(a.minus.en.replace(/^(Its shadow (is|can be)|Out of balance,? it (shows as|can show as)|Out of balance,?)\s*/, ''), 'en')}`,
+    ADVICE[n][lang],
+  ].filter(Boolean).join(' ');
+  return { tr: make('tr'), en: make('en') };
+}

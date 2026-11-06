@@ -75,7 +75,7 @@ const tr = {
   disclaimer: 'Eğlence ve kişisel keşif amaçlıdır.',
   dayChart: 'Gündüz haritası', nightChart: 'Gece haritası',
   hq: {
-    tab: 'Soru', title: 'Soru Sor', intro: 'Horary (soru haritası) astrolojisi: Sorunu içtenlikle sorduğun anın ve bulunduğun yerin haritası kurulur ve William Lilly ile Öner Döşer’in kurallarına göre yanıtlanır.',
+    tab: 'Soru', title: 'Soru Sor', intro: 'Horary (soru haritası) astrolojisi: Sorunu içtenlikle sorduğun anın ve bulunduğun yerin haritası kurulur ve klasik soru astrolojisinin kurallarıyla yanıtlanır.',
     rules: 'İyi bir soru için: soruyu gerçekten önemsediğinde ve bir kez sor; aynı soruyu tekrar tekrar sorma. Sağlık, hukuk ve hamilelik konuları için bu bölümü değil uzmanları kullan.',
     pick: 'Sorunun konusu', yourQ: 'Sorunu kendi cümlenle yaz (isteğe bağlı)', place: 'Şu an bulunduğun yer', change: 'Değiştir', ask: 'Haritayı kur ve yanıtla',
     you: 'Sen (soran)', matter: 'Konu', considerations: 'Hükümden önce dikkat', details: 'Haritanın gösterdikleri', timing: 'Zamanlama', chartAt: 'Soru haritası', askAgain: 'Yeni soru sor',
@@ -87,7 +87,7 @@ const tr = {
     s2: '2. Astro-Güzellik: Makyaj, Saç & Glam', makeup: 'Makyaj stili & odak', finish: 'Ten bitişi', feature: 'Öne çıkarılacak bölge', lip: 'Dudak tonları', blush: 'Allık tonları', hairCut: 'Saç kesimi & şekillendirme', hairColor: 'Saç rengi seçenekleri', venusMods: 'Venüs açılarının etkisi',
     s3: '3. Gelecekteki Eş Profili & İlişki Dinamiği', look: 'Görünüm & stil', personality: 'Kişilik & enerji', career: 'Olası meslek alanları', meet: 'Tanışma ortamı', ruler: '7. ev yöneticisi', juno: 'Juno — bağlılık beklentin', dynamic: 'İlişki dinamiği', in7: '7. evdeki gezegenler',
     s4: '4. Doğum Haritası & Hayat Alanları', chartRuler: 'Harita yöneticisi & ana tema', careerT: 'Kariyer & toplumsal başarı (10. ev, MC)', fields: 'Uygun alanlar', money2: 'Kazanç tarzı (2. ev)', money8: 'Ortak kaynaklar & yatırım (8. ev)', mind: 'Zihin & iletişim (Merkür, 3./9. ev)', node: 'Karmik yol (Ay Düğümleri)', grow: 'Geliştir', release: 'Bırak', advice: 'Usta tavsiyesi: 3 somut adım',
-    lillyBody: 'Klasik tarif (Lilly, 1647)', lillySpouse: 'Klasik eş tarifi (Lilly: 7. ev burcu + yöneticisi + Ay)', lillyCareer: 'Klasik meslek göstergeleri (Lilly)',
+    lillyBody: 'Klasik dış görünüş tarifi', lillySpouse: 'Partnerinin klasik tarifi', lillyCareer: 'Klasik meslek eğilimleri',
     note: 'Fiziksel eş betimlemeleri geleneksel astrolojideki burç–görünüm eşleştirmelerine dayanır; olasılık olarak oku.',
   },
 };
@@ -161,7 +161,7 @@ const en: Strings = {
   disclaimer: 'For entertainment and self-reflection.',
   dayChart: 'Day chart', nightChart: 'Night chart',
   hq: {
-    tab: 'Ask', title: 'Ask a Question', intro: 'Horary astrology: a chart is cast for the moment and place you sincerely ask, and judged by the rules of William Lilly and Öner Döşer.',
+    tab: 'Ask', title: 'Ask a Question', intro: 'Horary astrology: a chart is cast for the moment and place you sincerely ask, and judged by the classical rules of horary astrology.',
     rules: 'For a good question: ask when it truly matters and ask once; don’t repeat the same question. For health, legal or pregnancy matters, consult professionals rather than this section.',
     pick: 'What is your question about?', yourQ: 'Write your question (optional)', place: 'Where you are now', change: 'Change', ask: 'Cast the chart and answer',
     you: 'You (querent)', matter: 'The matter', considerations: 'Considerations before judgment', details: 'What the chart shows', timing: 'Timing', chartAt: 'Question chart', askAgain: 'Ask a new question',
@@ -173,7 +173,7 @@ const en: Strings = {
     s2: '2. Astro-Beauty: Makeup, Hair & Glam', makeup: 'Makeup style & focus', finish: 'Skin finish', feature: 'Feature to highlight', lip: 'Lip shades', blush: 'Blush shades', hairCut: 'Haircut & styling', hairColor: 'Hair colour options', venusMods: 'Venus aspects',
     s3: '3. Future Spouse Profile & Dynamics', look: 'Appearance & style', personality: 'Personality & vibe', career: 'Likely career fields', meet: 'Meeting ground', ruler: '7th-house ruler', juno: 'Juno — your commitment ideal', dynamic: 'Relationship dynamic', in7: 'Planets in your 7th house',
     s4: '4. Core Chart & Life Areas', chartRuler: 'Chart ruler & main theme', careerT: 'Career & public success (10th, MC)', fields: 'Fields that suit you', money2: 'Earning style (2nd)', money8: 'Shared resources & investing (8th)', mind: 'Mind & communication (Mercury, 3rd/9th)', node: 'Karmic path (Lunar Nodes)', grow: 'Grow toward', release: 'Release', advice: 'Master advice: 3 concrete steps',
-    lillyBody: 'Classical description (Lilly, 1647)', lillySpouse: 'Classical spouse description (Lilly: 7th sign + ruler + Moon)', lillyCareer: 'Classical career indicators (Lilly)',
+    lillyBody: 'Classical description of appearance', lillySpouse: 'Classical description of your partner', lillyCareer: 'Classical career leanings',
     note: 'Physical partner descriptions follow traditional sign–appearance associations; read them as possibilities.',
   },
 };

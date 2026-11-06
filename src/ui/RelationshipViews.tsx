@@ -8,6 +8,7 @@ import { synPair } from '../content/techniqueTexts';
 import { relPlacementTitle, relPlacementText, relAscText, relAspectTitle, relAspectText, relName, synTitle, synLongText, synWhy } from '../content/relationship';
 import { score, areas, summary, questions, intimacy, topAspects, BAND, INTIMACY, Intimacy, Scored, synOrb } from '../content/synastryAreas';
 import { Expand, P, Section, Sub, st } from './kit';
+import { strength } from './Readings';
 import { C, F, serif } from '../theme';
 
 type Lang = 'tr' | 'en';
@@ -44,7 +45,7 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
     return { sc, ar, sum: summary(sc, ar), qs: questions(sc), int: intimacy(me, them, sc), top: topAspects(sc) };
   }, [cross, me, them]);
   const name = (k: K) => relName(k)[lang];
-  const line = (s: Scored) => `${name(s.x.b)} ${ASPECT_INFO[s.x.type].name[lang]} ${name(s.x.a)} (${s.x.orb.toFixed(2)}°)`;
+  const line = (s: Scored) => `${lang === 'tr' ? 'Senin' : 'Your'} ${name(s.x.b)} ${ASPECT_INFO[s.x.type].name[lang].replace(/\s*\(.*\)/, '')} ${lang === 'tr' ? 'onun' : 'their'} ${name(s.x.a)}`;
   const shown = cross.filter(x => asteroids || (!ASTS.includes(x.a as BodyId) && !ASTS.includes(x.b as BodyId)));
 
   return (
@@ -104,16 +105,16 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
       </Section>
 
       <Section title={tx('En Kolaylaştırıcı Açılar', 'Most Supportive Aspects', lang)}>
-        {data.top.easy.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`Orb ${s.x.orb.toFixed(2)}°, ${tx('Neden önemli?', 'Why it matters', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
+        {data.top.easy.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`${strength(s.x.orb, lang)}. ${tx('Neden önemli?', 'Why it matters', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
       </Section>
       <Section title={tx('En Çok Dikkat İsteyen Açılar', 'Aspects Needing Most Care', lang)}>
-        {data.top.hard.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`Orb ${s.x.orb.toFixed(2)}°, ${tx('Neden dikkat ister?', 'Why it needs care', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
+        {data.top.hard.map((s, i) => <Item key={i} title={synTitle(s.x.b, s.x.a, s.x.type, theirName)[lang]} meta={`${strength(s.x.orb, lang)}. ${tx('Neden dikkat ister?', 'Why it needs care', lang)}`} body={synWhy(s.x.b, s.x.a, s.x.type)[lang]} />)}
         <Sub style={{ marginTop: 6 }}>{tx('Zorlayıcı açılar ilişkiyi bitirmek zorunda değildir; doğru farkındalıkla tarafların birbirini daha iyi anlamasına yardım eder.', 'Challenging aspects need not end a relationship; with awareness they help you understand each other better.', lang)}</Sub>
       </Section>
 
       <Section title={tx('Sinastri Açıları', 'Synastry Aspects', lang)}>
         <Expand more={tx('Tümünü göster', 'Show all', lang)} less={tx('Daha az', 'Less', lang)} initial={12} items={shown.map((x, i) => (
-          <Item key={i} title={`${synTitle(x.b, x.a, x.type, theirName)[lang]} - ${orbStr(x.orb)}`} body={synLongText(x.b, x.a, x.type, theirName, synPair(x.b, x.a, x.type))[lang]} />
+          <Item key={i} title={synTitle(x.b, x.a, x.type, theirName)[lang]} meta={strength(x.orb, lang)} body={synLongText(x.b, x.a, x.type, theirName, synPair(x.b, x.a, x.type))[lang]} />
         ))} />
       </Section>
     </View>
@@ -227,7 +228,7 @@ export function RelChartReport({ chart, kind, lang, asteroids, desc }: { chart: 
       <Section>
         {H(tx('GEZEGENLERİN AÇILARI', 'PLANETARY ASPECTS', lang))}
         {asps.length ? asps.map((a, i) => (
-          <Item key={i} title={`${relAspectTitle(a.a, a.b, a.type)[lang]} - ${orbStr(a.orb)}`} body={relAspectText(a.a, a.b, a.type, synPair(a.a, a.b, a.type))[lang]} />
+          <Item key={i} title={relAspectTitle(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={relAspectText(a.a, a.b, a.type, synPair(a.a, a.b, a.type))[lang]} />
         )) : <P>—</P>}
       </Section>
     </View>

@@ -3,12 +3,13 @@ import { Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { useStore } from '../store';
 import { destinyMatrix, compatMatrix, healthMap, ageMap, Matrix } from '../engine/matrix';
-import { ARCANA, POS, CHAKRA, mxText, MxPos } from '../content/arcana';
+import { ARCANA, POS, CHAKRA, MxPos, mxStory, SECTION_INTRO, ADVICE } from '../content/arcana';
 import { Chips, Expand, H1, H3, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
+const lowFirstTr = (s: string) => (s[0] === 'İ' ? 'i' : s[0] === 'I' ? 'ı' : s[0].toLocaleLowerCase('tr')) + s.slice(1);
 
 // ---------------- Diyagram ----------------
 function MatrixChart({ m, size, lang }: { m: Matrix; size: number; lang: Lang }) {
@@ -94,12 +95,15 @@ export default function MatrixScreen() {
   const an = (n: number) => `${n} ${ARCANA[n].name[lang]}`;
   const date = `${String(person.birth.day).padStart(2, '0')}.${String(person.birth.month).padStart(2, '0')}.${person.birth.year}`;
 
-  const Item = ({ pos, n, label }: { pos: MxPos; n: number; label?: string }) => (
-    <View style={st.row}>
-      <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.sub, marginBottom: 2 }}>{label ?? POS[pos].title[lang]}</Text>
-      <H3>{an(n)}</H3>
-      <P style={{ marginTop: 4 }}>{mxText(pos, n)[lang]}</P>
+  const Item = ({ pos, n, label, explain }: { pos: MxPos; n: number; label?: string; explain?: boolean }) => (
+    <View style={{ marginBottom: 22 }}>
+      <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{label ?? POS[pos].title[lang]}</Text>
+      <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(n)}</H3>
+      <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>{mxStory(pos, n, { explain })[lang]}</Text>
     </View>
+  );
+  const Intro = ({ k }: { k: keyof typeof SECTION_INTRO }) => (
+    <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 18, maxWidth: 640 }}>{SECTION_INTRO[k][lang]}</Text>
   );
 
   const diagramSize = twoCol ? 480 : Math.min(inner(760), 520);
@@ -119,38 +123,58 @@ export default function MatrixScreen() {
 
   const reading = (
     <View>
-      <Section title={tx('Ana enerjiler', 'Core energies', lang)}>
-        <Item pos="A" n={m.A} /><Item pos="B" n={m.B} /><Item pos="C" n={m.C} /><Item pos="E" n={m.E} />
+      <Section title={tx('Ana enerjilerin', 'Your core energies', lang)}>
+        <Intro k="core" />
+        <Item pos="A" n={m.A} /><Item pos="B" n={m.B} /><Item pos="C" n={m.C} /><Item pos="D" n={m.D} label={tx('Bu hayattaki görevin', 'Your task in this life', lang)} /><Item pos="E" n={m.E} />
       </Section>
-      <Section title={tx('Karmik kuyruk', 'Karmic tail', lang)} sub={`${tx('Kuyruk', 'Tail', lang)} ${m.tail[2]}-${m.tail[1]}-${m.tail[0]}. ${POS.tail.what[lang]}`}>
-        <Item pos="D" n={m.D} label={tx('Karmik görev (alt köşe)', 'Karmic task (bottom corner)', lang)} />
-        <Item pos="tail" n={m.D2} label={tx('Kuyruğun ortası', 'Middle of the tail', lang)} />
-        <Item pos="tail" n={m.D1} label={tx('Kuyruğun merkeze yakın ucu', 'Inner end of the tail', lang)} />
+      <Section title={tx('Karmik kuyruğun', 'Your karmic tail', lang)}>
+        <Intro k="tail" />
+        <Text style={{ fontFamily: F.serif, fontSize: 34, color: C.danger, marginBottom: 8 }}>{m.tail[2]}-{m.tail[1]}-{m.tail[0]}</Text>
+        <P style={{ marginBottom: 18, maxWidth: 640 }}>{lang === 'tr'
+          ? `Kuyruk üç sayıdan oluşur ve merkezden dışa doğru okunur: ${m.tail[2]} geçmişten getirdiğin temayı, ${m.tail[1]} bu temayı bugün nasıl yaşadığını, ${m.tail[0]} ise dersi çözdüğünde varacağın yeri anlatır.`
+          : `The tail has three numbers read from the centre outward: ${m.tail[2]} is the theme you carry from the past, ${m.tail[1]} how you live it today, and ${m.tail[0]} where you arrive once the lesson is resolved.`}</P>
+        <Item pos="tail" n={m.D1} explain={false} label={tx('Geçmişten getirdiğin tema', 'The theme you carry from the past', lang)} />
+        <Item pos="tail" n={m.D2} explain={false} label={tx('Bugün nasıl yaşıyorsun', 'How you live it today', lang)} />
+        <Item pos="D" n={m.D} explain={false} label={tx('Çözüldüğünde varacağın yer', 'Where you arrive once resolved', lang)} />
       </Section>
-      <Section title={tx('Yetenekler', 'Talents', lang)} sub={POS.talent.what[lang]}>
-        <Item pos="talent" n={m.B2} label={tx('Doğuştan yetenek', 'Innate talent', lang)} />
-        <Item pos="talent" n={m.B1} label={tx('Geliştirilecek yetenek', 'Talent to develop', lang)} />
+      <Section title={tx('Yeteneklerin', 'Your talents', lang)}>
+        <Intro k="talent" />
+        <Item pos="talent" n={m.B2} explain={false} label={tx('Doğuştan getirdiğin yetenek', 'The gift you were born with', lang)} />
+        <Item pos="talent" n={m.B1} explain={false} label={tx('Geliştirdikçe açılan yetenek', 'The gift that opens as you develop it', lang)} />
       </Section>
       <Section title={tx('Aşk ve para', 'Love and money', lang)}>
+        <Intro k="lovemoney" />
         <Item pos="love" n={m.love} /><Item pos="money" n={m.money} /><Item pos="X" n={m.X} />
       </Section>
-      <Section title={tx('Amaçlar', 'Purposes', lang)} sub={tx('Hayatın farklı dönemlerinde öne çıkan görevler.', 'Tasks that stand out in different stages of life.', lang)}>
-        {(['sky', 'earth', 'personal', 'male', 'female', 'social', 'spiritual', 'planetary'] as MxPos[]).map(k => (
-          <View key={k} style={st.row}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-              <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, flex: 1 }}>{POS[k].title[lang]}</Text>
-              <Text style={{ fontFamily: F.serifBold, fontWeight: '700', fontSize: 18, color: C.rose }}>{an((m as any)[k])}</Text>
+      <Section title={tx('Hayat amaçların', 'Your life purposes', lang)}>
+        <Intro k="purpose" />
+        {(['personal', 'social', 'spiritual', 'planetary'] as MxPos[]).map(k => {
+          const n = (m as any)[k] as number;
+          return (
+            <View key={k} style={{ marginBottom: 22 }}>
+              <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{POS[k].title[lang]}</Text>
+              <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(n)}</H3>
+              <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>
+                {POS[k].what[lang]} {lang === 'tr' ? `Bu dönemin enerjisi ${ARCANA[n].name.tr}: ${ARCANA[n].key.tr}.` : `This period’s energy is ${ARCANA[n].name.en}: ${ARCANA[n].key.en}.`} {ARCANA[n].plus[lang]} {ADVICE[n][lang]}
+              </Text>
             </View>
-            <Sub>{POS[k].what[lang]} {ARCANA[(m as any)[k]].plus[lang]}</Sub>
-          </View>
-        ))}
+          );
+        })}
+        <Sub style={{ maxWidth: 640 }}>{lang === 'tr'
+          ? `Kişisel amacın iki çizgiden doğar: gök çizgisi (${an(m.sky)}) ruhsal değerlerini, yer çizgisi (${an(m.earth)}) ise maddi becerilerini anlatır.`
+          : `Your personal purpose comes from two lines: the sky line (${an(m.sky)}) for spiritual values and the earth line (${an(m.earth)}) for practical skills.`}</Sub>
       </Section>
-      <Section title={tx('Soy enerjileri', 'Ancestral energies', lang)} sub={tx('Çapraz karenin köşeleri: sol üst ve sağ alt baba soyu, sağ üst ve sol alt anne soyu.', 'Corners of the diagonal square: top-left and bottom-right are the paternal line, top-right and bottom-left the maternal line.', lang)}>
-        {([[m.F, tx('Baba soyu (sol üst)', 'Paternal (top-left)', lang)], [m.H, tx('Baba soyu (sağ alt)', 'Paternal (bottom-right)', lang)], [m.G, tx('Anne soyu (sağ üst)', 'Maternal (top-right)', lang)], [m.I, tx('Anne soyu (sol alt)', 'Maternal (bottom-left)', lang)]] as [number, string][]).map(([n, label]) => (
-          <View key={label} style={st.row}>
-            <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.sub }}>{label}</Text>
-            <H3>{an(n)}</H3>
-            <P style={{ marginTop: 2 }}>{ARCANA[n].plus[lang]} {ARCANA[n].karma[lang]}</P>
+      <Section title={tx('Ailenden gelen enerjiler', 'Energies from your family', lang)}>
+        <Intro k="ancestry" />
+        {([[m.F, m.H, tx('Baba tarafın', 'Your father’s side', lang), m.male], [m.G, m.I, tx('Anne tarafın', 'Your mother’s side', lang), m.female]] as [number, number, string, number][]).map(([x, y, label, line]) => (
+          <View key={label} style={{ marginBottom: 22 }}>
+            <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{label}</Text>
+            <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(x)} {lang === 'tr' ? 've' : 'and'} {an(y)}</H3>
+            <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>
+              {lang === 'tr'
+                ? `Bu taraftan sana iki güç geçmiş. ${ARCANA[x].name.tr}: ${lowFirstTr(ARCANA[x].plus.tr)} ${ARCANA[y].name.tr} ise şunu getirir: ${lowFirstTr(ARCANA[y].plus.tr)} Bu soyun sana bıraktığı ders ise ${ARCANA[line].name.tr} enerjisiyle ilgili: ${lowFirstTr(ARCANA[line].karma.tr.replace(/^Ders: /, ''))}`
+                : `Two strengths come to you from this side. ${ARCANA[x].name.en}: ${ARCANA[x].plus.en} ${ARCANA[y].name.en} adds this: ${ARCANA[y].plus.en} The lesson this line leaves you relates to ${ARCANA[line].name.en}: ${ARCANA[line].karma.en.replace(/^The lesson: /, '')}`}
+            </Text>
           </View>
         ))}
       </Section>
@@ -158,7 +182,8 @@ export default function MatrixScreen() {
   );
 
   const health = (
-    <Section title={tx('Enerji haritası (çakralar)', 'Energy map (chakras)', lang)} sub={tx('Geleneksel çakra tablosu. Tıbbi bilgi değildir; sağlık konularında bir hekime danış.', 'The traditional chakra table. Not medical information; consult a doctor about health.', lang)}>
+    <Section title={tx('Enerji haritası', 'Energy map', lang)}>
+      <Intro k="health" />
       <View style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.ink }}>
         <Text style={[st.sub, { flex: 1 }]}>{tx('Çakra', 'Chakra', lang)}</Text>
         {[tx('Fizik', 'Body', lang), tx('Enerji', 'Energy', lang), tx('Duygu', 'Emotion', lang)].map(h => <Text key={h} style={[st.sub, { width: 64, textAlign: 'center' }]}>{h}</Text>)}
@@ -176,17 +201,20 @@ export default function MatrixScreen() {
         <Text style={{ flex: 1, fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink }}>{tx('Toplam', 'Total', lang)}</Text>
         {[hm.total.physics, hm.total.energy, hm.total.emotions].map((n, i) => <Text key={i} style={{ width: 64, textAlign: 'center', fontFamily: F.serifBold, fontWeight: '700', fontSize: 18, color: C.gold }}>{n}</Text>)}
       </View>
-      <P style={{ marginTop: 8 }}>{tx(`Duygu toplamındaki ${an(hm.total.emotions)}: `, `Emotion total ${an(hm.total.emotions)}: `, lang)}{ARCANA[hm.total.emotions].plus[lang]}</P>
+      <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 14, maxWidth: 660 }}>{lang === 'tr'
+        ? `En alttaki toplam satırı, bütün enerji merkezlerinin ortak dengesini gösterir. Senin duygu toplamın ${an(hm.total.emotions)}. ${ARCANA[hm.total.emotions].plus.tr} ${ADVICE[hm.total.emotions].tr}`
+        : `The total row at the bottom shows the overall balance of all energy centres. Your emotion total is ${an(hm.total.emotions)}. ${ARCANA[hm.total.emotions].plus.en} ${ADVICE[hm.total.emotions].en}`}</Text>
     </Section>
   );
 
   const fmtAge = (a: number) => (Number.isInteger(a) ? `${a}` : a.toFixed(a % 1 === 0.5 ? 1 : 2).replace('.', lang === 'tr' ? ',' : '.'));
   const agesView = (
-    <Section title={tx('Yaş haritası', 'Age map', lang)} sub={tx('Her 10 yıllık dönem 8 alt döneme bölünür; her alt dönemin bir arkanası vardır.', 'Each 10-year span is split into 8 sub-periods, each with its own arcana.', lang)}>
+    <Section title={tx('Yaş haritası', 'Age map', lang)}>
+      <Intro k="ages" />
       <View style={[st.panel, { marginBottom: 16, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
         <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.ink }}>{tx(`Şu an (${Math.floor(age)} yaş)`, `Now (age ${Math.floor(age)})`, lang)}</Text>
         <H3>{an(ages[curIdx].arcana)}</H3>
-        <P>{ARCANA[ages[curIdx].arcana].plus[lang]} {ARCANA[ages[curIdx].arcana].minus[lang]}</P>
+        <P>{lang === 'tr' ? `Hayatının bu döneminde ${ARCANA[ages[curIdx].arcana].name.tr} enerjisi öne çıkıyor: ${ARCANA[ages[curIdx].arcana].key.tr}.` : `In this period of your life the energy of ${ARCANA[ages[curIdx].arcana].name.en} stands out: ${ARCANA[ages[curIdx].arcana].key.en}.`} {ARCANA[ages[curIdx].arcana].plus[lang]} {ADVICE[ages[curIdx].arcana][lang]}</P>
         {ages[curIdx + 1] ? <Sub style={{ marginTop: 6 }}>{tx(`Sonraki dönem ${fmtAge(ages[curIdx + 1].age)} yaşında: ${an(ages[curIdx + 1].arcana)}`, `Next period at age ${fmtAge(ages[curIdx + 1].age)}: ${an(ages[curIdx + 1].arcana)}`, lang)}</Sub> : null}
       </View>
       <Expand more={tx('Tüm yaşları göster', 'Show all ages', lang)} less={tx('Daha az', 'Less', lang)} initial={16} items={ages.map((a, i) => (
@@ -206,6 +234,24 @@ export default function MatrixScreen() {
       <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{partner
         ? tx(`${person.name || 'Sen'} ve ${partner.name || 'partner'} için uyum matrisi: iki matrisin her noktası toplanır.`, `Compatibility matrix for ${person.name || 'you'} and ${partner.name || 'partner'}: each point of the two matrices is added.`, lang)
         : tx(`${person.name || 'Sen'}, ${date}. Doğum tarihindeki sayılar 22 Büyük Arkana’ya indirgenir; saat ve yer gerekmez.`, `${person.name || 'You'}, ${date}. Your birth date is reduced to the 22 Major Arcana; no time or place needed.`, lang)}</Sub>
+      <View style={[st.panel, { marginBottom: 24 }]}>
+        <Text style={{ fontFamily: F.serif, fontSize: 22, color: C.ink, marginBottom: 6 }}>{tx('Kader matrisi nedir?', 'What is a destiny matrix?', lang)}</Text>
+        <P style={{ maxWidth: 640 }}>{tx(
+          'Kader matrisi, doğum tarihindeki sayılardan kurulan bir kendini tanıma haritasıdır. Gün, ay ve yıl toplanarak 1 ile 22 arasında sayılara indirgenir. Her sayı, tarot destesindeki 22 Büyük Arkana kartından birine karşılık gelir ve bir enerjiyi, bir karakter özelliğini anlatır. Astrolojiden farklı olarak doğum saati veya yeri gerekmez.',
+          'The destiny matrix is a self-discovery map built from the numbers in your birth date. The day, month and year are reduced to numbers between 1 and 22. Each number matches one of the 22 Major Arcana cards of the tarot and describes an energy or character trait. Unlike astrology, it needs no birth time or place.', lang)}</P>
+        <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, marginTop: 12, marginBottom: 4 }}>{tx('Nasıl okunur?', 'How to read it', lang)}</Text>
+        {[
+          tx('Diyagramdaki her daire bir sayıdır. Köşeler kişiliğinin temelini, ortadaki altın daire ise özünü gösterir.', 'Each circle in the diagram is a number. The corners show the base of your personality; the gold circle in the middle is your core.', lang),
+          tx('Aşağıdaki “Yorum” bölümü her sayıyı sırayla, sade bir dille açıklar. Önce noktanın ne anlama geldiğini, sonra sendeki sayının ne söylediğini okursun.', 'The “Reading” section below explains each number in turn, in plain words: first what the point means, then what your number says.', lang),
+          tx('“Enerji” ve “Yaşlar” sekmeleri aynı sayıları beden enerjisine ve hayatının yıllarına yerleştirir.', 'The “Energy” and “Ages” tabs place the same numbers on your body’s energy and the years of your life.', lang),
+        ].map((t, i) => (
+          <View key={i} style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+            <Text style={{ fontFamily: F.serifBold, fontWeight: '700', fontSize: 16, color: C.gold, width: 16 }}>{i + 1}</Text>
+            <P style={{ flex: 1 }}>{t}</P>
+          </View>
+        ))}
+        <Sub style={{ marginTop: 10 }}>{tx('Matris bilimsel bir yöntem değildir; kendini düşünmek için bir araç olarak kullan.', 'The matrix is not a scientific method; use it as a tool for reflection.', lang)}</Sub>
+      </View>
       {people.length > 1 ? (
         <>
           <Text style={st.label}>{tx('Kimin matrisi?', 'Whose matrix?', lang)}</Text>

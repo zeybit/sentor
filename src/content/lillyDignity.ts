@@ -174,11 +174,11 @@ export const LILLY_MANNERS: Record<Classical, { well: L; ill: L }> = {
 export function mannersFor(s: LillyScore): { tone: 'well' | 'ill' | 'mixed'; text: L } {
   const m = LILLY_MANNERS[s.id];
   if (s.essTotal >= 4 || s.total >= 10) return { tone: 'well', text: m.well };
-  if (s.essTotal <= -4 && s.total < 0) return { tone: 'ill', text: { tr: `${m.ill.tr} Lilly’ye göre bu zayıflık bilinçli çabayla dengelenebilir; güçlü yönün: ${m.well.tr.charAt(0).toLocaleLowerCase('tr') + m.well.tr.slice(1)}`, en: `${m.ill.en} Per Lilly, conscious effort can balance this weakness; your potential strength: ${m.well.en.charAt(0).toLowerCase() + m.well.en.slice(1)}` } };
+  if (s.essTotal <= -4 && s.total < 0) return { tone: 'ill', text: { tr: `${m.ill.tr} bu zayıflık bilinçli çabayla dengelenebilir; güçlü yönün: ${m.well.tr.charAt(0).toLocaleLowerCase('tr') + m.well.tr.slice(1)}`, en: `${m.ill.en} conscious effort can balance this weakness; your potential strength: ${m.well.en.charAt(0).toLowerCase() + m.well.en.slice(1)}` } };
   return { tone: 'mixed', text: { tr: `Gezegen orta güçte; iki tarafı da taşır. Güçlü yanı: ${m.well.tr} Dikkat edilecek yanı: ${m.ill.tr}`, en: `Moderate strength; both sides can show. Strength: ${m.well.en} Watch for: ${m.ill.en}` } };
 }
 
-/** Doğum haritasının en güçlü gezegeni (toplam Lilly puanına göre) */
+/** Doğum haritasının en güçlü gezegeni (toplam güç puanına göre) */
 export function strongestPlanet(ch: Chart): LillyScore {
   return CLASSICAL.map(id => lillyScore(ch, id)).sort((a, b) => b.total - a.total)[0];
 }

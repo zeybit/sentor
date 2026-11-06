@@ -289,8 +289,8 @@ export function buildPortfolio(ch: Chart): Portfolio {
     body: asc !== null ? ASC_BODY[asc] : l('Yükselen burç için doğum saati gerekli.', 'Your birth time is needed for the Ascendant.'),
     lilly: personLines(ch, 1),
     classicColours: asc !== null ? {
-      tr: `Lilly'nin klasik renkleri: Yükselen ${SIGNS[asc].tr} → ${LILLY_SIGN_COLOUR[asc].tr}; harita yöneticisi ${BODIES[SIGN_RULERS[asc]].name.tr} → ${LILLY_PLANET_COLOUR[SIGN_RULERS[asc]]!.tr}.`,
-      en: `Lilly's classic colours: ${SIGNS[asc].en} Rising → ${LILLY_SIGN_COLOUR[asc].en}; chart ruler ${BODIES[SIGN_RULERS[asc]].name.en} → ${LILLY_PLANET_COLOUR[SIGN_RULERS[asc]]!.en}.`,
+      tr: `klasik renkleri: Yükselen ${SIGNS[asc].tr} → ${LILLY_SIGN_COLOUR[asc].tr}; harita yöneticisi ${BODIES[SIGN_RULERS[asc]].name.tr} → ${LILLY_PLANET_COLOUR[SIGN_RULERS[asc]]!.tr}.`,
+      en: `Classic colours: ${SIGNS[asc].en} Rising → ${LILLY_SIGN_COLOUR[asc].en}; chart ruler ${BODIES[SIGN_RULERS[asc]].name.en} → ${LILLY_PLANET_COLOUR[SIGN_RULERS[asc]]!.en}.`,
     } : null,
     wardrobe: [aStyle.clothes, ...(asc !== null && asc !== venus ? [STYLE[venus].clothes] : []), STYLE[venus].accessories],
     palette: style.palette,

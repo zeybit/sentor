@@ -8,8 +8,8 @@ import { P, Sub, st } from './kit';
 import { C, serif } from '../theme';
 
 const T = {
-  tr: { intro: 'Lilly’nin “güç ve zayıflık” tablosuna göre her gezegenin puanı. Esas onurlar gezegenin burçtaki doğal gücünü, ilineksel durumlar ise haritadaki etkinliğini gösterir. En yüksek puanlı gezegen hayatında en rahat kullandığın enerjidir.', ess: 'Esas', acc: 'İlineksel', total: 'Toplam', strongest: 'En güçlü gezegenin', manners: 'Lilly’ye göre karakter', tap: 'Ayrıntı için dokun' },
-  en: { intro: 'Each planet’s score by Lilly’s table of fortitudes and debilities. Essential dignities show a planet’s natural strength by sign; accidental conditions show how active it is in the chart. The highest-scoring planet is the energy you use most easily.', ess: 'Essential', acc: 'Accidental', total: 'Total', strongest: 'Your strongest planet', manners: 'Character per Lilly', tap: 'Tap for details' },
+  tr: { intro: 'Klasik “güç ve zayıflık” tablosuna göre her gezegenin puanı. Esas onurlar gezegenin burçtaki doğal gücünü, ilineksel durumlar ise haritadaki etkinliğini gösterir. En yüksek puanlı gezegen hayatında en rahat kullandığın enerjidir.', ess: 'Esas', acc: 'İlineksel', total: 'Toplam', strongest: 'En güçlü gezegenin', manners: 'karakter', tap: 'Ayrıntı için dokun' },
+  en: { intro: 'Each planet’s score on the classical table of strengths and weaknesses. Essential dignities show a planet’s natural strength by sign; accidental conditions show how active it is in the chart. The highest-scoring planet is the energy you use most easily.', ess: 'Essential', acc: 'Accidental', total: 'Total', strongest: 'Your strongest planet', manners: 'Character per Lilly', tap: 'Tap for details' },
 };
 
 export default function LillyTable({ chart, lang }: { chart: Chart; lang: Lang }) {
