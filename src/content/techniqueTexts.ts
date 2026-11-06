@@ -3,6 +3,7 @@ import type { BodyId, AspectType, Chart } from '../engine/astro';
 import { houseOf } from '../engine/astro';
 import { L, SIGNS, BODIES, HOUSES, BODY_FUNCTION, SIGN_ADVERB, ASPECT_INFO } from './base';
 import { ord } from './life';
+import { returnAscLife, returnLife, returnStageLife } from './lifeTexts';
 import type { CrossAspect, LotId, AngleLine } from '../engine/techniques';
 
 const l = (tr: string, en: string): L => ({ tr, en });
@@ -75,10 +76,10 @@ export const PROG_MOON_SIGN: L[] = [
   l('Progres Ay Balık’ta: içe dönüş, maneviyat, sanat ve bir döngünün tamamlanması.', 'Progressed Moon in Pisces: introspection, spirituality, art and the closing of a cycle.'),
 ];
 export function progMoonHouse(h: number): L {
-  return { tr: `Progres Ay ${h}. evinde: önümüzdeki yaklaşık 2,5 yıl boyunca duygusal odağın ${HOUSES[h - 1].area.tr}.`, en: `Progressed Moon in your ${ord(h)} house: for about 2.5 years your emotional focus is ${HOUSES[h - 1].area.en}.` };
+  return { tr: `Önümüzdeki iki-üç yıl boyunca kalbin en çok şu konularda: ${HOUSES[h - 1].area.tr}.`, en: `For the next two to three years your heart is mostly on ${HOUSES[h - 1].area.en}.` };
 }
 export function progSunText(sign: number): L {
-  return { tr: `Progres Güneş ${SIGNS[sign].tr} burcunda: yaklaşık 30 yıllık bu dönemde kimliğin ${SIGN_ADVERB[sign].tr} bir ifade kazanıyor.`, en: `Progressed Sun in ${SIGNS[sign].en}: in this ~30-year chapter your identity grows more ${SIGN_ADVERB[sign].en.replace(/ly\b/g, '')}.` };
+  return { tr: `Hayatının bu uzun evresinde (yaklaşık 30 yıl) kendini ${SIGN_ADVERB[sign].tr} ifade etmeye başlıyorsun; neyi önemsediğin buna göre şekilleniyor.`, en: `In this long chapter of life (about 30 years) you start expressing yourself ${SIGN_ADVERB[sign].en}; what you care about takes shape around it.` };
 }
 export const PROG_PHASE: L[] = [
   l('Progres Ay fazı yeni ay: 29 yıllık döngünün başı; yeni bir hayat bölümü tohumlanıyor.', 'Progressed new moon: the start of a 29-year cycle; a new life chapter is seeded.'),
@@ -93,6 +94,18 @@ export const PROG_PHASE: L[] = [
 
 // ---------------- Dönüşler ----------------
 export function returnTexts(ret: Chart, natal: Chart, kind: 'solar' | 'lunar'): { title: L; body: L }[] {
+  const out: { title: L; body: L }[] = [];
+  if (ret.asc !== null) {
+    out.push(returnAscLife(Math.floor(ret.asc / 30), kind));
+    if (natal.cusps.length) out.push(returnStageLife(houseOf(ret.asc, natal.cusps), kind));
+  }
+  for (const p of ['sun', 'moon', 'venus', 'mars', 'jupiter', 'saturn'] as BodyId[]) {
+    const pp = ret.positions[p]; if (!pp?.house) continue;
+    const r = returnLife(p, pp.house, kind); if (r) out.push(r);
+  }
+  return out;
+}
+export function returnTextsTechnical(ret: Chart, natal: Chart, kind: 'solar' | 'lunar'): { title: L; body: L }[] {
   const out: { title: L; body: L }[] = [];
   const period = kind === 'solar' ? l('bu yıl', 'this year') : l('bu ay', 'this month');
   if (ret.asc !== null) {

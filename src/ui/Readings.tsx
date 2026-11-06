@@ -3,7 +3,8 @@ import { Text, View } from 'react-native';
 import type { AspectType, BodyId, Chart } from '../engine/astro';
 import { ALL_BODIES, PLANETS, angleDiff, fmtDeg, ASPECTS, norm, moonPhase } from '../engine/astro';
 import { crossAspects, CrossAspect, antiscion, solarArcDegrees } from '../engine/techniques';
-import { BODIES, SIGNS, SIGN_GLYPHS, HOUSES, ASPECT_INFO, dignityOf, SIGN_KEYWORDS } from '../content/base';
+import { BODIES, SIGNS, SIGN_GLYPHS, HOUSES, ASPECT_INFO, dignityOf, SIGN_KEYWORDS, SIGN_ADVERB } from '../content/base';
+import { CLOSING, lifeAspect, lifeHouse, lifePair, shortArea, Technique } from '../content/lifeTexts';
 import { placementText, ASC } from '../content/placements';
 import { planetInHouse, houseRulerText } from '../content/life';
 import { PLANET_HOUSE } from '../content/houseTexts';
@@ -80,11 +81,11 @@ export function NatalReading({ chart, s, t, lang }: { chart: Chart; s: Strings; 
 }
 
 // ---------------- Transit / progresyon / solar arc ----------------
-function CrossList({ list, prefix, lang, s }: { list: CrossAspect[]; prefix: { tr: string; en: string }; lang: Lang; s: Strings }) {
+function CrossList({ list, tech, lang, s }: { list: CrossAspect[]; tech: Technique; lang: Lang; s: Strings }) {
   if (!list.length) return null;
   return (
     <Expand more={s.showMore} less={s.showLess} initial={10} items={list.map((x, i) => {
-      const r = transitText(x.a, x.b, x.type, prefix);
+      const r = lifeAspect(x.a, x.b, x.type, tech);
       const ap = x.applying === undefined ? '' : x.applying ? (lang === 'tr' ? ', etkisi artıyor' : ', building up') : (lang === 'tr' ? ', etkisi azalıyor' : ', fading');
       return <Item key={i} title={r.title[lang]} meta={`${strength(x.orb, lang)}${ap}`} body={r.body[lang]} />;
     })} />
@@ -94,14 +95,15 @@ function CrossList({ list, prefix, lang, s }: { list: CrossAspect[]; prefix: { t
 export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKind; natal: Chart; other: Chart; s: Strings; t: T2; lang: Lang }) {
   const OP = other.positions;
   if (kind === 'transit') {
-    const list = crossAspects(other, natal, 3, [...PLANETS, 'chiron', 'node'] as BodyId[]).filter(x => x.a !== 'asc' && x.a !== 'mc');
+    const W: Record<string, number> = { pluto: 9, neptune: 8, uranus: 7, saturn: 6, jupiter: 5, node: 4, chiron: 4, mars: 3, sun: 2, venus: 2, mercury: 1, moon: 0 };
+    const list = crossAspects(other, natal, 3, [...PLANETS, 'chiron', 'node'] as BodyId[]).filter(x => x.a !== 'asc' && x.a !== 'mc').sort((p, q) => (W[q.a] ?? 0) - (W[p.a] ?? 0) || p.orb - q.orb);
     const slow: BodyId[] = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'mars'];
     return (
       <View>
-        <Section title={t.transitTitle}>{list.length ? <CrossList list={list} prefix={{ tr: 'Transit', en: 'Transit' }} lang={lang} s={s} /> : <P>{t.noItems}</P>}</Section>
+        <Section title={t.transitTitle}>{list.length ? <CrossList list={list} tech="transit" lang={lang} s={s} /> : <P>{t.noItems}</P>}</Section>
         {natal.cusps.length ? (
           <Section title={t.transitHouses}>
-            {slow.map(b => { const h = (() => { for (let i = 0; i < 12; i++) { const a = natal.cusps[i], z = natal.cusps[(i + 1) % 12]; if (norm(OP[b].lon - a) < norm(z - a)) return i + 1; } return 1; })(); return <View key={b} style={st.row}><P>{transitHouseText(b, h)[lang]}</P></View>; })}
+            {slow.map(b => { const h = (() => { for (let i = 0; i < 12; i++) { const a = natal.cusps[i], z = natal.cusps[(i + 1) % 12]; if (norm(OP[b].lon - a) < norm(z - a)) return i + 1; } return 1; })(); const r = lifeHouse(b, h); return <Item key={b} title={r.title[lang]} body={r.body[lang]} />; })}
           </Section>
         ) : null}
       </View>
@@ -114,12 +116,12 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     return (
       <View>
         <Section title={t.progTitle}>
-          <Item title={`${lang === 'tr' ? 'Progres Güneş' : 'Progressed Sun'} — ${SIGNS[OP.sun.sign][lang]} ${fmtDeg(OP.sun.lon)}`} body={progSunText(OP.sun.sign)[lang]} />
-          <Item title={`${lang === 'tr' ? 'Progres Ay' : 'Progressed Moon'} — ${SIGNS[OP.moon.sign][lang]} ${fmtDeg(OP.moon.lon)}`} body={PROG_MOON_SIGN[OP.moon.sign][lang] + (pmH ? ' ' + progMoonHouse(pmH)[lang] : '')} />
-          <Item title={lang === 'tr' ? 'Progres Ay fazı' : 'Progressed lunar phase'} body={PROG_PHASE[ph][lang]} />
-          {other.asc !== null ? <Item title={`${lang === 'tr' ? 'Progres Yükselen' : 'Progressed Ascendant'} — ${SIGNS[Math.floor(other.asc / 30)][lang]} ${fmtDeg(other.asc)}`} body={lang === 'tr' ? `Kendini ifade biçimin yavaş yavaş ${SIGNS[Math.floor(other.asc / 30)].tr} niteliklerine doğru evriliyor. Progres MC: ${SIGNS[Math.floor(other.mc! / 30)].tr} ${fmtDeg(other.mc!)}.` : `Your self-expression gradually evolves toward ${SIGNS[Math.floor(other.asc / 30)].en} qualities. Progressed MC: ${fmtDeg(other.mc!)} ${SIGNS[Math.floor(other.mc! / 30)].en}.`} /> : null}
+          <Item title={lang === 'tr' ? 'Hayatının bu evresindeki ana yönelimin' : 'Your main direction in this phase of life'} body={progSunText(OP.sun.sign)[lang]} />
+          <Item title={lang === 'tr' ? 'Şu anki duygusal evren (2-3 yıl)' : 'Your current emotional chapter (2–3 years)'} body={afterColon(PROG_MOON_SIGN[OP.moon.sign][lang]) + (pmH ? ' ' + progMoonHouse(pmH)[lang] : '')} />
+          <Item title={lang === 'tr' ? 'Hayat döngünün neresindesin' : 'Where you are in your life cycle'} body={afterColon(PROG_PHASE[ph][lang])} />
+          {other.asc !== null ? <Item title={lang === 'tr' ? 'İnsanlara nasıl görünmeye başlıyorsun' : 'How you are starting to come across'} body={lang === 'tr' ? `Tavrın ve tarzın yavaş yavaş ${SIGN_ADVERB[Math.floor(other.asc / 30)].tr} bir hâl alıyor; çevren bu değişimi senden önce fark edebilir.` : `Your manner and style are slowly turning ${SIGN_ADVERB[Math.floor(other.asc / 30)].en}; people around you may notice before you do.`} /> : null}
         </Section>
-        <Section title={t.progAspects}>{list.length ? <CrossList list={list} prefix={{ tr: 'Progres', en: 'Progressed' }} lang={lang} s={s} /> : <P>{t.noItems}</P>}</Section>
+        <Section title={t.progAspects}><Sub style={{ marginBottom: 8 }}>{CLOSING.progressed![lang]}</Sub>{list.length ? <CrossList list={list} tech="progressed" lang={lang} s={s} /> : <P>{t.noItems}</P>}</Section>
       </View>
     );
   }
@@ -128,7 +130,8 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     const arc = solarArcDegrees(natal, other.utc);
     return (
       <Section title={t.saTitle}>
-        {list.length ? <CrossList list={list.filter(x => !(x.a === x.b))} prefix={{ tr: 'Solar arc', en: 'Solar arc' }} lang={lang} s={s} /> : <P>{t.noItems}</P>}
+        <Sub style={{ marginBottom: 8 }}>{CLOSING.solarArc![lang]}</Sub>
+        {list.length ? <CrossList list={list.filter(x => !(x.a === x.b))} tech="solarArc" lang={lang} s={s} /> : <P>{t.noItems}</P>}
       </Section>
     );
   }
@@ -140,8 +143,8 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
         <Section title={kind === 'solarReturn' ? t.srTitle : t.lrTitle}>
           {items.map((x, i) => <Item key={i} title={x.title[lang]} body={x.body[lang]} />)}
         </Section>
-        <Section title={s.aspects}>
-          <Expand more={s.showMore} less={s.showLess} initial={6} items={asp.map((a, i) => <Item key={i} title={aspectTitle(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={(natalAspectText(a.a, a.b, a.type) ?? ASPECT_INFO[a.type].desc)[lang]} />)} />
+        <Section title={kind === 'solarReturn' ? (lang === 'tr' ? 'Bu yılın iç dengeleri' : 'The inner balance of the year') : (lang === 'tr' ? 'Bu ayın iç dengeleri' : 'The inner balance of the month')}>
+          <Expand more={s.showMore} less={s.showLess} initial={6} items={asp.map((a, i) => <Item key={i} title={lifePair(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={(natalAspectText(a.a, a.b, a.type) ?? ASPECT_INFO[a.type].desc)[lang]} />)} />
         </Section>
       </View>
     );
@@ -160,7 +163,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
         <Sub style={{ marginBottom: 8 }}>{t.antDesc}</Sub>
         {hits.length ? hits.map((h, i) => {
           const txt = natalAspectText(h.a, h.b, h.contra ? 'square' : 'trine') ?? ASPECT_INFO[h.contra ? 'square' : 'trine'].desc;
-          return <Item key={i} title={`${BODIES[h.a].name[lang]} ⇄ ${BODIES[h.b].name[lang]} (${h.contra ? t.contra + ' ' : ''}${t.antContact})`} meta={strength(h.orb, lang)} body={txt[lang]} />;
+          return <Item key={i} title={lang === 'tr' ? `${cap(shortArea(h.a).tr)} ve ${shortArea(h.b).tr} arasında gizli bir bağ` : `A hidden link between ${shortArea(h.a).en} and ${shortArea(h.b).en}`} meta={strength(h.orb, lang)} body={txt[lang]} />;
         }) : <P>{t.noItems}</P>}
       </Section>
     );
@@ -170,17 +173,45 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     return (
       <View>
         <Section title={t.nowTitle}>
-          {PLANETS.map(p => <View key={p} style={[st.row, { paddingVertical: 6 }]}><Text style={st.p}>{BODIES[p].glyph} {BODIES[p].name[lang]} — {SIGNS[OP[p].sign][lang]} {fmtDeg(OP[p].lon)}{OP[p].retro ? ' ℞' : ''}</Text></View>)}
+          {PLANETS.map(p => <Item key={p} title={`${BODIES[p].glyph} ${BODIES[p].name[lang]} ${lang === 'tr' ? SIGNS[OP[p].sign].tr + ' burcunda' : 'in ' + SIGNS[OP[p].sign].en}${OP[p].retro ? (lang === 'tr' ? ', geri gidiyor' : ', retrograde') : ''}`} body={nowPlanet(p, OP[p].sign, !!OP[p].retro)[lang]} />)}
           <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? `Ay ışığı %${Math.round(mp.illum * 100)}` : `Moon illumination ${Math.round(mp.illum * 100)}%`}</Sub>
         </Section>
         <Section title={t.nowAspects}>
-          <Expand more={s.showMore} less={s.showLess} initial={8} items={other.aspects.filter(a => PLANETS.includes(a.a) && PLANETS.includes(a.b)).map((a, i) => <Item key={i} title={aspectTitle(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={ASPECT_INFO[a.type].desc[lang]} />)} />
+          <Expand more={s.showMore} less={s.showLess} initial={8} items={other.aspects.filter(a => PLANETS.includes(a.a) && PLANETS.includes(a.b)).map((a, i) => <Item key={i} title={nowPair(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={(lang === 'tr' ? 'Herkes için: ' : 'For everyone: ') + ASPECT_INFO[a.type].desc[lang] + '.'} />)} />
         </Section>
-        <Section title={t.transitTitle}><CrossList list={crossAspects(other, natal, 2, PLANETS).filter(x => x.a !== 'asc' && x.a !== 'mc')} prefix={{ tr: 'Transit', en: 'Transit' }} lang={lang} s={s} /></Section>
+        <Section title={t.transitTitle}><CrossList list={crossAspects(other, natal, 2, PLANETS).filter(x => x.a !== 'asc' && x.a !== 'mc')} tech="transit" lang={lang} s={s} /></Section>
       </View>
     );
   }
   return null;
+}
+
+
+const afterColon = (x: string) => { const i = x.indexOf(':'); const r = i >= 0 && i < 60 ? x.slice(i + 1).trim() : x; return r.charAt(0).toLocaleUpperCase('tr') + r.slice(1); };
+const cap = (x: string) => x.charAt(0).toLocaleUpperCase('tr') + x.slice(1);
+const GEN: Partial<Record<BodyId, { tr: string; en: string }>> = {
+  sun: { tr: 'genel enerji ve gündem', en: 'the general mood and agenda' }, moon: { tr: 'duygular ve ruh hali', en: 'feelings and mood' },
+  mercury: { tr: 'iletişim, haberler ve kararlar', en: 'communication, news and decisions' }, venus: { tr: 'aşk, zevkler ve para', en: 'love, taste and money' },
+  mars: { tr: 'enerji, hırs ve tartışmalar', en: 'energy, drive and arguments' }, jupiter: { tr: 'şans, büyüme ve iyimserlik', en: 'luck, growth and optimism' },
+  saturn: { tr: 'sorumluluk, kurallar ve sınırlar', en: 'responsibility, rules and limits' }, uranus: { tr: 'yenilikler ve sürprizler', en: 'innovation and surprises' },
+  neptune: { tr: 'hayaller, sanat ve belirsizlik', en: 'dreams, art and uncertainty' }, pluto: { tr: 'güç ve köklü değişimler', en: 'power and deep change' },
+};
+const GEN_SHORT: Partial<Record<BodyId, { tr: string; en: string }>> = {
+  sun: { tr: 'gündem', en: 'the agenda' }, moon: { tr: 'ruh hali', en: 'mood' }, mercury: { tr: 'iletişim', en: 'communication' }, venus: { tr: 'aşk', en: 'love' },
+  mars: { tr: 'enerji', en: 'energy' }, jupiter: { tr: 'şans', en: 'luck' }, saturn: { tr: 'sorumluluklar', en: 'duties' }, uranus: { tr: 'sürprizler', en: 'surprises' },
+  neptune: { tr: 'hayaller', en: 'dreams' }, pluto: { tr: 'güç dengeleri', en: 'power dynamics' },
+};
+function nowPair(a: BodyId, b: BodyId, type: AspectType) {
+  const n = ASPECT_INFO[type].nature, A = GEN_SHORT[a] ?? { tr: '', en: '' }, B = GEN_SHORT[b] ?? { tr: '', en: '' };
+  const v = n === 'harmonious' ? { tr: 'uyum içinde', en: 'in harmony' } : n === 'fusion' ? { tr: 'birleşiyor', en: 'merging' } : { tr: 'arasında gerginlik var', en: 'are in tension' };
+  return { tr: `${cap(A.tr)} ve ${B.tr} ${v.tr}`, en: `${cap(A.en)} and ${B.en} ${v.en}` };
+}
+function nowPlanet(p: BodyId, sign: number, retro: boolean) {
+  const g = GEN[p] ?? { tr: 'bu alan', en: 'this area' };
+  return {
+    tr: `Herkes için ${g.tr} şu sıralar ${SIGN_ADVERB[sign].tr} bir havada.${retro ? ' Gezegen geri gidiyor: bu konularda gecikme, tekrar ve eskiye dönüş olabilir; yeni başlangıç yerine gözden geçirme zamanı.' : ''}`,
+    en: `For everyone, ${g.en} currently has a ${SIGN_ADVERB[sign].en} feel.${retro ? ' It is retrograde: delays, repeats and returns to the past are likely; a time to review rather than start fresh.' : ''}`,
+  };
 }
 
 export { ptName };
