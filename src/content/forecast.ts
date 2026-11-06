@@ -8,6 +8,7 @@ import { ord } from './life';
 const l = (tr: string, en: string): L => ({ tr, en });
 
 export const TRANSIT_THEME: Record<string, L> = {
+  lilith: l('bastırılan istekler ve isyan', 'suppressed wishes and rebellion'),
   sun: l('odak ve canlılık', 'focus and vitality'),
   moon: l('ruh hali ve duygular', 'mood and emotions'),
   mercury: l('iletişim, mesajlar ve kararlar', 'communication, messages and decisions'),
@@ -56,19 +57,22 @@ export interface Daily {
 const NATAL_POINT_NAME = (p: BodyId | 'asc' | 'mc'): L =>
   p === 'asc' ? l('Yükselen', 'your Ascendant') : p === 'mc' ? l('MC (kariyer noktan)', 'your Midheaven') : l(`natal ${BODIES[p].name.tr}`, `natal ${BODIES[p].name.en}`);
 
-const ORB: Record<string, number> = { moon: 2.5, sun: 1.5, mercury: 1.5, venus: 1.5, mars: 1.5, jupiter: 1.2, saturn: 1.2, uranus: 1, neptune: 1, pluto: 1 };
+const ORB: Record<string, number> = { lilith: 1.5, moon: 2.5, sun: 1.5, mercury: 1.5, venus: 1.5, mars: 1.5, jupiter: 1.2, saturn: 1.2, uranus: 1, neptune: 1, pluto: 1 };
 
 export function computeDaily(ch: Chart, date = new Date()): Daily {
-  const now = positionsAt(date, [...PLANETS]);
+  const now = positionsAt(date, [...PLANETS, 'lilith']);
   const natal: { id: BodyId | 'asc' | 'mc'; lon: number }[] = PLANETS.map(p => ({ id: p, lon: ch.positions[p].lon }));
   if (ch.asc !== null) natal.push({ id: 'asc', lon: ch.asc });
   if (ch.mc !== null) natal.push({ id: 'mc', lon: ch.mc });
+  if (ch.positions.lilith) natal.push({ id: 'lilith', lon: ch.positions.lilith.lon });
   const hits: TransitHit[] = [];
-  for (const tp of PLANETS) {
+  for (const tp of [...PLANETS, 'lilith'] as BodyId[]) {
     for (const n of natal) {
+      if (tp === n.id) continue;
       const d = angleDiff(now[tp].lon, n.lon);
       for (const a of ASPECTS) {
         if (a.type === 'quincunx') continue;
+        if ((tp === 'lilith' || n.id === 'lilith') && a.type !== 'conjunction' && a.type !== 'opposition') continue;
         const orb = Math.abs(d - a.angle);
         if (orb <= ORB[tp]) {
           const info = ASPECT_INFO[a.type];
@@ -112,7 +116,7 @@ export function computeDaily(ch: Chart, date = new Date()): Daily {
   };
 }
 
-function weight(p: BodyId) { return ({ pluto: 10, neptune: 9, uranus: 8, saturn: 7, jupiter: 6, mars: 5, sun: 4, venus: 3, mercury: 2, moon: 1 } as any)[p] || 0; }
+function weight(p: BodyId) { return ({ lilith: 5.5, pluto: 10, neptune: 9, uranus: 8, saturn: 7, jupiter: 6, mars: 5, sun: 4, venus: 3, mercury: 2, moon: 1 } as any)[p] || 0; }
 
 export const MOON_HOUSE_DAY = (h: number): L => h ? l(`Ay bugün senin ${h}. evinde: odak ${HOUSES[h - 1].short.tr.toLocaleLowerCase('tr')} konularında.`, `The Moon is in your ${ord(h)} house: focus on ${HOUSES[h - 1].short.en.toLowerCase()}.`) : l('', '');
 

@@ -99,7 +99,7 @@ export function returnTexts(ret: Chart, natal: Chart, kind: 'solar' | 'lunar'): 
     out.push(returnAscLife(Math.floor(ret.asc / 30), kind));
     if (natal.cusps.length) out.push(returnStageLife(houseOf(ret.asc, natal.cusps), kind));
   }
-  for (const p of ['sun', 'moon', 'venus', 'mars', 'jupiter', 'saturn'] as BodyId[]) {
+  for (const p of ['sun', 'moon', 'venus', 'mars', 'jupiter', 'saturn', 'lilith'] as BodyId[]) {
     const pp = ret.positions[p]; if (!pp?.house) continue;
     const r = returnLife(p, pp.house, kind); if (r) out.push(r);
   }

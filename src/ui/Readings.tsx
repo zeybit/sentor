@@ -95,8 +95,8 @@ function CrossList({ list, tech, lang, s }: { list: CrossAspect[]; tech: Techniq
 export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKind; natal: Chart; other: Chart; s: Strings; t: T2; lang: Lang }) {
   const OP = other.positions;
   if (kind === 'transit') {
-    const W: Record<string, number> = { pluto: 9, neptune: 8, uranus: 7, saturn: 6, jupiter: 5, node: 4, chiron: 4, mars: 3, sun: 2, venus: 2, mercury: 1, moon: 0 };
-    const list = crossAspects(other, natal, 3, [...PLANETS, 'chiron', 'node'] as BodyId[]).filter(x => x.a !== 'asc' && x.a !== 'mc').sort((p, q) => (W[q.a] ?? 0) - (W[p.a] ?? 0) || p.orb - q.orb);
+    const W: Record<string, number> = { pluto: 9, neptune: 8, uranus: 7, saturn: 6, jupiter: 5, node: 4, chiron: 4, lilith: 4, mars: 3, sun: 2, venus: 2, mercury: 1, moon: 0 };
+    const list = crossAspects(other, natal, 3, [...PLANETS, 'chiron', 'node', 'lilith'] as BodyId[]).filter(x => x.a !== 'asc' && x.a !== 'mc' && lilOk(x)).sort((p, q) => (W[q.a] ?? 0) - (W[p.a] ?? 0) || p.orb - q.orb);
     const slow: BodyId[] = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'mars'];
     return (
       <View>
@@ -110,7 +110,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     );
   }
   if (kind === 'progressed') {
-    const list = crossAspects(other, natal, 1, PLANETS).filter(x => x.a !== 'asc' && x.a !== 'mc' && !['uranus', 'neptune', 'pluto'].includes(x.a as string));
+    const list = crossAspects(other, natal, 1, [...PLANETS, 'lilith'] as BodyId[]).filter(x => x.a !== 'asc' && x.a !== 'mc' && x.a !== 'lilith' && !['uranus', 'neptune', 'pluto'].includes(x.a as string) && lilOk(x));
     const ph = Math.floor(norm(OP.moon.lon - OP.sun.lon + 22.5) / 45) % 8;
     const pmH = natal.cusps.length ? (() => { for (let i = 0; i < 12; i++) { const a = natal.cusps[i], z = natal.cusps[(i + 1) % 12]; if (norm(OP.moon.lon - a) < norm(z - a)) return i + 1; } return 1; })() : 0;
     return (
@@ -126,7 +126,7 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     );
   }
   if (kind === 'solarArc') {
-    const list = crossAspects(other, natal, 1, PLANETS);
+    const list = crossAspects(other, natal, 1, [...PLANETS, 'lilith'] as BodyId[]).filter(lilOk);
     const arc = solarArcDegrees(natal, other.utc);
     return (
       <Section title={t.saTitle}>
@@ -197,13 +197,13 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     return (
       <View>
         <Section title={t.nowTitle}>
-          {PLANETS.map(p => <Item key={p} title={`${BODIES[p].glyph} ${BODIES[p].name[lang]} ${lang === 'tr' ? SIGNS[OP[p].sign].tr + ' burcunda' : 'in ' + SIGNS[OP[p].sign].en}${OP[p].retro ? (lang === 'tr' ? ', geri gidiyor' : ', retrograde') : ''}`} body={nowPlanet(p, OP[p].sign, !!OP[p].retro)[lang]} />)}
+          {([...PLANETS, 'lilith'] as BodyId[]).map(p => <Item key={p} title={`${BODIES[p].glyph} ${BODIES[p].name[lang]} ${lang === 'tr' ? SIGNS[OP[p].sign].tr + ' burcunda' : 'in ' + SIGNS[OP[p].sign].en}${OP[p].retro ? (lang === 'tr' ? ', geri gidiyor' : ', retrograde') : ''}`} body={nowPlanet(p, OP[p].sign, !!OP[p].retro)[lang]} />)}
           <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? `Ay ışığı %${Math.round(mp.illum * 100)}` : `Moon illumination ${Math.round(mp.illum * 100)}%`}</Sub>
         </Section>
         <Section title={t.nowAspects}>
           <Expand more={s.showMore} less={s.showLess} initial={8} items={other.aspects.filter(a => PLANETS.includes(a.a) && PLANETS.includes(a.b)).map((a, i) => <Item key={i} title={nowPair(a.a, a.b, a.type)[lang]} meta={strength(a.orb, lang)} body={(lang === 'tr' ? 'Herkes için: ' : 'For everyone: ') + ASPECT_INFO[a.type].desc[lang] + '.'} />)} />
         </Section>
-        <Section title={t.transitTitle}><CrossList list={crossAspects(other, natal, 2, PLANETS).filter(x => x.a !== 'asc' && x.a !== 'mc')} tech="transit" lang={lang} s={s} /></Section>
+        <Section title={t.transitTitle}><CrossList list={crossAspects(other, natal, 2, [...PLANETS, 'lilith'] as BodyId[]).filter(x => x.a !== 'asc' && x.a !== 'mc' && lilOk(x))} tech="transit" lang={lang} s={s} /></Section>
       </View>
     );
   }
@@ -211,6 +211,8 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
 }
 
 
+/** Lilith yalnızca kavuşum ve karşıtlıkla yorumlanır */
+const lilOk = (x: CrossAspect) => (x.a !== 'lilith' && x.b !== 'lilith') || x.type === 'conjunction' || x.type === 'opposition';
 const afterColon = (x: string) => { const i = x.indexOf(':'); const r = i >= 0 && i < 60 ? x.slice(i + 1).trim() : x; return r.charAt(0).toLocaleUpperCase('tr') + r.slice(1); };
 const cap = (x: string) => x.charAt(0).toLocaleUpperCase('tr') + x.slice(1);
 const GEN: Partial<Record<BodyId, { tr: string; en: string }>> = {
@@ -219,6 +221,7 @@ const GEN: Partial<Record<BodyId, { tr: string; en: string }>> = {
   mars: { tr: 'enerji, hırs ve tartışmalar', en: 'energy, drive and arguments' }, jupiter: { tr: 'şans, büyüme ve iyimserlik', en: 'luck, growth and optimism' },
   saturn: { tr: 'sorumluluk, kurallar ve sınırlar', en: 'responsibility, rules and limits' }, uranus: { tr: 'yenilikler ve sürprizler', en: 'innovation and surprises' },
   neptune: { tr: 'hayaller, sanat ve belirsizlik', en: 'dreams, art and uncertainty' }, pluto: { tr: 'güç ve köklü değişimler', en: 'power and deep change' },
+  lilith: { tr: 'bastırılan arzular ve isyan', en: 'suppressed desires and rebellion' },
 };
 const GEN_SHORT: Partial<Record<BodyId, { tr: string; en: string }>> = {
   sun: { tr: 'gündem', en: 'the agenda' }, moon: { tr: 'ruh hali', en: 'mood' }, mercury: { tr: 'iletişim', en: 'communication' }, venus: { tr: 'aşk', en: 'love' },

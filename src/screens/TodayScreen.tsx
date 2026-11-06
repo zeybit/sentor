@@ -7,6 +7,7 @@ import { H1, Meter, P, Section, Sub, Expand, st, useLayout } from '../ui/kit';
 import SkyBand from '../ui/SkyBand';
 import NextPeriod from '../ui/NextPeriod';
 import { strength } from '../ui/Readings';
+import { lifeAspect } from '../content/lifeTexts';
 import { YearCard } from '../ui/LillyBlocks';
 import { MonthlyTransits, LunarCalendar, PlanetaryHours, VoidMoon } from '../ui/TodayExtras';
 import { T2S } from '../i18n2';
@@ -54,9 +55,10 @@ export default function TodayScreen() {
 
       <Section title={s.activeTransits}>
         {daily.hits.length === 0 ? <P>{s.noTransits}</P> : (
-          <Expand more={s.showMore} less={s.showLess} initial={5} items={daily.hits.map((h, i) => (
-            <View key={i} style={st.row}><P>{h.text[lang]}</P><Sub>{strength(h.orb, lang)}</Sub></View>
-          ))} />
+          <Expand more={s.showMore} less={s.showLess} initial={5} items={daily.hits.map((h, i) => {
+            const r = lifeAspect(h.transit, h.natal, h.type, 'transit');
+            return <View key={i} style={st.row}><Text style={{ fontFamily: serif, fontSize: 18, color: C.ink }}>{r.title[lang]}</Text><Sub>{strength(h.orb, lang)}</Sub><P style={{ marginTop: 4 }}>{r.body[lang]}</P></View>;
+          })} />
         )}
       </Section>
 

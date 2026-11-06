@@ -23,6 +23,7 @@ export const LIFE_AREA: Partial<Record<K, L>> = {
   pluto: l('içindeki güç ve köklü değişimler', 'your inner power and deep changes'),
   chiron: l('eski kırgınlıkların ve iyileşmen', 'your old hurts and healing'),
   node: l('hayatının yönü', 'the direction of your life'),
+  lilith: l('saklı tarafın ve bastırdığın arzuların', 'your hidden side and suppressed desires'),
   asc: l('görünüşün ve insanlara karşı tavrın', 'your appearance and how you come across'),
   mc: l('kariyerin ve itibarın', 'your career and reputation'),
 };
@@ -41,6 +42,7 @@ const TONE_TXT: Partial<Record<BodyId, Record<Tone, L>>> = {
   neptune: { easy: l('ilham ve sezgi güçleniyor', 'inspiration and intuition grow'), hard: l('belirsizlik ve hayal kırıklığı riski', 'risk of confusion and disappointment'), fusion: l('sisli ama ilham dolu bir dönem', 'a foggy but inspired period') },
   pluto: { easy: l('güç kazandıran derin bir değişim', 'a deep change that empowers you'), hard: l('zorlayıcı ama dönüştürücü bir süreç', 'a hard but transforming process'), fusion: l('köklü bir yeniden doğuş', 'a radical rebirth') },
   chiron: { easy: l('eski yaralar iyileşebilir', 'old wounds can heal'), hard: l('eski kırgınlıklar yeniden gün yüzüne çıkıyor', 'old hurts resurface'), fusion: l('iyileşme ve yüzleşme zamanı', 'a time to face things and heal') },
+  lilith: { easy: l('saklı gücün işine yarıyor', 'your hidden power works for you'), hard: l('bastırdıkların yüzeye çıkıyor', 'what you suppressed comes to the surface'), fusion: l('artık yeter dediğin bir an', 'an "enough is enough" moment') },
   node: { easy: l('doğru yöne bir kapı aralanıyor', 'a door opens in the right direction'), hard: l('yön değiştirme baskısı', 'pressure to change course'), fusion: l('kader gibi hissettiren bir buluşma ya da karar', 'a meeting or decision that feels fated') },
 };
 
@@ -57,6 +59,17 @@ const ANGLE_TXT: Record<'asc' | 'mc', Record<Tone, { t: L; e: L }>> = {
   },
 };
 
+const LILITH_EFF: Record<Tone, L> = {
+  easy: l('Saklamaya alıştığın taraf bu konuda sana cesaret veriyor; kurallara uymadığın yerde şans buluyorsun', 'The side you usually hide gives you courage here; you find luck where you break the rules'),
+  hard: l('Bu konuda yıllardır yuttuğun bir şey yüzeye çıkabilir: öfke, kıskançlık ya da bastırılmış bir istek. Kaçmak yerine adını koymak seni özgürleştirir', 'Something you swallowed for years may rise here: anger, jealousy or a suppressed wish. Naming it instead of running frees you'),
+  fusion: l('Bu konuda artık eskisi gibi uysal olamazsın. Sınır çizmek, hayır demek ya da yasak sayılan bir şeyi istemek gündeme gelir', 'You can no longer be as compliant as before here. Setting limits, saying no, or wanting something forbidden comes up'),
+};
+const TO_LILITH: Record<Tone, L> = {
+  easy: l('Bu etki saklı tarafını yumuşakça uyandırıyor; bastırdığın bir isteği sahiplenmek kolaylaşıyor', 'This gently wakes your hidden side; owning a suppressed wish becomes easier'),
+  hard: l('Bu etki seni kızdıran, kıskandıran ya da "fazla" bulunduğun eski bir yaraya dokunuyor. Tepkin büyük olabilir; altındaki ihtiyacı görmeye çalış', 'This touches an old wound where you were angry, jealous or called "too much". Your reaction may be big; look for the need beneath it'),
+  fusion: l('Bu etki tam olarak bastırdığın gücün üstüne basıyor: yasak bir çekim, güçlü bir öfke ya da bir anda gelen özgürleşme isteği olabilir', 'This lands right on your suppressed power: a forbidden attraction, strong anger or a sudden urge to break free'),
+};
+
 export type Technique = 'transit' | 'progressed' | 'solarArc';
 export const CLOSING: Record<Technique, L | null> = {
   transit: null,
@@ -70,9 +83,9 @@ export function lifeAspect(t: K, n: K, type: AspectType, tech: Technique): { tit
   const area = lifeArea(n);
   const ang = t === 'asc' || t === 'mc' ? ANGLE_TXT[t][tn] : null;
   const tt = ang?.t ?? TONE_TXT[t as BodyId]?.[tn] ?? (tn === 'easy' ? l('destekleniyor', 'supported') : tn === 'hard' ? l('sınanıyor', 'being tested') : l('gündemde', 'on the agenda'));
-  const raw = ang?.e ?? TRANSIT_EFFECT[t as BodyId]?.[tn === 'easy' ? 'harmonious' : tn === 'hard' ? 'challenging' : 'fusion'] ?? ASPECT_INFO[type].desc;
+  const raw = ang?.e ?? (t === 'lilith' ? LILITH_EFF[tn] : n === 'lilith' ? TO_LILITH[tn] : null) ?? TRANSIT_EFFECT[t as BodyId]?.[tn === 'easy' ? 'harmonious' : tn === 'hard' ? 'challenging' : 'fusion'] ?? ASPECT_INFO[type].desc;
   const eff = { tr: cap(raw.tr), en: cap(raw.en) };
-  const span = tech === 'transit' ? TRANSIT_SPAN[t as BodyId] : null;
+  const span = tech === 'transit' ? (t === 'lilith' ? l('1–2 ay', '1–2 months') : TRANSIT_SPAN[t as BodyId]) : null;
   return {
     title: { tr: `${cap(area.tr)}: ${tt.tr}`, en: `${cap(area.en)}: ${tt.en}` },
     body: {
@@ -86,7 +99,7 @@ export function lifeAspect(t: K, n: K, type: AspectType, tech: Technique): { tit
 const SHORT: Partial<Record<K, L>> = {
   sun: l('özgüvenin', 'your confidence'), moon: l('duyguların', 'your feelings'), mercury: l('aklın', 'your mind'), venus: l('aşk hayatın', 'your love life'),
   mars: l('enerjin', 'your energy'), jupiter: l('şansın', 'your luck'), saturn: l('sorumlulukların', 'your duties'), uranus: l('özgürlük isteğin', 'your need for freedom'),
-  neptune: l('hayallerin', 'your dreams'), pluto: l('içindeki güç', 'your inner power'), chiron: l('eski yaraların', 'your old wounds'), node: l('hayat yönün', 'your life direction'),
+  neptune: l('hayallerin', 'your dreams'), pluto: l('içindeki güç', 'your inner power'), lilith: l('saklı tarafın', 'your hidden side'), chiron: l('eski yaraların', 'your old wounds'), node: l('hayat yönün', 'your life direction'),
   asc: l('görünüşün', 'your image'), mc: l('kariyerin', 'your career'),
 };
 export const shortArea = (k: K): L => SHORT[k] ?? lifeArea(k);
@@ -123,6 +136,7 @@ const RET_PLANET: Partial<Record<BodyId, { t: L; b: L }>> = {
   venus: { t: l('Aşk ve keyif nereden gelecek', 'Where love and joy will come from'), b: l('sevgi, keyif ve güzel anlar en çok', 'love, pleasure and good moments mostly') },
   mars: { t: l('Nerede mücadele edip harekete geçeceksin', 'Where you will fight and act'), b: l('mücadele ve harekete geçme isteğin en çok', 'your urge to act and fight mostly') },
   jupiter: { t: l('Şansın nerede açılıyor', 'Where luck opens up'), b: l('şans ve fırsatlar en çok', 'luck and opportunities mostly') },
+  lilith: { t: l('Nerede kuralları yıkacaksın', 'Where you will break the rules'), b: l('bastırdığın istekler ve hayır deme gücün en çok', 'your suppressed wishes and power to say no mostly') },
   saturn: { t: l('Nerede emek ve sabır gerekecek', 'Where effort and patience will be needed'), b: l('emek, sabır ve sorumluluk en çok', 'effort, patience and responsibility mostly') },
 };
 export function returnLife(planet: BodyId, house: number, kind: 'solar' | 'lunar'): { title: L; body: L } | null {
