@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 
-export type IconName = 'today' | 'chart' | 'portfolio' | 'matrix' | 'ask' | 'trends' | 'settings' | 'chevron' | 'help' | 'plus' | 'close';
+export type IconName = 'future' | 'today' | 'chart' | 'portfolio' | 'matrix' | 'ask' | 'trends' | 'settings' | 'chevron' | 'help' | 'plus' | 'close';
 
 /** 24×24 çizgi ikonlar; tek kalınlık, uçlar yuvarlak */
 export default function Icon({ name, size = 22, color, filled }: { name: IconName; size?: number; color: string; filled?: boolean }) {
@@ -46,6 +46,12 @@ export default function Icon({ name, size = 22, color, filled }: { name: IconNam
       {name === 'help' && (<>
         <Path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4Z" {...p} />
         <Line x1={9} y1={9} x2={15} y2={9} {...p} /><Line x1={9} y1={13} x2={13} y2={13} {...p} />
+      </>)}
+      {name === 'future' && (<>
+        <Rect x={3.5} y={5} width={17} height={15} rx={2} {...p} fill={filled ? color : 'none'} fillOpacity={0.18} />
+        <Line x1={3.5} y1={9.5} x2={20.5} y2={9.5} {...p} />
+        <Line x1={8} y1={3} x2={8} y2={6.5} {...p} /><Line x1={16} y1={3} x2={16} y2={6.5} {...p} />
+        <Path d="M12 12.2l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3Z" {...p} fill={color} strokeWidth={1} />
       </>)}
       {name === 'chevron' && <Polyline points="6,9 12,15 18,9" {...p} />}
       {name === 'plus' && (<><Line x1={12} y1={5} x2={12} y2={19} {...p} /><Line x1={5} y1={12} x2={19} y2={12} {...p} /></>)}

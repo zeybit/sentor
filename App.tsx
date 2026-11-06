@@ -17,16 +17,18 @@ import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import MatrixScreen from './src/screens/MatrixScreen';
 import HelpScreen from './src/screens/HelpScreen';
+import FutureScreen from './src/screens/FutureScreen';
+import { NavCtx } from './src/nav';
 
-type Main = 'today' | 'chart' | 'portfolio' | 'matrix' | 'ask' | 'trends';
+type Main = 'today' | 'chart' | 'portfolio' | 'future' | 'matrix' | 'ask' | 'trends';
 type Tab = Main | 'settings' | 'help';
 const MAIN: { key: Main; icon: IconName }[] = [
-  { key: 'today', icon: 'today' }, { key: 'chart', icon: 'chart' }, { key: 'portfolio', icon: 'portfolio' },
+  { key: 'today', icon: 'today' }, { key: 'chart', icon: 'chart' }, { key: 'portfolio', icon: 'portfolio' }, { key: 'future', icon: 'future' },
   { key: 'matrix', icon: 'matrix' }, { key: 'ask', icon: 'ask' }, { key: 'trends', icon: 'trends' },
 ];
 const LABEL: Record<Tab, { tr: string; en: string }> = {
   today: { tr: 'Bugün', en: 'Today' }, chart: { tr: 'Harita', en: 'Chart' }, portfolio: { tr: 'Portföy', en: 'Portfolio' },
-  matrix: { tr: 'Matris', en: 'Matrix' }, ask: { tr: 'Soru sor', en: 'Ask' }, trends: { tr: 'Trendler', en: 'Trends' },
+  future: { tr: 'Gelecek', en: 'Future' }, matrix: { tr: 'Matris', en: 'Matrix' }, ask: { tr: 'Soru sor', en: 'Ask' }, trends: { tr: 'Trendler', en: 'Trends' },
   settings: { tr: 'Ayarlar', en: 'Settings' }, help: { tr: 'Terimler', en: 'Glossary' },
 };
 const WIDE_SCREENS: Tab[] = ['chart', 'matrix'];
@@ -112,12 +114,14 @@ function Shell() {
     );
   }
 
-  const Screen = { today: TodayScreen, portfolio: PortfolioScreen, ask: HoraryScreen, chart: ChartScreen, matrix: MatrixScreen, trends: TrendsScreen, help: HelpScreen, settings: null }[tab];
+  const Screen = { future: FutureScreen, today: TodayScreen, portfolio: PortfolioScreen, ask: HoraryScreen, chart: ChartScreen, matrix: MatrixScreen, trends: TrendsScreen, help: HelpScreen, settings: null }[tab];
   const maxW = wide && WIDE_SCREENS.includes(tab) ? 1180 : 760;
   const content = (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView ref={scroll} contentContainerStyle={[styles.page, { maxWidth: maxW, paddingHorizontal: wide ? 48 : tablet ? 32 : 16, paddingTop: wide ? 40 : 12 }]} keyboardShouldPersistTaps="handled">
-        {tab === 'settings' ? <SettingsScreen onDone={() => go('chart')} /> : Screen ? <Screen /> : null}
+        <NavCtx.Provider value={t => go(t as Tab)}>
+          {tab === 'settings' ? <SettingsScreen onDone={() => go('chart')} /> : Screen ? <Screen /> : null}
+        </NavCtx.Provider>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -209,7 +213,7 @@ const makeStyles = () => ({
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   tabbar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.bg, paddingBottom: 4 },
   tab: { flex: 1, alignItems: 'center', paddingBottom: 4, minHeight: 56 },
-  tabText: { fontFamily: F.sansMed, fontSize: 11, color: C.sub, marginTop: 3 },
+  tabText: { fontFamily: F.sansMed, fontSize: 10.5, color: C.sub, marginTop: 3 },
   rail: { width: 248, paddingTop: 28, paddingBottom: 20, paddingRight: 12, borderRightWidth: 1, borderRightColor: C.line, zIndex: 10 },
   railItem: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopRightRadius: 10, borderBottomRightRadius: 10, paddingRight: 12, marginBottom: 2 },
 }) as const;

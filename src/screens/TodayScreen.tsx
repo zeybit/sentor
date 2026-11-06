@@ -5,6 +5,7 @@ import { computeDaily, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast
 import { BODIES, MOON_PHASE_TIP, SIGNS, SIGN_GLYPHS } from '../content/base';
 import { H1, Meter, P, Section, Sub, Expand, st, useLayout } from '../ui/kit';
 import SkyBand from '../ui/SkyBand';
+import NextPeriod from '../ui/NextPeriod';
 import { strength } from '../ui/Readings';
 import { YearCard } from '../ui/LillyBlocks';
 import { MonthlyTransits, LunarCalendar, PlanetaryHours } from '../ui/TodayExtras';
@@ -28,6 +29,7 @@ export default function TodayScreen() {
       <View style={{ marginTop: 8, marginBottom: 32 }}>
         <SkyBand natal={chart} width={inner(760)} lang={lang} />
       </View>
+      <NextPeriod />
 
       <Section>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 16 }}>

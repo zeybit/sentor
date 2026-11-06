@@ -10,6 +10,13 @@ import { synastry, SYN_LABEL } from '../content/forecast';
 import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import { HARMONY } from '../content/techniqueTexts';
+import { spouseProfile, marriageWindows } from '../content/spouse';
+import { WindowCard } from './FutureScreen';
+import { useNav } from '../nav';
+import { F } from '../theme';
+import { ActivityIndicator, Pressable } from 'react-native';
+import { useEffect } from 'react';
+import type { Window } from '../engine/timeline';
 import { SynastryReport, SynastryTables, RelChartReport, synAspects } from '../ui/RelationshipViews';
 import { T2S } from '../i18n2';
 import BirthForm from '../ui/BirthForm';
@@ -53,15 +60,7 @@ export default function LoveScreen() {
 
   return (
     <View>
-      <Section>
-        <Row label={`${s.loveStyle}, ${SIGNS[P_.venus.sign][lang]}`}>{VENUS[P_.venus.sign][lang]}</Row>
-        <Row label={`${s.desire}, ${SIGNS[P_.mars.sign][lang]}`}>{MARS_DESIRE[P_.mars.sign][lang]}</Row>
-        {desc !== null ? <Row label={`${s.partner}, ${SIGNS[desc][lang]}`}>{PARTNER[desc][lang]}</Row> : null}
-        {fifth !== null ? <Row label={`${s.dating}, ${SIGNS[fifth][lang]}`}>{DATING[fifth][lang]}</Row> : null}
-        {P_.venus.house ? <Row label={`${s.meet}, ${P_.venus.house}.`}>{VENUS_HOUSE_MEET[P_.venus.house - 1][lang]}</Row> : null}
-        {in7.length ? <Row label={s.seventhPlanets}>{in7.map(p => PLANET_IN_7[p]![lang]).join('\n\n')}</Row> : null}
-        {desc !== null ? <Sub style={{ marginTop: 8 }}>{houseRulerText(chart, 7)?.[lang]}</Sub> : <Sub>{s.needsTime}</Sub>}
-      </Section>
+      <SpouseBlock />
 
       <Section title={s.compat} sub={s.compatSub}>
         {others.length ? (
@@ -109,5 +108,55 @@ export default function LoveScreen() {
         </>
       ) : null}
     </View>
+  );
+}
+
+/** Gelecekteki eş tahmini ve evlilik zamanı */
+function SpouseBlock() {
+  const { chart, lang, s } = useStore();
+  const nav = useNav();
+  const [wins, setWins] = useState<Window[] | null>(null);
+  useEffect(() => {
+    setWins(null);
+    if (!chart) return;
+    const id = setTimeout(() => setWins(marriageWindows(chart)), 30);
+    return () => clearTimeout(id);
+  }, [chart]);
+  if (!chart) return null;
+  const prof = spouseProfile(chart, lang);
+  const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
+  const P_ = chart.positions;
+  return (
+    <Section title={L('Gelecekteki eşin', 'Your future partner')}>
+      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 16, maxWidth: 640 }}>
+        {L('Haritanda evlilik ve uzun süreli ilişkileri anlatan yedinci ev, onun gezegeni ve aşk gezegeni Venüs birlikte okunduğunda, hayatına girecek ciddi partnerin hakkında bir portre çıkar. Her bölümün altında bunun haritanın neresinden geldiğini görebilirsin.',
+          'Reading your seventh house (marriage and long-term bonds), its planet and Venus, the planet of love, together gives a portrait of the serious partner who will enter your life. Under each part you can see where in your chart it comes from.')}
+      </Text>
+      {prof ? prof.map(x => (
+        <View key={x.id} style={{ marginBottom: 20 }}>
+          <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{x.title[lang]}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
+        </View>
+      )) : <P>{s.needsTime}</P>}
+      <View style={{ marginBottom: 20 }}>
+        <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Nasıl seversin, nasıl çekersin?', 'How you love and attract')}</Text>
+        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>
+          {L(`Venüs’ün ${SIGNS[P_.venus.sign].tr} burcunda. ${VENUS[P_.venus.sign].tr} Mars’ın da ${SIGNS[P_.mars.sign].tr} burcunda. ${MARS_DESIRE[P_.mars.sign].tr}`,
+            `Your Venus is in ${SIGNS[P_.venus.sign].en}: ${VENUS[P_.venus.sign].en} Your Mars is in ${SIGNS[P_.mars.sign].en}: ${MARS_DESIRE[P_.mars.sign].en}`)}
+        </Text>
+      </View>
+      <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 8 }}>{L('Ne zaman?', 'When?')}</Text>
+      {wins === null ? <ActivityIndicator color={C.rose} style={{ alignSelf: 'flex-start', marginVertical: 12 }} />
+        : wins.length ? (
+          <>
+            <Sub style={{ marginBottom: 12, maxWidth: 640 }}>{L('Önümüzdeki yıllarda ciddi bir ilişki ya da evlilik için en güçlü görünen dönemler:', 'The strongest-looking periods ahead for a serious relationship or marriage:')}</Sub>
+            {wins.map((w, i) => <WindowCard key={i} w={w} lang={lang} showTip={false} />)}
+          </>
+        ) : <P>{L('Önümüzdeki yıllarda belirgin bir dönem çıkmadı.', 'No marked period found for the coming years.')}</P>}
+      <Pressable onPress={() => nav('future')} accessibilityRole="link" style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
+        <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{L('Bütün hayat takvimini aç', 'Open your full life calendar')}</Text>
+      </Pressable>
+    </Section>
   );
 }
