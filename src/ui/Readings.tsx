@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { AspectType, BodyId, Chart } from '../engine/astro';
-import { ALL_BODIES, PLANETS, angleDiff, fmtDeg, ASPECTS, norm, moonPhase } from '../engine/astro';
+import { ALL_BODIES, PLANETS, angleDiff, fmtDeg, ASPECTS, norm, moonPhase, houseOf } from '../engine/astro';
 import { crossAspects, CrossAspect, antiscion, solarArcDegrees } from '../engine/techniques';
 import { BODIES, SIGNS, SIGN_GLYPHS, HOUSES, ASPECT_INFO, dignityOf, SIGN_KEYWORDS, SIGN_ADVERB } from '../content/base';
 import { CLOSING, lifeAspect, lifeHouse, lifePair, shortArea, Technique } from '../content/lifeTexts';
@@ -150,22 +150,46 @@ export function KindReading({ kind, natal, other, s, t, lang }: { kind: ChartKin
     );
   }
   if (kind === 'antiscia') {
-    const hits: { a: BodyId; b: BodyId; contra: boolean; orb: number }[] = [];
-    for (const a of PLANETS) for (const b of PLANETS) {
+    type P2 = BodyId | 'asc' | 'mc';
+    const lonOf = (k: P2) => k === 'asc' ? natal.asc : k === 'mc' ? natal.mc : natal.positions[k].lon;
+    const targets: P2[] = [...PLANETS, ...(natal.asc !== null ? ['asc', 'mc'] as P2[] : [])];
+    const hits: { a: P2; b: P2; contra: boolean; orb: number }[] = [];
+    const seen = new Set<string>();
+    for (const a of PLANETS) for (const b of targets) {
       if (a === b) continue;
+      const lb = lonOf(b); if (lb === null) continue;
       const an = antiscion(natal.positions[a].lon);
-      const o1 = angleDiff(an, natal.positions[b].lon), o2 = angleDiff(norm(an + 180), natal.positions[b].lon);
-      if (o1 <= 1.5 && a < b) hits.push({ a, b, contra: false, orb: o1 });
-      else if (o2 <= 1.5 && a < b) hits.push({ a, b, contra: true, orb: o2 });
+      const o1 = angleDiff(an, lb), o2 = angleDiff(norm(an + 180), lb);
+      const key = [a, b].sort().join('-');
+      if (seen.has(key)) continue;
+      if (o1 <= 2) { hits.push({ a, b, contra: false, orb: o1 }); seen.add(key); }
+      else if (o2 <= 2) { hits.push({ a, b, contra: true, orb: o2 }); seen.add(key); }
     }
+    hits.sort((x, y) => x.orb - y.orb);
+    const tr = lang === 'tr';
     return (
-      <Section title={t.antTitle}>
-        <Sub style={{ marginBottom: 8 }}>{t.antDesc}</Sub>
-        {hits.length ? hits.map((h, i) => {
-          const txt = natalAspectText(h.a, h.b, h.contra ? 'square' : 'trine') ?? ASPECT_INFO[h.contra ? 'square' : 'trine'].desc;
-          return <Item key={i} title={lang === 'tr' ? `${cap(shortArea(h.a).tr)} ve ${shortArea(h.b).tr} arasında gizli bir bağ` : `A hidden link between ${shortArea(h.a).en} and ${shortArea(h.b).en}`} meta={strength(h.orb, lang)} body={txt[lang]} />;
-        }) : <P>{t.noItems}</P>}
-      </Section>
+      <View>
+        <Section title={t.antTitle}>
+          <Sub style={{ marginBottom: 8 }}>{t.antDesc}</Sub>
+          {hits.length ? hits.map((h, i) => {
+            const isPl = (k: P2): k is BodyId => k !== 'asc' && k !== 'mc';
+            const txt = (isPl(h.b) ? natalAspectText(h.a, h.b, h.contra ? 'square' : 'trine') : null) ?? lifePair(h.a, h.b, h.contra ? 'square' : 'trine');
+            const body = isPl(h.b) && natalAspectText(h.a, h.b, h.contra ? 'square' : 'trine') ? txt[lang] : (tr ? (h.contra ? 'Bu iki alan arasında görünmeyen bir gerilim var; biri öne çıktığında diğeri de huzursuzlanır. Farkına vardığında dengelemek kolaylaşır.' : 'Bu iki alan arka planda birbirini besliyor; birinde iyi giden bir şey diğerine de kendiliğinden yansır.') : (h.contra ? 'There is a hidden tension between these two areas; when one rises, the other gets restless. Noticing it makes balance easier.' : 'These two areas quietly feed each other; when one goes well, the other benefits too.'));
+            return <Item key={i} title={tr ? `${cap(shortArea(h.a).tr)} ve ${shortArea(h.b).tr} arasında gizli bir ${h.contra ? 'gerilim' : 'bağ'}` : `A hidden ${h.contra ? 'tension' : 'link'} between ${shortArea(h.a).en} and ${shortArea(h.b).en}`} meta={strength(h.orb, lang)} body={body} />;
+          }) : <P>{tr ? 'Haritanda gezegenlerin arasında güçlü bir gizli bağ yok. Bu kötü bir şey değil: gezegenlerin birbirine açıkça, görünür yollarla bağlanıyor demek. Aşağıda her birinin sessizce dokunduğu alanı görebilirsin.' : 'There is no strong hidden link between your planets. That is not bad: it means your planets connect openly and visibly. Below you can see the area each one quietly touches.'}</P>}
+        </Section>
+        <Section title={tr ? 'Gezegenlerinin sessizce dokunduğu alanlar' : 'Areas your planets quietly touch'}>
+          <Sub style={{ marginBottom: 8 }}>{tr ? 'Her gezegenin bir ayna noktası vardır. O nokta haritanın hangi alanına düşüyorsa, gezegen orayı da arka planda etkiler.' : 'Each planet has a mirror point. Wherever that point falls in your chart, the planet influences that area in the background too.'}</Sub>
+          {PLANETS.map(p => {
+            const an = antiscion(natal.positions[p].lon), sg = Math.floor(an / 30);
+            const h = natal.cusps.length ? houseOf(an, natal.cusps) : 0;
+            const body = h
+              ? (tr ? `${cap(shortArea(p).tr)} görünmeden şu konuları da etkiliyor: ${HOUSES[h - 1].area.tr}. Bu alanda ${SIGN_ADVERB[sg].tr} bir tavrın olduğunu fark edebilirsin.` : `${cap(shortArea(p).en)} also quietly affects ${HOUSES[h - 1].area.en}. You may notice you act ${SIGN_ADVERB[sg].en} there.`)
+              : (tr ? `${cap(shortArea(p).tr)} arka planda ${SIGN_ADVERB[sg].tr} bir renk taşıyor.` : `${cap(shortArea(p).en)} carries a ${SIGN_ADVERB[sg].en} tone in the background.`);
+            return <Item key={p} title={`${BODIES[p].glyph} ${BODIES[p].name[lang]}`} body={body} />;
+          })}
+        </Section>
+      </View>
     );
   }
   if (kind === 'now') {
