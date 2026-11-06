@@ -1,0 +1,105 @@
+// Uyum matrisi: iki kişinin matrisi toplandığında çıkan sayıların ilişki diliyle yorumu ("siz" diliyle).
+import { L } from './base';
+import { ARCANA } from './arcana';
+const l = (tr: string, en: string): L => ({ tr, en });
+
+/** 22 enerjinin bir ilişkideki karşılığı */
+export const COUPLE: Record<number, { bond: L; risk: L; tip: L }> = {
+  1: { bond: l('Birbirinizi konuşarak, fikir üreterek ve yeni işlere başlayarak beslersiniz. Birlikteyken ikiniz de daha cesur ve girişken olursunuz.', 'You feed each other through talk, ideas and starting new things. Together you both become bolder and more enterprising.'),
+    risk: l('Sözler fazla keskinleşebilir; kimin haklı olduğu yarışı ilişkiyi yorar.', 'Words can get too sharp; competing over who is right wears the relationship down.'),
+    tip: l('Ortak bir proje başlatın; enerjinizi birbirinize değil aynı hedefe yöneltin.', 'Start a shared project; aim your energy at one goal rather than at each other.') },
+  2: { bond: l('Aranızda sözsüz bir anlaşma var. Çoğu şeyi konuşmadan hissedersiniz; güven yavaş ama derin kurulur.', 'There is an unspoken understanding between you. You sense most things without words; trust builds slowly but deeply.'),
+    risk: l('Söylenmeyenler birikebilir; sessizlik zamanla mesafeye dönüşür.', 'What goes unsaid can pile up; silence may slowly turn into distance.'),
+    tip: l('Hissettiklerinizi tahmin etmeye bırakmayın, ara sıra yüksek sesle söyleyin.', 'Do not leave feelings to guesswork; say them out loud now and then.') },
+  3: { bond: l('Sıcak, bereketli ve besleyici bir birliktelik. Ev kurmak, güzel bir hayat yaratmak ve birbirinize bakmak sizi mutlu eder.', 'A warm, abundant, nurturing bond. Building a home, creating a beautiful life and caring for each other makes you happy.'),
+    risk: l('Biriniz hep veren, diğeri hep alan tarafa geçerse denge bozulur.', 'If one of you always gives and the other always takes, the balance breaks.'),
+    tip: l('Şefkati karşılıklı tutun; teşekkür etmeyi ve şımartılmayı ikiniz de öğrenin.', 'Keep care mutual; both of you learn to thank and to be pampered.') },
+  4: { bond: l('Sağlam, güvenilir ve düzen kuran bir ilişki. Birlikte plan yapar, söz verir ve tutarsınız; başkaları size güvenir.', 'A solid, reliable relationship that builds structure. You plan, promise and keep your word together; others trust you.'),
+    risk: l('Kontrol ve kurallar sevginin önüne geçebilir; ilişki bir işletmeye dönüşebilir.', 'Control and rules can get ahead of love; the relationship can turn into a business.'),
+    tip: l('Planın içine plansız anlar da koyun; romantizmi takvime yazmayı unutmayın.', 'Leave unplanned moments in the plan; remember to put romance on the calendar.') },
+  5: { bond: l('Ortak değerler, inançlar ve öğrenme isteği sizi bağlar. Birbirinize öğretir, birbirinizden öğrenirsiniz.', 'Shared values, beliefs and a love of learning bind you. You teach each other and learn from each other.'),
+    risk: l('Biriniz diğerine akıl vermeye başlarsa ilişki öğretmen–öğrenci ilişkisine döner.', 'If one starts lecturing the other, it becomes a teacher–pupil relationship.'),
+    tip: l('Gelenekleri birlikte seçin; ailelerden gelen kuralları değil kendi kurallarınızı yaşayın.', 'Choose your traditions together; live by your own rules, not those handed down by families.') },
+  6: { bond: l('Bu güçlü bir aşk enerjisi: çekim, romantizm ve birbirini seçme duygusu yüksek. Gerçekten birlikte olmayı seçmiş iki insansınız.', 'This is a strong love energy: attraction, romance and the feeling of choosing each other run high. You are two people who truly chose to be together.'),
+    risk: l('Kararsızlık ve kıskançlık; birinizin aklı başka seçeneklerde kalabilir.', 'Indecision and jealousy; one of you may keep thinking about other options.'),
+    tip: l('Seçiminizi her gün yeniden yapın; sevgiyi söylemek kadar göstermek de önemli.', 'Make your choice again every day; showing love matters as much as saying it.') },
+  7: { bond: l('Birlikte hareket eden, hedefe koşan bir ekip gibisiniz. Seyahat, değişim ve ilerleme bu ilişkinin yakıtı.', 'You are like a team in motion, racing toward goals. Travel, change and progress fuel this relationship.'),
+    risk: l('Hep bir sonraki hedefe bakarken birbirinizi gözden kaçırabilirsiniz.', 'Always looking to the next goal, you can lose sight of each other.'),
+    tip: l('Durup kazandıklarınızı birlikte kutlayın; yolculuk kadar varış da önemli.', 'Stop and celebrate what you have achieved together; arriving matters as much as travelling.') },
+  8: { bond: l('Adalet ve dürüstlük üzerine kurulu bir ilişki. Hesap sorulabilen, net ve dengeli bir bağınız var.', 'A relationship built on fairness and honesty. Your bond is clear, balanced and accountable.'),
+    risk: l('Her şeyi tartıp ölçmek, kim ne verdi diye saymak sevgiyi soğutur.', 'Weighing everything and keeping score of who gave what cools love.'),
+    tip: l('Adil olun ama hesap tutmayın; bazen karşılık beklemeden verin.', 'Be fair but do not keep accounts; sometimes give without expecting anything back.') },
+  9: { bond: l('Derin, bilge ve biraz içe dönük bir ilişki. Birlikte sessizliği, doğayı ve derin sohbetleri seversiniz.', 'A deep, wise and somewhat inward relationship. Together you love silence, nature and deep conversations.'),
+    risk: l('İkiniz de kendi kabuğunuza çekilirseniz aynı evde yalnız kalabilirsiniz.', 'If you both withdraw into your shells, you can end up lonely in the same house.'),
+    tip: l('Yalnız kalma ihtiyacına saygı gösterin ama birlikte vakit için de alan açın.', 'Respect each other\'s need to be alone, but make room for time together too.') },
+  10: { bond: l('Şans, kader ve döngüler ilişkisi. Karşılaşmanız tesadüf gibi görünse de hayatınızı değiştiren dönemeçler birlikte gelir.', 'A relationship of luck, fate and cycles. Your meeting may look like chance, but life-changing turns come to you together.'),
+    risk: l('Dönemsel iniş çıkışlar; iyi giderken çok iyi, kötü giderken çok kötü.', 'Cyclical ups and downs; very good when it is good, very bad when it is bad.'),
+    tip: l('Zor dönemin geçeceğini bilin; esnek kalın ve fırsatları birlikte değerlendirin.', 'Know that hard times pass; stay flexible and seize opportunities together.') },
+  11: { bond: l('Güçlü, tutkulu ve enerjik bir birliktelik. Birlikteyken dağları devirebilirsiniz; aranızdaki çekim yoğun.', 'A strong, passionate, energetic union. Together you can move mountains; the attraction between you is intense.'),
+    risk: l('Güç savaşı ve öfke patlamaları; ikiniz de geri adım atmak istemeyebilirsiniz.', 'Power struggles and outbursts; neither of you may want to back down.'),
+    tip: l('Gücünüzü birbirinize karşı değil birlikte kullanın; spor ve ortak hedefler bu enerjiyi dengeler.', 'Use your strength together, not against each other; sport and shared goals balance this energy.') },
+  12: { bond: l('Fedakârlık ve farklı bakış açısı üzerine kurulu bir bağ. Birbiriniz için çok şeyden vazgeçebilirsiniz.', 'A bond built on sacrifice and seeing things differently. You may give up a lot for each other.'),
+    risk: l('Biriniz kendini kurban gibi hissetmeye başlarsa ilişki ağırlaşır.', 'If one starts feeling like a victim, the relationship grows heavy.'),
+    tip: l('Fedakârlığı dengede tutun; ihtiyaçlarınızı açıkça söyleyin.', 'Keep sacrifice balanced; state your needs openly.') },
+  13: { bond: l('Dönüşüm ilişkisi: birlikte olduğunuzda ikiniz de eski hâlinizi bırakırsınız. Bu bağ sizi kökten değiştirir.', 'A relationship of transformation: together you both leave your old selves behind. This bond changes you at the root.'),
+    risk: l('Ani kopuşlar, bitişler ve yeniden başlamalar yaşanabilir.', 'Sudden breaks, endings and new starts may happen.'),
+    tip: l('Değişimden korkmayın; eskiyen alışkanlıkları birlikte bırakıp ilişkiyi yenileyin.', 'Do not fear change; drop worn-out habits together and renew the relationship.') },
+  14: { bond: l('Uyum, sükûnet ve denge ilişkisi. Birbirinizi sakinleştirir, birbirinize iyi gelirsiniz.', 'A relationship of harmony, calm and balance. You soothe each other and do each other good.'),
+    risk: l('Fazla uyum heyecanı söndürebilir; tartışmaktan kaçınmak sorunları ertelemek olabilir.', 'Too much harmony can dull excitement; avoiding arguments can mean postponing problems.'),
+    tip: l('Ara sıra rutini bozun; sakinliği korurken heyecanı da besleyin.', 'Break the routine now and then; keep the calm while feeding the excitement.') },
+  15: { bond: l('Yoğun çekim, tutku ve güçlü bir bağımlılık hissi. Birbirinizden kopmak çok zordur.', 'Intense attraction, passion and a strong sense of attachment. Breaking away from each other is very hard.'),
+    risk: l('Kıskançlık, kontrol ve sahiplenme; tutku bağımlılığa dönüşebilir.', 'Jealousy, control and possessiveness; passion can turn into dependence.'),
+    tip: l('Tutkuyu özgürlükle dengeleyin; birbirinizin ayrı hayatlarına da alan bırakın.', 'Balance passion with freedom; leave room for each other\'s separate lives.') },
+  16: { bond: l('Sarsıcı ama özgürleştirici bir bağ. Bu ilişki ikinizin de kurduğu eski yapıları yıkar ve yerine daha gerçek bir şey koyar.', 'A shaking but liberating bond. This relationship breaks old structures you both built and puts something more real in their place.'),
+    risk: l('Ani krizler, beklenmedik değişimler ve sert tartışmalar.', 'Sudden crises, unexpected changes and harsh arguments.'),
+    tip: l('Krizleri bir son değil yeniden yapılanma olarak görün; birlikte daha sağlam temeller atın.', 'See crises as rebuilding, not endings; lay firmer foundations together.') },
+  17: { bond: l('Umut, ilham ve yaratıcılık ilişkisi. Birbirinizin içindeki en güzel yanı görür, birbirinize ilham verirsiniz.', 'A relationship of hope, inspiration and creativity. You see the best in each other and inspire each other.'),
+    risk: l('Birbirinizi fazla idealleştirip gerçeği görmezden gelebilirsiniz.', 'You may idealise each other too much and overlook reality.'),
+    tip: l('Hayalleri somut adımlara çevirin; sanat, müzik ya da ortak bir hobi bağınızı güçlendirir.', 'Turn dreams into concrete steps; art, music or a shared hobby strengthens your bond.') },
+  18: { bond: l('Sezgisel, duygusal ve gizemli bir bağ. Aranızdaki çekim açıklanamaz; birbirinizin rüyalarına bile girersiniz.', 'An intuitive, emotional and mysterious bond. The pull between you cannot be explained; you even appear in each other\'s dreams.'),
+    risk: l('Kuşku, kaygı ve yanlış anlaşılmalar; söylenmeyenleri hayal gücü doldurur.', 'Doubt, anxiety and misunderstandings; imagination fills in what is not said.'),
+    tip: l('Kuşkularınızı içinizde büyütmeyin, açıkça konuşun; netlik bu ilişkinin ilacıdır.', 'Do not let doubts grow inside; talk openly. Clarity is this relationship\'s medicine.') },
+  19: { bond: l('Neşeli, sıcak ve aydınlık bir ilişki. Birlikteyken güler, parlar ve çevrenize de enerji verirsiniz.', 'A joyful, warm and bright relationship. Together you laugh, shine and give energy to people around you.'),
+    risk: l('İkiniz de ilgi odağı olmak isteyebilir; ego çatışmaları çıkabilir.', 'You may both want the spotlight; ego clashes may arise.'),
+    tip: l('Birbirinizin başarısını kendi başarınız gibi kutlayın; çocuklar ve oyun bu bağı besler.', 'Celebrate each other\'s success as your own; children and play nourish this bond.') },
+  20: { bond: l('Ailevi, köklü ve uyanış getiren bir bağ. Bu ilişki iki aileyi birleştirir ve ikinize de geçmişle barışma fırsatı verir.', 'A familial, rooted bond that brings awakening. This relationship joins two families and gives you both a chance to make peace with the past.'),
+    risk: l('Ailelerin ilişkiye fazla karışması ya da eski aile kalıplarının tekrar etmesi.', 'Families interfering too much, or old family patterns repeating.'),
+    tip: l('Ailelerinize saygı gösterin ama kendi yuvanızın kurallarını birlikte koyun.', 'Respect your families, but set the rules of your own home together.') },
+  21: { bond: l('Geniş ufuklu, özgür ve dünyaya açılan bir ilişki. Birlikte seyahat eder, farklı kültürler ve yeni dünyalar keşfedersiniz.', 'A wide-horizoned, free relationship that opens to the world. Together you travel and discover different cultures and new worlds.'),
+    risk: l('Fazla özgürlük bağlılık sorununa dönüşebilir; ortak bir merkez bulmak zorlaşır.', 'Too much freedom can turn into commitment issues; finding a shared centre becomes hard.'),
+    tip: l('Özgürlüğü koruyun ama bir "biz" alanı da oluşturun; ortak bir ev ya da gelenek iyi gelir.', 'Keep your freedom but also create a "we" space; a shared home or ritual helps.') },
+  22: { bond: l('Hafif, eğlenceli ve kendiliğinden bir ilişki. Birlikte çocuk gibi oynar, maceraya atılır ve anı yaşarsınız.', 'A light, playful and spontaneous relationship. Together you play like children, jump into adventures and live in the moment.'),
+    risk: l('Sorumluluktan kaçmak ve geleceği planlamamak ilişkiyi belirsiz bırakabilir.', 'Avoiding responsibility and not planning the future can leave the relationship uncertain.'),
+    tip: l('Eğlenceyi kaybetmeden küçük ortak hedefler koyun; hafiflik ile güveni birlikte büyütün.', 'Without losing the fun, set small shared goals; grow lightness and trust together.') },
+};
+
+export type CouplePos = 'E' | 'A' | 'B' | 'C' | 'D' | 'love' | 'money' | 'X' | 'tail1' | 'tail2' | 'tail3' | 'talent1' | 'talent2' | 'personal' | 'social' | 'spiritual';
+export const COUPLE_POS: Record<CouplePos, { title: L; what: L }> = {
+  E: { title: l('İlişkinizin özü', 'The core of your relationship'), what: l('Matrisin merkezi, ikinizi bir arada tutan ana enerjidir; bu ilişkinin en doğal hâli budur.', 'The centre of the matrix is the main energy holding you together; it is the relationship at its most natural.') },
+  A: { title: l('Sizi birbirinize çeken kıvılcım', 'The spark that drew you together'), what: l('İlk tanıştığınızda birbirinizde gördüğünüz ve ilişkiyi başlatan enerji.', 'The energy you saw in each other when you first met, the one that started it all.') },
+  B: { title: l('Birlikte açılan yeteneğiniz', 'The gift that opens when you are together'), what: l('İkinizin yan yana olduğunda ortaya çıkan ilham ve yaratıcı güç.', 'The inspiration and creative power that appears when you are side by side.') },
+  C: { title: l('Dünyaya bakan yüzünüz', 'The face you show the world'), what: l('Çevrenizin sizi bir çift olarak nasıl gördüğü ve ortak maddi hayatınız.', 'How people around you see you as a couple, and your shared material life.') },
+  D: { title: l('Birlikte geçmeniz gereken sınav', 'The test you must pass together'), what: l('Bu ilişkinin ikinize öğretmek için geldiği ana ders.', 'The main lesson this relationship came to teach you both.') },
+  love: { title: l('Aşkınızın dili', 'The language of your love'), what: l('Sevginizi nasıl yaşadığınız ve ilişkinin romantik tarafı.', 'How you live your love and the romantic side of the relationship.') },
+  money: { title: l('Ortak paranız ve işleriniz', 'Your shared money and work'), what: l('Birlikte para kazanma, harcama ve iş yapma biçiminiz.', 'How you earn, spend and work together.') },
+  X: { title: l('Aşk ile para arasındaki denge', 'The balance between love and money'), what: l('Duygular ile maddi konuların ilişkinizde nasıl buluştuğu.', 'How feelings and material matters meet in your relationship.') },
+  tail1: { title: l('İlişkinin geçmişten getirdiği tema', 'The theme the relationship carries from the past'), what: l('Bu bağın çözülmesi gereken eski bir düğüm gibi taşıdığı konu.', 'The issue this bond carries like an old knot waiting to be untied.') },
+  tail2: { title: l('Bu temayı bugün nasıl yaşıyorsunuz', 'How you live this theme today'), what: l('Eski düğümün bugünkü ilişkinizde nasıl ortaya çıktığı.', 'How the old knot shows up in your relationship today.') },
+  tail3: { title: l('Düğüm çözüldüğünde varacağınız yer', 'Where you arrive once the knot is untied'), what: l('Dersi birlikte çözdüğünüzde ilişkinin ulaşacağı hâl.', 'What the relationship becomes once you resolve the lesson together.') },
+  talent1: { title: l('İlişkinin doğal armağanı', 'The relationship\'s natural gift'), what: l('Hiç çaba harcamadan birlikte yaptığınız güzel şey.', 'The beautiful thing you do together without any effort.') },
+  talent2: { title: l('Birlikte geliştirdikçe açılan güç', 'The power that opens as you grow together'), what: l('Zamanla ve emekle birlikte geliştirebileceğiniz yetenek.', 'The ability you can develop together with time and effort.') },
+  personal: { title: l('Bu ilişki neden hayatınıza girdi', 'Why this relationship came into your lives'), what: l('İkinizin kişisel olarak bu bağdan öğreneceği şey.', 'What each of you will personally learn from this bond.') },
+  social: { title: l('Birlikte çevrenize ne katıyorsunuz', 'What you give others together'), what: l('Bir çift olarak ailenize, arkadaşlarınıza ve topluma verdiğiniz.', 'What you give to your families, friends and society as a couple.') },
+  spiritual: { title: l('İlişkinin en derin anlamı', 'The deepest meaning of the relationship'), what: l('Bu bağın ruhsal düzeydeki amacı.', 'The purpose of this bond on a soul level.') },
+};
+
+export function coupleStory(pos: CouplePos, n: number): L {
+  const c = COUPLE[n]; const a = ARCANA[n]; const p = COUPLE_POS[pos];
+  return {
+    tr: `${p.what.tr} Sizde bu nokta ${a.name.tr} enerjisi taşıyor. ${c.bond.tr} Dikkat etmeniz gereken: ${c.risk.tr.charAt(0).toLocaleLowerCase('tr') + c.risk.tr.slice(1)} ${c.tip.tr}`,
+    en: `${p.what.en} For you this point carries the energy of ${a.name.en}. ${c.bond.en} What to watch: ${c.risk.en.charAt(0).toLowerCase() + c.risk.en.slice(1)} ${c.tip.en}`,
+  };
+}
+export const COUPLE_INTRO = l(
+  'Uyum matrisi, iki kişinin matrislerindeki her sayının toplanmasıyla kurulur. Ortaya çıkan sayılar artık ikinizi ayrı ayrı değil, ilişkinizi anlatır: sizi neyin bir araya getirdiği, birlikte neyi güzel yaptığınız ve hangi konuda birlikte çalışmanız gerektiği.',
+  'The compatibility matrix is built by adding each number in the two people\'s matrices. The resulting numbers no longer describe you separately but your relationship: what brought you together, what you do well together and what you need to work on together.');
