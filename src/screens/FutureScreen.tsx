@@ -174,15 +174,16 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
 
 type FeedItem = { k: 'w'; w: Window; d: Date } | { k: 'e'; e: SkyEvent; d: Date };
 /** Büyük dönemler ve tek tek gezegen olayları, yıllara göre tek bir tarih akışında */
-function Feed({ items, lang, rel, tips }: { items: FeedItem[]; lang: Lang; rel?: Rel; tips: boolean }) {
+function Feed({ items, lang, rel, tips, upcoming = false }: { items: FeedItem[]; lang: Lang; rel?: Rel; tips: boolean; upcoming?: boolean }) {
   const [n, setN] = useState(20);
   const shown = items.slice(0, n);
   let year = -1;
   return (
     <View>
       {shown.map((it, i) => {
-        const y = it.d.getFullYear();
-        const hdr = y !== year ? (year = y, <Text style={{ fontFamily: F.serif, fontSize: 26, color: C.gold, marginTop: 10, marginBottom: 10 }}>{y}</Text>) : null;
+        const ongoing = upcoming && it.d.getTime() <= Date.now();
+        const y = ongoing ? 0 : it.d.getFullYear();
+        const hdr = y !== year ? (year = y, <Text style={{ fontFamily: F.serif, fontSize: 26, color: C.gold, marginTop: 10, marginBottom: 10 }}>{ongoing ? tx('Şu an etkili olanlar', 'In effect now', lang) : y}</Text>) : null;
         return (
           <React.Fragment key={it.k === 'w' ? `w${i}${it.w.start.getTime()}${it.w.topic}` : it.e.id}>
             {hdr}
@@ -279,7 +280,7 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
       ) : (
         <>
           <Section title={tx('Sıradaki önemli dönemlerin', 'Your next important periods', lang)} sub={tx('Önümüzdeki 12 yıl, tarih sırasıyla. Renkli çizgili kartlar birkaç tekniğin birleştiği büyük dönemlerdir; noktalı satırlar o aralıkta haritana dokunan tek tek gezegen olaylarıdır (kavuşumlar, açılar, tutulmalar, ilerletilmiş Ay).', 'The next 12 years in date order. Cards with a coloured bar are major periods where several techniques agree; dotted rows are the single planet events touching your chart in between (conjunctions, aspects, eclipses, progressed Moon).', lang)}>
-            {feedUp.length ? <Feed key={`u${topic}`} items={feedUp} lang={lang} rel={profile.rel} tips /> : <P>{tx('Bu konu için önümüzdeki 12 yılda belirgin bir dönem çıkmadı; bu, sakin ve istikrarlı bir akış anlamına gelir.', 'No marked period for this topic in the next 12 years; that means a calm, steady flow.', lang)}</P>}
+            {feedUp.length ? <Feed key={`u${topic}`} items={feedUp} lang={lang} rel={profile.rel} tips upcoming /> : <P>{tx('Bu konu için önümüzdeki 12 yılda belirgin bir dönem çıkmadı; bu, sakin ve istikrarlı bir akış anlamına gelir.', 'No marked period for this topic in the next 12 years; that means a calm, steady flow.', lang)}</P>}
           </Section>
 
           <Section title={tx('Bütün hayatın tek bakışta', 'Your whole life at a glance', lang)} sub={tx('Renkli çubuklar öne çıkan dönemleri gösterir; koyu olanlar daha güçlüdür. Yana kaydırabilirsin.', 'Coloured bars mark the standout periods; darker ones are stronger. Scroll sideways.', lang)}>
