@@ -100,7 +100,7 @@ export function overlays(owner: Chart, host: Chart, ownerName: string, hostName:
     const enBase = sp ? sp(O, H).en : `${enGen(ownerName)} ${BODIES[b].name.en} ${VISIT[b](O, H).en} ${hostEn}`;
     return {
       body: b, lon, sign, house,
-      title: { tr: `${O.gen} ${POSS[b]} → ${H.gen} ${house}. evi (${SIGNS[sign].tr})`, en: `${enGen(ownerName)} ${BODIES[b].name.en} → ${enGen(hostName)} ${house}th house (${SIGNS[sign].en})` },
+      title: { tr: `${O.gen} ${POSS[b]} (${SIGNS[sign].tr}) → ${H.gen} ${house}. evi`, en: `${enGen(ownerName)} ${BODIES[b].name.en} (${SIGNS[sign].en}) → ${enGen(hostName)} ${house}${house === 1 ? 'st' : house === 2 ? 'nd' : house === 3 ? 'rd' : 'th'} house` },
       text: { tr, en: enBase },
     };
   });
