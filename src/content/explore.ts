@@ -1,8 +1,9 @@
 // Keşfet: ünlü ikizin, testler (baskın gezegen, aşk dili, element, tarot kartın) ve şehir önerileri.
 import type { BodyId, Chart } from '../engine/astro';
-import { computeChart, PLANETS, SIGN_RULERS, angleDiff } from '../engine/astro';
+import { PLANETS, SIGN_RULERS, angleDiff } from '../engine/astro';
 import { destinyMatrix } from '../engine/matrix';
 import { cartography, AngleLine } from '../engine/techniques';
+import { CELEB_SIGNS } from './celebSigns';
 import { CELEBS, Celeb } from './celebs';
 import { SIGNS, BODIES, L } from './base';
 import { ARCANA } from './arcana';
@@ -15,10 +16,10 @@ let CACHE: CelebData[] | null = null;
 function celebData(): CelebData[] {
   if (CACHE) return CACHE;
   const all = [...CELEBS.tr.map(c => [c, false] as const), ...CELEBS.world.map(c => [c, true] as const)];
-  CACHE = all.map(([c, world]) => {
-    const ch = computeChart({ year: c[1], month: c[2], day: c[3], hour: 12, minute: 0, timeKnown: false, lat: 0, lon: 0, tz: 'UTC' }, { houseSystem: 'placidus', zodiac: 'tropical' });
+  CACHE = all.map(([c, world], i) => {
+    const g = (k: number) => parseInt(CELEB_SIGNS[i * 5 + k], 12);
     const m = destinyMatrix(c[3], c[2], c[1]);
-    return { c, sun: ch.positions.sun.sign, moon: ch.positions.moon.sign, mercury: ch.positions.mercury.sign, venus: ch.positions.venus.sign, mars: ch.positions.mars.sign, mx: [m.A, m.B, m.C, m.D, m.E], world };
+    return { c, sun: g(0), moon: g(1), mercury: g(2), venus: g(3), mars: g(4), mx: [m.A, m.B, m.C, m.D, m.E], world };
   });
   return CACHE;
 }

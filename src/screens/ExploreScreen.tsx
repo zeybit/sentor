@@ -11,7 +11,7 @@ import { BODIES, HOUSES, SIGNS, L } from '../content/base';
 import { ARCANA, ADVICE } from '../content/arcana';
 import { HOUSE_YEAR, VENUS_YEAR, JUP_YEAR, SAT_YEAR } from '../content/yearStory';
 import { celebTwins, dominantPlanet, PLANET_TYPE, loveLanguage, LOVE_LANG, LoveLang, elementProfile, ELEMENT_TYPE, cityPicks } from '../content/explore';
-import { FIELD } from '../content/celebs';
+import { CELEBS, FIELD } from '../content/celebs';
 import { yearSvg, twinSvg, testSvg, citySvg } from '../content/shareCards';
 import { bigCities } from '../ui/Tools';
 import { TarotCard } from '../ui/TarotCard';
@@ -145,7 +145,7 @@ function Twins() {
   const build = useCallback(() => twinSvg(profile?.name ?? '', shown.map(t => ({ name: t.name, score: t.score, reason: t.reasons.slice(0, 2).map(r => r[lang]).join(' · ') })), lang), [shown, profile, lang]);
   if (!chart || !profile) return null;
   return (
-    <Section title={tx('Haritasına en çok benzeyen ünlüler', 'Celebrities whose charts are most like yours', lang)} sub={tx('Güneş, Ay, Venüs, Mars ve Merkür burçlarıyla kader matrisi kartları karşılaştırılır. Ünlülerin doğum saatleri çoğu zaman bilinmediği için yükselen burç hesaba katılmaz.', 'Sun, Moon, Venus, Mars and Mercury signs plus destiny matrix cards are compared. Celebrities’ birth times are usually unknown, so the rising sign is left out.', lang)}>
+    <Section title={tx('Haritasına en çok benzeyen ünlüler', 'Celebrities whose charts are most like yours', lang)} sub={tx(`${CELEBS.tr.length + CELEBS.world.length} ünlü arasından (${CELEBS.tr.length} Türkiye, ${CELEBS.world.length} dünya) Güneş, Ay, Venüs, Mars ve Merkür burçlarıyla kader matrisi kartları karşılaştırılır. Ünlülerin doğum saatleri çoğu zaman bilinmediği için yükselen burç hesaba katılmaz.`, `Among ${CELEBS.tr.length + CELEBS.world.length} celebrities, Sun, Moon, Venus, Mars and Mercury signs plus destiny matrix cards are compared. Celebrities’ birth times are usually unknown, so the rising sign is left out.`, lang)}>
       <Chips items={[{ key: 'all', label: tx('Hepsi', 'All', lang) }, { key: 'tr', label: tx('Türkiye', 'Türkiye', lang) }, { key: 'world', label: tx('Dünya', 'World', lang) }]} value={scope} onChange={v => setScope(v as any)} />
       {shown.map((t, i) => (
         <View key={t.name} style={[st.panel, { marginTop: 10, borderLeftWidth: 3, borderLeftColor: i === 0 ? C.gold : C.line }]}>
