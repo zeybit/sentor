@@ -14,7 +14,7 @@ import { fmtLocal } from '../util';
 
 type Lang = 'tr' | 'en';
 let BIG: { name: string; country: string; lat: number; lon: number; pop: number }[] | null = null;
-const bigCities = () => BIG ?? (BIG = (cityTz.cityMapping as any[]).filter(c => c.pop >= 700000).map(c => ({ name: c.city, country: c.country, lat: c.lat, lon: c.lng, pop: c.pop })));
+export const bigCities = () => BIG ?? (BIG = (cityTz.cityMapping as any[]).filter(c => c.pop >= 700000).map(c => ({ name: c.city, country: c.country, lat: c.lat, lon: c.lng, pop: c.pop })));
 
 // ---------------- Kartografi ----------------
 export function Cartography({ natal, t, lang }: { natal: Chart; t: T2; lang: Lang }) {

@@ -120,3 +120,44 @@ export function groupSvg(names: string[], score: (i: number, j: number) => numbe
   }
   return frame(tx('GRUP UYUMUMUZ', 'OUR GROUP HARMONY', lang), tx(`${n} kişi`, `${n} people`, lang), cells);
 }
+
+// ---------------- Yıllık hikâye ----------------
+export function yearSvg(name: string, age: number, word: string, head: string, months: number[], lang: Lang, startMonth = 0) {
+  const mx = Math.max(1, ...months);
+  const MN = lang === 'tr' ? ['O', 'Ş', 'M', 'N', 'M', 'H', 'T', 'A', 'E', 'E', 'K', 'A'] : ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  const bars = months.map((v, i) => { const h = 20 + (v / mx) * 300, x = 150 + i * 66; return `<rect x="${x}" y="${1500 - h}" width="44" height="${h}" rx="10" fill="#F2B84B" fill-opacity="${0.35 + (v / mx) * 0.65}"/>${T(x + 22, 1550, 28, '#93A9BB', MN[(startMonth + i) % 12])}`; }).join('');
+  const lines = wrap(head, 26).slice(0, 2).map((t, i) => T(540, 900 + i * 76, 62, '#E3ECF3', t, { font: SERIF })).join('');
+  return frame(tx('YENİ YAŞIM', 'MY NEW YEAR', lang), name, `${T(540, 640, 220, '#F2B84B', String(age), { font: SERIF })}${T(540, 760, 50, '#93A9BB', tx(`yılın kelimesi: ${word}`, `word of the year: ${word}`, lang), { italic: true, font: SERIF })}${lines}${bars}${T(540, 1620, 30, '#93A9BB', tx('Ay ay yoğunluk', 'Intensity month by month', lang))}`);
+}
+
+// ---------------- Ünlü ikizin ----------------
+export function twinSvg(name: string, twins: { name: string; score: number; reason: string }[], lang: Lang) {
+  const rows = twins.slice(0, 3).map((t, i) => {
+    const y = 640 + i * 360;
+    return `<rect x="110" y="${y - 130}" width="860" height="300" rx="32" fill="#ffffff" fill-opacity="0.06" stroke="#F2B84B" stroke-opacity="${i === 0 ? 0.9 : 0.4}" stroke-width="3"/>
+${T(170, y - 40, 40, '#F2B84B', `#${i + 1} · %${t.score}`, { anchor: 'start', weight: '700' })}
+${T(170, y + 40, 66, '#E3ECF3', t.name, { anchor: 'start', font: SERIF })}
+${wrap(t.reason, 44).slice(0, 2).map((r, k) => T(170, y + 100 + k * 42, 32, '#93A9BB', r, { anchor: 'start' })).join('')}`;
+  }).join('');
+  return frame(tx('ÜNLÜ İKİZLERİM', 'MY CELEBRITY TWINS', lang), name, rows);
+}
+
+// ---------------- Test sonucu ----------------
+export function testSvg(kicker: string, name: string, result: string, text: string, bars: { label: string; v: number; col: string }[], lang: Lang) {
+  const t = wrap(result, 22).slice(0, 2).map((r, i) => T(540, 640 + i * 90, 78, '#F2B84B', r, { font: SERIF })).join('');
+  const body = wrap(text, 40).slice(0, 5).map((r, i) => T(540, 900 + i * 52, 38, '#E3ECF3', r)).join('');
+  const b = bars.slice(0, 5).map((x, i) => { const y = 1260 + i * 90; return `${T(150, y + 10, 34, '#E3ECF3', x.label, { anchor: 'start' })}<rect x="470" y="${y - 22}" width="460" height="36" rx="18" fill="#ffffff" fill-opacity="0.1"/><rect x="470" y="${y - 22}" width="${Math.max(18, 4.6 * x.v)}" height="36" rx="18" fill="${x.col}"/>${T(950, y + 10, 30, '#93A9BB', `%${x.v}`, { anchor: 'end' })}`; }).join('');
+  return frame(kicker, name, `${t}${body}${b}`);
+}
+
+// ---------------- Şehirlerim ----------------
+export function citySvg(name: string, picks: { theme: string; city: string; country: string; good: boolean }[], lang: Lang) {
+  const rows = picks.slice(0, 6).map((p, i) => {
+    const y = 600 + i * 200;
+    return `<rect x="110" y="${y - 80}" width="860" height="170" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="${p.good ? '#F2B84B' : '#F28A5B'}" stroke-opacity="0.6" stroke-width="2"/>
+${T(160, y - 20, 30, p.good ? '#93A9BB' : '#F28A5B', p.theme.toLocaleUpperCase(lang), { anchor: 'start', spacing: 2 })}
+${T(160, y + 50, 60, '#E3ECF3', p.city, { anchor: 'start', font: SERIF })}
+${T(930, y + 50, 30, '#93A9BB', p.country, { anchor: 'end' })}`;
+  }).join('');
+  return frame(tx('BENİM ŞEHİRLERİM', 'MY CITIES', lang), name, rows);
+}

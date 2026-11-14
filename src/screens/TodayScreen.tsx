@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { ShareToggle, safeName } from '../ui/ShareImage';
 import { monthSvg } from '../content/shareCards';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useNav } from '../nav';
+import { birthdayInfo } from './ExploreScreen';
 import { useStore } from '../store';
 import { computeDaily, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast';
 import { BODIES, MOON_PHASE_TIP, SIGNS, SIGN_GLYPHS } from '../content/base';
@@ -19,6 +21,7 @@ export default function TodayScreen() {
   const { chart, s, lang, profile, location } = useStore();
   const t2 = T2S[lang];
   const { inner } = useLayout();
+  const nav = useNav();
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
   const buildMonth = useCallback(() => (chart ? monthSvg(chart, profile?.name ?? '', lang) : ''), [chart, profile, lang]);
@@ -29,6 +32,13 @@ export default function TodayScreen() {
     <View>
       <Sub>{fmt.format(now)}</Sub>
       <H1>{profile?.name ? `${profile.name}, ${s.todayFor.toLocaleLowerCase(lang)}` : s.todayFor}</H1>
+      {profile ? (() => { const bi = birthdayInfo(profile.birth); const since = -bi.daysTo; if (bi.daysTo > 30 || since > 14) return null;
+        return (
+          <Pressable accessibilityRole="button" onPress={() => nav('explore:year')} style={{ marginTop: 10, marginBottom: 6, padding: 16, borderRadius: 16, backgroundColor: '#0F2440' }}>
+            <Text style={{ color: '#F2B84B', fontFamily: serif, fontSize: 22 }}>{bi.daysTo > 0 ? (lang === 'tr' ? `${bi.daysTo} gün sonra ${bi.age} yaşındasın ✦` : `${bi.age} in ${bi.daysTo} days ✦`) : (lang === 'tr' ? `Yeni yaşın kutlu olsun ✦ ${bi.age}` : `Happy birthday ✦ ${bi.age}`)}</Text>
+            <Text style={{ color: '#D5E1EA', fontSize: 15, marginTop: 4 }}>{lang === 'tr' ? 'Yeni yaşının hikâyesi hazır: aşk, şans, sınav ve en hareketli ayların. Okumak için dokun →' : 'The story of your new year is ready: love, luck, lessons and your busiest months. Tap to read →'}</Text>
+          </Pressable>
+        ); })() : null}
       <ShareToggle label={lang === 'tr' ? 'Aylık enerji kartın' : 'Your monthly energy card'} build={buildMonth} filename={`aylik-enerji-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
 
       <View style={{ marginTop: 8, marginBottom: 32 }}>
