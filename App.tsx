@@ -77,6 +77,8 @@ function Wordmark({ size = 21 }: { size?: number }) {
 function Shell() {
   const { ready, profile, chart, s, setProfile, lang, people, addPerson } = useStore();
   const [invite, setInvite] = useState(() => readInviteFromUrl());
+  const [notice, setNotice] = useState('');
+  const [navKey, setNavKey] = useState(0);
   // Tarayıcı çevirisinin Türkçe metni bozmasını önle: sayfa dilini uygulama diliyle eşle
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
@@ -89,7 +91,7 @@ function Shell() {
   const { wide, tablet } = useLayout();
   const [tab, setTab] = useState<Tab>('today');
   const scroll = useRef<ScrollViewInstance>(null);
-  const go = (t: Tab) => { setTab(t); scroll.current?.scrollTo({ y: 0, animated: false }); };
+  const go = (t: Tab) => { setTab(t); setNotice(''); scroll.current?.scrollTo({ y: 0, animated: false }); };
   const label = (t: Tab) => LABEL[t][lang];
 
   // Uygulama açıkken bağlantı yapıştırılırsa da daveti yakala
@@ -102,8 +104,10 @@ function Shell() {
   // Uyum daveti: davet edeni kişilere ekle ve doğrudan uyum sayfasını aç
   useEffect(() => {
     if (!ready || !profile || !invite) return;
-    const ex = sameBirth(invite, profile) ? null : people.find(p => sameBirth(p, invite)) ?? addPerson(invite);
-    if (ex) { setPendingKind(`compat:${ex.id}`); go('love'); }
+    if (sameBirth(invite, profile)) { setNotice(lang === 'tr' ? 'Bu senin kendi uyum bağlantın. Arkadaşın açtığında kendi doğum bilgisini girecek ve ikinizin uyumunu görecek; sen de onun bağlantısını açınca sonucu göreceksin.' : 'This is your own compatibility link. When your friend opens it they enter their birth details and see your compatibility; open their link to see it too.'); setInvite(null); return; }
+    const ex = people.find(p => sameBirth(p, invite)) ?? addPerson(invite);
+    setPendingKind(`compat:${ex.id}`); go('love'); setNavKey(k => k + 1);
+    setNotice(lang === 'tr' ? `${invite.name || 'Davet eden kişi'} kişilerine eklendi; ikinizin uyumu açıldı.` : `${invite.name || 'The inviter'} was added to your people; your compatibility is open.`);
     setInvite(null);
   }, [ready, profile, invite]);
 
@@ -142,7 +146,14 @@ function Shell() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView ref={scroll} contentContainerStyle={[styles.page, { maxWidth: maxW, paddingHorizontal: wide ? 48 : tablet ? 32 : 16, paddingTop: wide ? 40 : 12 }]} keyboardShouldPersistTaps="handled">
         <NavCtx.Provider value={t => { const [tb, k] = t.split(':'); setPendingKind(k ?? null); go(tb as Tab); }}>
-          {tab === 'settings' ? <SettingsScreen onDone={() => go('chart')} /> : Screen ? <Screen /> : null}
+          {notice ? (
+            <Pressable onPress={() => setNotice('')} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Bildirimi kapat' : 'Dismiss notice'}
+              style={{ backgroundColor: C.goldSoft, borderRadius: 12, padding: 14, marginBottom: 16, flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+              <Text style={{ flex: 1, fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.ink }}>{notice}</Text>
+              <Text style={{ fontSize: 18, color: C.sub }}>×</Text>
+            </Pressable>
+          ) : null}
+          {tab === 'settings' ? <SettingsScreen onDone={() => go('chart')} /> : Screen ? <Screen key={navKey} /> : null}
         </NavCtx.Provider>
       </ScrollView>
     </KeyboardAvoidingView>
