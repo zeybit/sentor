@@ -7,6 +7,7 @@ import { COUPLE, COUPLE_INTRO, COUPLE_POS, buildCouple } from '../content/couple
 import { ARCANA, POS, CHAKRA, MxPos, mxStory, SECTION_INTRO, ADVICE } from '../content/arcana';
 import { Chips, Expand, H1, H3, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
+import { TarotCard, TAROT_CREDIT } from '../ui/TarotCard';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -96,13 +97,36 @@ export default function MatrixScreen() {
   const an = (n: number) => `${n} ${ARCANA[n].name[lang]}`;
   const date = `${String(person.birth.day).padStart(2, '0')}.${String(person.birth.month).padStart(2, '0')}.${person.birth.year}`;
 
-  const Item = ({ pos, n, label, explain }: { pos: MxPos; n: number; label?: string; explain?: boolean }) => (
-    <View style={{ marginBottom: 22 }}>
-      <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{label ?? POS[pos].title[lang]}</Text>
-      <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(n)}</H3>
-      <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>{mxStory(pos, n, { explain })[lang]}</Text>
+  const narrowCard = inner(760) < 520;
+  /** Kart görseli + metin satırı */
+  const CardRow = ({ n, label, title, children }: { n: number; label: string; title: React.ReactNode; children: React.ReactNode }) => (
+    <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24, alignItems: 'flex-start' }}>
+      <TarotCard n={n} w={narrowCard ? 58 : 76} name={ARCANA[n].name[lang]} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{label}</Text>
+        <H3 style={{ fontSize: 22, lineHeight: 28 }}>{title}</H3>
+        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 620 }}>{children}</Text>
+      </View>
     </View>
   );
+  const Item = ({ pos, n, label, explain }: { pos: MxPos; n: number; label?: string; explain?: boolean }) => (
+    <CardRow n={n} label={label ?? POS[pos].title[lang]} title={an(n)}>{mxStory(pos, n, { explain })[lang]}</CardRow>
+  );
+  /** Ana enerjiler kişinin portresi gibi: tepe, sol, merkez, sağ, alt */
+  const Spread = () => {
+    const w = narrowCard ? 62 : 92;
+    const cell = (n: number, cap: string) => <TarotCard n={n} w={w} name={`${n} ${ARCANA[n].name[lang]}`} caption={cap} />;
+    const blank = <View style={{ width: w }} />;
+    const gap = narrowCard ? 18 : 30;
+    return (
+      <View style={{ alignItems: 'center', marginBottom: 26 }}>
+        <View style={{ flexDirection: 'row', gap }}>{blank}{cell(m.B, tx('Ruhsal yanın', 'Your spirit', lang))}{blank}</View>
+        <View style={{ flexDirection: 'row', gap, marginTop: 8 }}>{cell(m.A, tx('Kişiliğin', 'Personality', lang))}{cell(m.E, tx('Özün', 'Your core', lang))}{cell(m.C, tx('Yeteneğin', 'Your talent', lang))}</View>
+        <View style={{ flexDirection: 'row', gap, marginTop: 8 }}>{blank}{cell(m.D, tx('Görevin', 'Your task', lang))}{blank}</View>
+        <Sub style={{ marginTop: 10, textAlign: 'center', maxWidth: 520 }}>{tx('Doğum tarihinden çıkan beş ana kart, seni bir tarot açılımı gibi anlatır: üstte ruhsal yanın, solda kişiliğin, ortada özün, sağda yeteneğin, altta bu hayattaki görevin.', 'The five main cards from your birth date describe you like a tarot spread: spirit on top, personality on the left, your core in the centre, talent on the right and your life task below.', lang)}</Sub>
+      </View>
+    );
+  };
   const Intro = ({ k }: { k: keyof typeof SECTION_INTRO }) => (
     <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 18, maxWidth: 640 }}>{SECTION_INTRO[k][lang]}</Text>
   );
@@ -125,6 +149,7 @@ export default function MatrixScreen() {
   const reading = (
     <View>
       <Section title={tx('Ana enerjilerin', 'Your core energies', lang)}>
+        <Spread />
         <Intro k="core" />
         <Item pos="A" n={m.A} /><Item pos="B" n={m.B} /><Item pos="C" n={m.C} /><Item pos="D" n={m.D} label={tx('Bu hayattaki görevin', 'Your task in this life', lang)} /><Item pos="E" n={m.E} />
       </Section>
@@ -152,13 +177,9 @@ export default function MatrixScreen() {
         {(['personal', 'social', 'spiritual', 'planetary'] as MxPos[]).map(k => {
           const n = (m as any)[k] as number;
           return (
-            <View key={k} style={{ marginBottom: 22 }}>
-              <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{POS[k].title[lang]}</Text>
-              <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(n)}</H3>
-              <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>
-                {POS[k].what[lang]} {lang === 'tr' ? `Bu dönemin enerjisi ${ARCANA[n].name.tr}: ${ARCANA[n].key.tr}.` : `This period’s energy is ${ARCANA[n].name.en}: ${ARCANA[n].key.en}.`} {ARCANA[n].plus[lang]} {ADVICE[n][lang]}
-              </Text>
-            </View>
+            <CardRow key={k} n={n} label={POS[k].title[lang]} title={an(n)}>
+              {POS[k].what[lang]} {lang === 'tr' ? `Bu dönemin enerjisi ${ARCANA[n].name.tr}: ${ARCANA[n].key.tr}.` : `This period’s energy is ${ARCANA[n].name.en}: ${ARCANA[n].key.en}.`} {ARCANA[n].plus[lang]} {ADVICE[n][lang]}
+            </CardRow>
           );
         })}
         <Sub style={{ maxWidth: 640 }}>{lang === 'tr'
@@ -169,6 +190,9 @@ export default function MatrixScreen() {
         <Intro k="ancestry" />
         {([[m.F, m.H, tx('Baba tarafın', 'Your father’s side', lang), m.male], [m.G, m.I, tx('Anne tarafın', 'Your mother’s side', lang), m.female]] as [number, number, string, number][]).map(([x, y, label, line]) => (
           <View key={label} style={{ marginBottom: 22 }}>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 8 }}>
+              <TarotCard n={x} w={narrowCard ? 50 : 64} name={ARCANA[x].name[lang]} /><TarotCard n={y} w={narrowCard ? 50 : 64} name={ARCANA[y].name[lang]} />
+            </View>
             <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{label}</Text>
             <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(x)} {lang === 'tr' ? 've' : 'and'} {an(y)}</H3>
             <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>
@@ -196,11 +220,7 @@ export default function MatrixScreen() {
         <Section key={sec.title.tr} title={sec.title[lang]}>
           {sec.title.tr === 'İlişkinin karmik düğümü' ? <Text style={{ fontFamily: F.serif, fontSize: 34, color: C.danger, marginBottom: 8 }}>{m.tail[2]}-{m.tail[1]}-{m.tail[0]}</Text> : null}
           {sec.items.map(it => (
-            <View key={it.pos} style={{ marginBottom: 22 }}>
-              <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{COUPLE_POS[it.pos].title[lang]}</Text>
-              <H3 style={{ fontSize: 22, lineHeight: 28 }}>{an(it.n)}{it.repeat ? <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub }}>{tx('  · tekrar eden enerji', '  · repeated energy', lang)}</Text> : null}</H3>
-              <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 660 }}>{it.text[lang]}</Text>
-            </View>
+            <CardRow key={it.pos} n={it.n} label={COUPLE_POS[it.pos].title[lang]} title={<>{an(it.n)}{it.repeat ? <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub }}>{tx('  · tekrar eden enerji', '  · repeated energy', lang)}</Text> : null}</>}>{it.text[lang]}</CardRow>
           ))}
         </Section>
       ))}
@@ -295,6 +315,7 @@ export default function MatrixScreen() {
           <View style={{ flex: 1, maxWidth: 640 }}>
             <Segmented items={[{ key: 'reading', label: tx('Yorum', 'Reading', lang) }, { key: 'health', label: tx('Enerji haritası', 'Energy map', lang) }, ...(partner ? [] : [{ key: 'ages' as View_, label: tx('Yaş haritası', 'Age map', lang) }])]} value={view} onChange={setView} />
             {view === 'reading' ? (partner ? coupleReading : reading) : view === 'health' ? health : agesView}
+            {view === 'reading' ? <Sub style={{ marginBottom: 20 }}>{TAROT_CREDIT[lang]}</Sub> : null}
           </View>
         </View>
       ) : (
@@ -302,6 +323,7 @@ export default function MatrixScreen() {
           {diagram}
           <Segmented items={[{ key: 'reading', label: tx('Yorum', 'Reading', lang) }, { key: 'health', label: tx('Enerji', 'Energy', lang) }, ...(partner ? [] : [{ key: 'ages' as View_, label: tx('Yaşlar', 'Ages', lang) }])]} value={view} onChange={setView} />
           {view === 'reading' ? (partner ? coupleReading : reading) : view === 'health' ? health : agesView}
+            {view === 'reading' ? <Sub style={{ marginBottom: 20 }}>{TAROT_CREDIT[lang]}</Sub> : null}
         </>
       )}
     </View>
