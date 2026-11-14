@@ -132,7 +132,9 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
     title = `${tName} → ${PT_NAME[e.n][lang]} · ${ASPECT_INFO[e.type].name[lang].toLocaleLowerCase(lang)}`;
     if (e.n !== 'dsc' && e.n !== 'ic') sub = lifeAspect(e.t, e.n, e.type, 'progressed').title[lang];
     const c = CLS[e.t]!;
-    lines.push({ text: CONCRETE[e.n][c][lang] });
+    const base = CONCRETE[e.n][c][lang];
+    const jHard = e.t === 'jupiter' && (e.type === 'square' || e.type === 'opposition');
+    lines.push({ text: jHard ? tx(`Fırsat var ama ölçüyü kaçırma: ${base.charAt(0).toLocaleLowerCase('tr')}${base.slice(1)} Fazla söz vermek, fazla harcamak ya da aşırı iyimserlik bu dönemin tuzağı.`, `There is opportunity, but don’t overdo it: ${base.charAt(0).toLowerCase()}${base.slice(1)} Overpromising, overspending or blind optimism are the trap now.`, lang) : base });
     if (e.n === 'venus' || e.n === 'dsc') {
       if (rel) lines.push({ text: REL_LINE[c][rel][lang] });
       else (['single', 'partner', 'married'] as Rel[]).forEach(k => lines.push({ label: REL_LABEL[k][lang], text: REL_LINE[c][k][lang] }));
@@ -170,20 +172,27 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
   );
 }
 
-function SkyList({ list, lang, rel }: { list: SkyEvent[]; lang: Lang; rel?: Rel }) {
-  const [n, setN] = useState(15);
-  const shown = list.slice(0, n);
+type FeedItem = { k: 'w'; w: Window; d: Date } | { k: 'e'; e: SkyEvent; d: Date };
+/** Büyük dönemler ve tek tek gezegen olayları, yıllara göre tek bir tarih akışında */
+function Feed({ items, lang, rel, tips }: { items: FeedItem[]; lang: Lang; rel?: Rel; tips: boolean }) {
+  const [n, setN] = useState(20);
+  const shown = items.slice(0, n);
   let year = -1;
   return (
     <View>
-      {shown.map(e => {
-        const y = e.start.getFullYear();
-        const hdr = y !== year ? (year = y, <Text key={`y${y}`} style={{ fontFamily: F.serif, fontSize: 26, color: C.gold, marginTop: 10, marginBottom: 8 }}>{y}</Text>) : null;
-        return <React.Fragment key={e.id}>{hdr}<SkyCard e={e} lang={lang} rel={rel} /></React.Fragment>;
+      {shown.map((it, i) => {
+        const y = it.d.getFullYear();
+        const hdr = y !== year ? (year = y, <Text style={{ fontFamily: F.serif, fontSize: 26, color: C.gold, marginTop: 10, marginBottom: 10 }}>{y}</Text>) : null;
+        return (
+          <React.Fragment key={it.k === 'w' ? `w${i}${it.w.start.getTime()}${it.w.topic}` : it.e.id}>
+            {hdr}
+            {it.k === 'w' ? <WindowCard w={it.w} lang={lang} showTip={tips} /> : <SkyCard e={it.e} lang={lang} rel={rel} />}
+          </React.Fragment>
+        );
       })}
-      {list.length > n ? (
-        <Pressable accessibilityRole="button" onPress={() => setN(n + 20)} style={{ paddingVertical: 8 }}>
-          <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{tx(`Daha fazla göster (${list.length - n} olay daha)`, `Show more (${list.length - n} more)`, lang)}</Text>
+      {items.length > n ? (
+        <Pressable accessibilityRole="button" onPress={() => setN(n + 25)} style={{ paddingVertical: 8 }}>
+          <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{tx(`Daha fazla göster (${items.length - n} kayıt daha)`, `Show more (${items.length - n} more)`, lang)}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -250,6 +259,8 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
   const future = filtered.filter(w => w.end > now);
   const upcoming = future.filter(w => w.start.getTime() < now.getTime() + 12 * YEAR);
   const past = filtered.filter(w => w.end <= now && w.end.getTime() > now.getTime() - 15 * YEAR).reverse();
+  const feedUp: FeedItem[] = [...upcoming.map(w => ({ k: 'w' as const, w, d: w.start })), ...skyF.filter(e => e.end > now).map(e => ({ k: 'e' as const, e, d: e.start }))].sort((x, y) => x.d.getTime() - y.d.getTime());
+  const feedPast: FeedItem[] = [...past.map(w => ({ k: 'w' as const, w, d: w.start })), ...skyF.filter(e => e.end <= now).map(e => ({ k: 'e' as const, e, d: e.start }))].sort((x, y) => y.d.getTime() - x.d.getTime());
   const noTime = !chart.input.timeKnown;
 
   return (
@@ -267,12 +278,8 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
         </View>
       ) : (
         <>
-          <Section title={tx('Sıradaki önemli dönemlerin', 'Your next important periods', lang)} sub={tx('Önümüzdeki 12 yıl', 'The next 12 years', lang)}>
-            {upcoming.length ? upcoming.slice(0, 8).map((w, i) => <WindowCard key={i} w={w} lang={lang} />) : <P>{tx('Bu konu için önümüzdeki 12 yılda belirgin bir dönem çıkmadı; bu, sakin ve istikrarlı bir akış anlamına gelir.', 'No marked period for this topic in the next 12 years; that means a calm, steady flow.', lang)}</P>}
-          </Section>
-
-          <Section title={tx('Aradaki gezegen olayları', 'Planet events in between', lang)} sub={tx('Gezegenlerin doğum haritandaki noktalara yaptığı her kavuşum ve açı, tutulmalar ve iç saatini gösteren ilerletilmiş Ay. Yukarıdaki büyük dönemlerin arasında hayatına neler yansıyacağını tek tek gösterir.', 'Every conjunction and aspect planets make to your birth chart, eclipses, and the progressed Moon that shows your inner clock. It fills in what reaches your life between the big periods above.', lang)}>
-            {(() => { const now2 = Date.now(); const up = skyF.filter(e => e.end.getTime() > now2); return up.length ? <SkyList key={topic} list={up} lang={lang} rel={profile.rel} /> : <P>{tx('Bu konu için yakın zamanda belirgin bir gezegen olayı yok.', 'No notable planet events for this topic soon.', lang)}</P>; })()}
+          <Section title={tx('Sıradaki önemli dönemlerin', 'Your next important periods', lang)} sub={tx('Önümüzdeki 12 yıl, tarih sırasıyla. Renkli çizgili kartlar birkaç tekniğin birleştiği büyük dönemlerdir; noktalı satırlar o aralıkta haritana dokunan tek tek gezegen olaylarıdır (kavuşumlar, açılar, tutulmalar, ilerletilmiş Ay).', 'The next 12 years in date order. Cards with a coloured bar are major periods where several techniques agree; dotted rows are the single planet events touching your chart in between (conjunctions, aspects, eclipses, progressed Moon).', lang)}>
+            {feedUp.length ? <Feed key={`u${topic}`} items={feedUp} lang={lang} rel={profile.rel} tips /> : <P>{tx('Bu konu için önümüzdeki 12 yılda belirgin bir dönem çıkmadı; bu, sakin ve istikrarlı bir akış anlamına gelir.', 'No marked period for this topic in the next 12 years; that means a calm, steady flow.', lang)}</P>}
           </Section>
 
           <Section title={tx('Bütün hayatın tek bakışta', 'Your whole life at a glance', lang)} sub={tx('Renkli çubuklar öne çıkan dönemleri gösterir; koyu olanlar daha güçlüdür. Yana kaydırabilirsin.', 'Coloured bars mark the standout periods; darker ones are stronger. Scroll sideways.', lang)}>
@@ -280,7 +287,7 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
           </Section>
 
           <Section title={tx('Geçmişini kontrol et', 'Check your past', lang)} sub={tx('Bu dönemlerde gerçekten önemli bir şey yaşadın mı? Geçmişte tutan dönemler, gelecekteki tarihlerin senin haritanda ne kadar işe yaradığını gösterir. Hiçbiri tutmuyorsa doğum saatini kontrol etmeye değer.', 'Did something important really happen in these periods? Past periods that match show how well the future dates work for your chart. If none match, it’s worth checking your birth time.', lang)}>
-            {past.length ? past.slice(0, 8).map((w, i) => <WindowCard key={i} w={w} lang={lang} showTip={false} />) : <P>{tx('Son 15 yılda bu konu için belirgin bir dönem yok.', 'No marked period for this topic in the last 15 years.', lang)}</P>}
+            {feedPast.length ? <Feed key={`p${topic}`} items={feedPast} lang={lang} rel={profile.rel} tips={false} /> : <P>{tx('Son 15 yılda bu konu için belirgin bir dönem yok.', 'No marked period for this topic in the last 15 years.', lang)}</P>}
           </Section>
 
           <Sub style={{ marginBottom: 20, maxWidth: 640 }}>{tx('Bu tarihler kesin olayları değil, belirli konuların öne çıktığı dönemleri gösterir. Kararlarını yalnızca bunlara göre verme.', 'These dates show periods when certain themes come forward, not fixed events. Don’t base decisions on them alone.', lang)}</Sub>
