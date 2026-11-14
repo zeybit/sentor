@@ -45,6 +45,13 @@ export default function LoveScreen() {
   const [view, setView] = useState<'readings' | 'tables'>('readings');
   const [part, setPart] = useState<'spouse' | 'compat' | 'group'>(pend?.startsWith('compat') ? 'compat' : pend === 'group' ? 'group' : 'spouse');
   const [inviteMsg, setInviteMsg] = useState('');
+  // Kişi ya da sekme değişince eski "paylaşıldı" mesajı kalmasın; başarı mesajı birkaç saniye sonra kaybolur
+  useEffect(() => { setInviteMsg(''); }, [pid, part]);
+  useEffect(() => {
+    if (!inviteMsg || inviteMsg.includes('://')) return;
+    const id = setTimeout(() => setInviteMsg(''), 4000);
+    return () => clearTimeout(id);
+  }, [inviteMsg]);
   const partner = others.find(p => p.id === pid) ?? null;
   const pc = useMemo(() => (partner ? chartOf(partner) : null), [partner, opts]);
   const data = useMemo(() => {
