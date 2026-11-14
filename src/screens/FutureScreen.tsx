@@ -6,6 +6,7 @@ import type { Chart } from '../engine/astro';
 import { lifeTimeline, Topic, TOPICS, Window, strengthOf } from '../engine/timeline';
 import { Chips, H1, P, Section, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
+import { EVENTS, LOVE_TIP, Rel } from '../content/lifeEvents';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -36,11 +37,44 @@ const Dots = ({ n }: { n: number }) => (
   </View>
 );
 
+const REL_LABEL: Record<Rel, { tr: string; en: string }> = { single: { tr: 'Bekârsan', en: 'If single' }, partner: { tr: 'İlişkin varsa', en: 'If in a relationship' }, married: { tr: 'Evliysen', en: 'If married' } };
+
+/** Dönemin somut senaryoları: her gökyüzü olayına ve ilişki durumuna göre */
+function scenarios(w: Window, rel: Rel | undefined, lang: Lang): { label?: string; text: string }[] {
+  const out: { label?: string; text: string }[] = [];
+  const seen = new Set<string>();
+  let splitShown = false;
+  for (const r of w.reasons) {
+    const ev = EVENTS[r.id];
+    if (!ev || out.length >= 4) continue;
+    const pick = rel ? (rel === 'single' ? ev.s : rel === 'partner' ? ev.p : ev.m) : undefined;
+    if (pick || ev.all) {
+      const txt = (pick ?? ev.all)![lang];
+      if (seen.has(txt)) continue;
+      seen.add(txt);
+      if (!rel && !ev.all && !splitShown) {
+        splitShown = true;
+        (['single', 'partner', 'married'] as Rel[]).forEach(k => { const v = k === 'single' ? ev.s : k === 'partner' ? ev.p : ev.m; if (v) out.push({ label: REL_LABEL[k][lang], text: v[lang] }); });
+      } else out.push({ text: txt });
+    } else if (!rel && !splitShown) {
+      splitShown = true;
+      (['single', 'partner', 'married'] as Rel[]).forEach(k => { const v = k === 'single' ? ev.s : k === 'partner' ? ev.p : ev.m; if (v) out.push({ label: REL_LABEL[k][lang], text: v[lang] }); });
+    }
+  }
+  return out;
+}
+
 export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang; showTip?: boolean }) {
+  const { profile } = useStore();
+  const rel = profile?.rel;
   const t = TOPIC_INFO[w.topic];
   const s = strengthOf(w.score);
+  const head = w.reasons.map(r => EVENTS[r.id]?.head).find(Boolean);
+  const sc = scenarios(w, rel, lang);
+  const relMatters = w.reasons.some(r => { const e = EVENTS[r.id]; return e && (e.s || e.p || e.m); });
+  const tip = w.topic === 'love' ? LOVE_TIP[rel ?? 'none'][lang] : t.tip[lang];
   return (
-    <View style={{ borderLeftWidth: 3, borderLeftColor: t.color(), paddingLeft: 14, paddingVertical: 4, marginBottom: 22 }}>
+    <View style={{ borderLeftWidth: 3, borderLeftColor: t.color(), paddingLeft: 14, paddingVertical: 4, marginBottom: 26 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: t.color() }}>{t.name[lang]}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -49,17 +83,30 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
         </View>
       </View>
       <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginTop: 2 }}>{fmtRange(w, lang)}</Text>
+      {head ? <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 25, color: C.ink, marginTop: 2 }}>{head[lang]}</Text> : null}
+      {sc.length ? (
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, marginBottom: 2 }}>{tx('Senin için ne olabilir', 'What it could bring you', lang)}</Text>
+          {sc.map((x, i) => (
+            <Text key={i} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 3 }}>
+              {'• '}{x.label ? <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{x.label}: </Text> : null}{x.text}
+            </Text>
+          ))}
+          {!rel && relMatters ? <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{tx('Ayarlar’da ilişki durumunu eklersen yalnızca sana uyan senaryo gösterilir.', 'Add your relationship status in Settings to see only the scenario that fits you.', lang)}</Text> : null}
+        </View>
+      ) : null}
+      <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, marginTop: 10 }}>{tx('Gökyüzünde ne oluyor', 'What’s happening in the sky', lang)}</Text>
       {(['transit', 'progression', 'other'] as const).map(g => {
         const rs = w.reasons.filter(r => techOfId(r.id) === g).slice(0, 2);
         if (!rs.length) return null;
         const lbl = g === 'transit' ? tx('Transit', 'Transit', lang) : g === 'progression' ? tx('Progresyon', 'Progression', lang) : tx('Yaşın teması ve tutulmalar', 'Age theme and eclipses', lang);
         return (
-          <Text key={g} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, marginTop: 6 }}>
-            <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{lbl}: </Text>{rs.map(r => r.text[lang]).join(' ')}
+          <Text key={g} style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 24, color: C.sub, marginTop: 4 }}>
+            <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.ink }}>{lbl}: </Text>{rs.map(r => r.text[lang]).join(' ')}
           </Text>
         );
       })}
-      {showTip ? <Text style={{ fontFamily: F.sans, fontSize: 14, lineHeight: 22, color: C.sub, marginTop: 6 }}>{t.tip[lang]}</Text> : null}
+      {showTip ? <Text style={{ fontFamily: F.sans, fontSize: 14, lineHeight: 22, color: C.sub, marginTop: 8 }}>{tip}</Text> : null}
     </View>
   );
 }

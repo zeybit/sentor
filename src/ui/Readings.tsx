@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import type { AspectType, BodyId, Chart } from '../engine/astro';
 import { ALL_BODIES, PLANETS, angleDiff, fmtDeg, ASPECTS, norm, moonPhase, houseOf } from '../engine/astro';
 import { crossAspects, CrossAspect, antiscion, solarArcDegrees } from '../engine/techniques';
@@ -14,7 +14,8 @@ import { lillyScore, mannersFor, CLASSICAL, Classical } from '../content/lillyDi
 import * as N from '../content/lillyNatal';
 import { LILLY_NOTE } from './LillyBlocks';
 import { natalStory } from '../content/story';
-import { Expand, P, Section, Sub, st } from './kit';
+import { Expand, P, Section, Segmented, Sub, st } from './kit';
+import { characterReading, CHAR_INTRO, CharItem } from '../content/character';
 import { C, ELEMENT_COLOR, F, serif } from '../theme';
 import type { Strings } from '../i18n';
 import type { T2 } from '../i18n2';
@@ -56,6 +57,58 @@ export function angleAspects(c: Chart): { a: K; b: K; type: AspectType; orb: num
 
 // ---------------- Doğum haritası: kitap gibi akıcı anlatım ----------------
 export function NatalReading({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; lang: Lang; asteroids: boolean }) {
+  const [mode, setMode] = useState<'story' | 'places'>('story');
+  return (
+    <View>
+      <View style={{ marginBottom: 20 }}>
+        <Segmented items={[{ key: 'story', label: lang === 'tr' ? 'Hikâyen' : 'Your story' }, { key: 'places', label: lang === 'tr' ? 'Karakterin, yerleşim yerleşim' : 'Your character, placement by placement' }]} value={mode} onChange={v => setMode(v as any)} />
+      </View>
+      {mode === 'story' ? <NatalStory chart={chart} s={s} t={t} lang={lang} /> : <CharacterBook chart={chart} lang={lang} />}
+    </View>
+  );
+}
+
+function CharacterBook({ chart, lang }: { chart: Chart; lang: Lang }) {
+  const items = useMemo(() => characterReading(chart, lang), [chart, lang]);
+  return (
+    <View>
+      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 22, maxWidth: 640 }}>{CHAR_INTRO[lang]}</Text>
+      {!chart.cusps.length ? <Sub style={{ marginBottom: 16 }}>{lang === 'tr' ? 'Doğum saatin bilinmediği için ev yorumları ve yükselen yok; yalnızca burç yorumları gösteriliyor.' : 'Your birth time is unknown, so house readings and the Ascendant are left out; only sign readings are shown.'}</Sub> : null}
+      {items.map((it, i) => <CharCard key={it.key} it={it} lang={lang} initial={i < 3} />)}
+    </View>
+  );
+}
+
+function CharCard({ it, lang, initial }: { it: CharItem; lang: Lang; initial: boolean }) {
+  const [open, setOpen] = useState(initial);
+  return (
+    <View style={{ borderTopWidth: 1, borderTopColor: C.line, paddingVertical: 16 }}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(o => !o)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{it.title}</Text>
+        <Text style={{ fontSize: 13, color: C.rose, fontWeight: '600' }}>{open ? (lang === 'tr' ? 'Gizle' : 'Hide') : (lang === 'tr' ? 'Oku' : 'Read')}</Text>
+      </Pressable>
+      {open ? (
+        <View style={{ marginTop: 8, maxWidth: 660 }}>
+          <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 23, color: C.sub, marginBottom: 8 }}>{lang === 'tr' ? 'İhtiyacı: ' : 'What it needs: '}{it.need}.</Text>
+          {it.lines.map((ln, j) => (
+            <Text key={j} style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 27, color: C.ink, marginBottom: 8 }}>
+              <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{ln.label}: </Text>{ln.text}.
+            </Text>
+          ))}
+          {it.dose.length ? (
+            <View style={{ marginTop: 6, borderLeftWidth: 3, borderLeftColor: C.gold, paddingLeft: 12 }}>
+              <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{lang === 'tr' ? 'Senin haritanda' : 'In your chart'}</Text>
+              {it.dose.map((d, j) => <Text key={j} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginBottom: 4 }}>{d}</Text>)}
+            </View>
+          ) : null}
+          {it.note ? <Sub style={{ marginTop: 8 }}>{it.note}</Sub> : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function NatalStory({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; lang: Lang }) {
   const chapters = useMemo(() => natalStory(chart, lang), [chart, lang]);
   return (
     <View>

@@ -5,7 +5,7 @@ import type { Lang } from './content/base';
 import { STRINGS, Strings } from './i18n';
 import { applyTheme, ThemeMode } from './theme';
 
-export interface Profile { id: string; name: string; place: string; birth: BirthInput; gender?: 'f' | 'm' }
+export interface Profile { id: string; name: string; place: string; birth: BirthInput; gender?: 'f' | 'm'; rel?: 'single' | 'partner' | 'married' }
 export interface Place { label: string; lat: number; lon: number; tz: string }
 
 interface State {

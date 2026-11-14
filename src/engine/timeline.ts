@@ -109,10 +109,16 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[]): Record<Topic, Factor[]> {
   for (const e of ecl) {
     if (Math.abs(e.date.getTime() - d.getTime()) > 92 * DAY) continue;
     const el = norm(e.lon - ay);
-    if (hasAngles && (near(el, ASC, 4) || near(el, DSC, 4))) add('love', 'Eax', 2, 'Bir tutulma kimlik–ilişki eksenine düşüyor: ilişki hayatında başlangıçlar ya da bitişler.', 'An eclipse falls on your self–partner axis: beginnings or endings in relationships.');
-    if (near(el, P.venus.lon, 3)) add('love', 'Even', 1, 'Bir tutulma Venüs’üne düşüyor: aşk hayatında dönüm noktası.', 'An eclipse falls on your Venus: a turning point in love.');
-    if (hasAngles && (near(el, MC, 4) || near(el, IC, 4))) { add('career', 'Emc', 2, 'Bir tutulma kariyer–yuva eksenine düşüyor: iş veya ev hayatında yön değişikliği.', 'An eclipse falls on your career–home axis: a change of direction at work or home.'); add('home', 'Eic', 1, 'Tutulma ev ve aile konularını da hareketlendiriyor.', 'The eclipse also stirs home and family matters.'); }
-    if (near(el, P.sun.lon, 3) || near(el, P.moon.lon, 3)) add('change', 'Elum', 1, 'Bir tutulma Güneş’ine ya da Ay’ına düşüyor: kişisel bir dönüm noktası.', 'An eclipse falls on your Sun or Moon: a personal turning point.');
+    // Kuzey düğüme yakın Güneş tutulması (ya da Güney düğüme yakın Ay) büyüme, tersi bitiş temalıdır
+    const nodeAt = norm(bodyLon('node', e.date) - ay);
+    const sunAt = e.kind === 'solar' ? el : norm(el + 180);
+    const north = angleDiff(sunAt, nodeAt) < 90;
+    const NS = north ? 'N' : 'S';
+    const pol = north ? l(' Kuzey düğüme yakın bu tutulma büyüme ve yeni başlangıç getirir.', ' Near the North Node, this eclipse brings growth and new beginnings.') : l(' Güney düğüme yakın bu tutulma bir şeyi bitirir ve bıraktırır.', ' Near the South Node, this eclipse ends something and asks you to let go.');
+    if (hasAngles && (near(el, ASC, 4) || near(el, DSC, 4))) add('love', 'Eax' + NS, 2, 'Bir tutulma kimlik–ilişki eksenine düşüyor: ilişki hayatında dönüm noktası.' + pol.tr, 'An eclipse falls on your self–partner axis: a turning point in relationships.' + pol.en);
+    if (near(el, P.venus.lon, 3)) add('love', 'Even' + NS, 1, 'Bir tutulma Venüs’üne düşüyor: aşk hayatında dönüm noktası.' + pol.tr, 'An eclipse falls on your Venus: a turning point in love.' + pol.en);
+    if (hasAngles && (near(el, MC, 4) || near(el, IC, 4))) { add('career', 'Emc' + NS, 2, 'Bir tutulma kariyer–yuva eksenine düşüyor: iş veya ev hayatında yön değişikliği.' + pol.tr, 'An eclipse falls on your career–home axis: a change of direction at work or home.' + pol.en); add('home', 'Eic', 1, 'Tutulma ev ve aile konularını da hareketlendiriyor.', 'The eclipse also stirs home and family matters.'); }
+    if (near(el, P.sun.lon, 3) || near(el, P.moon.lon, 3)) add('change', 'Elum' + NS, 1, 'Bir tutulma Güneş’ine ya da Ay’ına düşüyor: kişisel bir dönüm noktası.' + pol.tr, 'An eclipse falls on your Sun or Moon: a personal turning point.' + pol.en);
   }
 
   // ---- İkincil progresyon (doğumdan sonraki her gün = hayatının bir yılı) ----
