@@ -19,6 +19,8 @@ import { ActivityIndicator, Pressable } from 'react-native';
 import { useEffect } from 'react';
 import type { Window } from '../engine/timeline';
 import { SynastryReport, SynastryTables, RelChartReport, synAspects } from '../ui/RelationshipViews';
+import { RadarChart, RadarOverride } from '../ui/RelViz';
+import { areas, score } from '../content/synastryAreas';
 import { T2S } from '../i18n2';
 import BirthForm from '../ui/BirthForm';
 import Wheel from '../ui/Wheel';
@@ -44,9 +46,11 @@ export default function LoveScreen() {
   const data = useMemo(() => {
     if (!chart || !pc) return null;
     const sy = synastry(chart, pc);
+    const cross = synAspects(crossAspects(pc, chart, 6, [...PLANETS, 'node', 'chiron', 'juno', 'ceres', 'pallas', 'vesta', 'lilith', 'fortune'] as BodyId[]));
+    const part = (k: string) => sy.parts.find(p => p.key === k)?.score;
+    const ov: RadarOverride = { attraction: part('attraction'), emotion: part('emotional'), comm: part('communication'), longevity: part('longterm') };
     return {
-      sy, lilly: concord(chart, pc),
-      cross: synAspects(crossAspects(pc, chart, 6, [...PLANETS, 'node', 'chiron', 'juno', 'ceres', 'pallas', 'vesta', 'lilith', 'fortune'] as BodyId[])),
+      sy, lilly: concord(chart, pc), cross, ar: areas(score(cross)), ov,
       wheelCross: crossAspects(pc, chart, 6, [...PLANETS, 'node'] as BodyId[]),
       comp: compositeChart(chart, pc, opts), dav: davisonChart(chart, pc, opts),
     };
@@ -103,10 +107,10 @@ export default function LoveScreen() {
                   <Text style={{ fontFamily: serif, fontSize: 52, color: C.rose }}>%{data.sy.total}</Text>
                   <Sub>{HARMONY[harmonyBand(data.sy.total)][lang]}</Sub>
                 </View>
-                {data.sy.parts.map(p => <Bar key={p.key} label={SYN_LABEL[p.key][lang]} pct={p.score} />)}
-                <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? '0–30 zayıf, 30–50 orta, 50–80 iyi, 80–100 mükemmel' : '0–30 weak, 30–50 average, 50–80 good, 80–100 perfect'}</Sub>
+                <RadarChart ar={data.ar} ov={data.ov} lang={lang} size={Math.min(width - 210, 360)} />
+                <Sub style={{ marginTop: 6, textAlign: 'center' }}>{lang === 'tr' ? 'Her köşe bir alandaki uyumu gösterir: 0–30 zayıf, 30–50 orta, 50–80 iyi, 80–100 mükemmel.' : 'Each corner shows harmony in one area: 0–30 weak, 30–50 average, 50–80 good, 80–100 perfect.'}</Sub>
               </Section>
-              <SynastryReport me={chart} them={pc!} cross={data.cross} myName={profile.name} theirName={partner.name} lang={lang} asteroids={showAsteroids} />
+              <SynastryReport me={chart} them={pc!} cross={data.cross} myName={profile.name} theirName={partner.name} lang={lang} asteroids={showAsteroids} ov={data.ov} total={data.sy.total} />
               <Section title={data.lilly ? data.lilly.title[lang] : ''}>
                 {data.lilly?.items.map((it, i) => <View key={i} style={st.row}><P>{it.text[lang]}</P></View>)}
               </Section>

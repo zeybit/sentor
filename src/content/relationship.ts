@@ -162,7 +162,7 @@ export const REL: Record<string, RelPoint> = {
 export const relName = (k: K): L => REL[k]?.name ?? l(k, k);
 
 // ---------------- Burçlar: ilişkideki tonu ----------------
-const SIGN_REL: { mood: L; detail: L }[] = [
+export const SIGN_REL: { mood: L; detail: L }[] = [
   { mood: l('cesur, hızlı ve doğrudan', 'bold, fast and direct'), detail: l('Koç enerjisi ilişkiye heyecan, spontanlık ve ilk adımı atma cesareti getirir; beklemek yerine harekete geçmeyi sever.', 'Aries energy brings excitement, spontaneity and the courage to make the first move; it prefers action over waiting.') },
   { mood: l('sakin, duyusal ve sadık', 'calm, sensual and loyal'), detail: l('Boğa enerjisi güven, istikrar ve bedensel keyiflerle beslenir; güzel yemekler, dokunuş ve huzurlu bir yuva bu ilişkinin dilidir.', 'Taurus energy thrives on security, stability and bodily pleasures; good food, touch and a peaceful home are this relationship’s language.') },
   { mood: l('meraklı, hareketli ve sohbet dolu', 'curious, lively and full of conversation'), detail: l('İkizler enerjisi zihinsel kıvılcımla canlanır; esprili konuşmalar, kısa geziler ve sürekli yeni bilgiler ilişkiyi taze tutar.', 'Gemini energy comes alive through mental sparks; witty talk, short trips and constant new information keep things fresh.') },

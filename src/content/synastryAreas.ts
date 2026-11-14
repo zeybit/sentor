@@ -102,7 +102,7 @@ export const BAND: Record<Band, { name: L; text: L }> = {
 };
 const band = (r: number): Band => (r >= 0.65 ? 'veryGood' : r >= 0.55 ? 'good' : r >= 0.45 ? 'balanced' : r >= 0.35 ? 'effort' : 'muchEffort');
 
-export interface AreaResult { def: AreaDef; score: number; band: Band; sup: Scored[]; cha: Scored[] }
+export interface AreaResult { def: AreaDef; score: number; band: Band; sup: Scored[]; cha: Scored[]; ratio: number; mag: number }
 
 function relevance(s: Scored, focus: K[]) {
   const ia = focus.includes(s.x.a), ib = focus.includes(s.x.b);
@@ -118,7 +118,7 @@ export function areas(sc: Scored[]): AreaResult[] {
     const sup = rel.filter(z => z.s.pol > 0).sort((p, q) => q.s.strength * q.r - p.s.strength * p.r || p.s.x.orb - q.s.x.orb).slice(0, 3).map(z => z.s);
     const cha = rel.filter(z => z.s.pol < 0).sort((p, q) => q.s.strength * q.r - p.s.strength * p.r || p.s.x.orb - q.s.x.orb).slice(0, 3).map(z => z.s);
     const v = Math.round(total);
-    return { def, score: v, band: band(sp / Math.max(0.01, sp + ch)), sup, cha };
+    return { def, score: v, band: band(sp / Math.max(0.01, sp + ch)), sup, cha, ratio: sp / Math.max(0.01, sp + ch), mag: sp + ch };
   });
 }
 

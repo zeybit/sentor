@@ -7,7 +7,8 @@ import { ASPECT_INFO, BODIES, HOUSES, SIGNS, SIGN_GLYPHS, L } from '../content/b
 import { synPair } from '../content/techniqueTexts';
 import { relPlacementTitle, relPlacementText, relAscText, relAspectTitle, relAspectText, relName, synTitle, synLongText, synWhy } from '../content/relationship';
 import { score, areas, summary, questions, intimacy, topAspects, BAND, INTIMACY, Intimacy, Scored, synOrb } from '../content/synastryAreas';
-import { Expand, P, Section, Sub, st } from './kit';
+import { Expand, P, Section, Sub, st, useLayout } from './kit';
+import { BondMap, HouseRing, IdentityCard, HouseDonut, RelTimeline, ShareCard, RadarOverride } from './RelViz';
 import { overlays, overlaySummary, trForms, OverlayRow } from '../content/overlays';
 import { strength } from './Readings';
 import { C, F, serif } from '../theme';
@@ -41,7 +42,7 @@ export function synAspects(list: CrossAspect[]) {
 }
 
 // ===================== Sinastri raporu =====================
-export function SynastryReport({ me, them, cross, myName, theirName, lang, asteroids }: { me: Chart; them: Chart; cross: CrossAspect[]; myName: string; theirName: string; lang: Lang; asteroids: boolean }) {
+export function SynastryReport({ me, them, cross, myName, theirName, lang, asteroids, ov, total }: { me: Chart; them: Chart; cross: CrossAspect[]; myName: string; theirName: string; lang: Lang; asteroids: boolean; ov?: RadarOverride; total?: number }) {
   const data = useMemo(() => {
     const sc = score(cross);
     const ar = areas(sc);
@@ -50,6 +51,8 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
   const name = (k: K) => relName(k)[lang];
   const line = (s: Scored) => `${lang === 'tr' ? 'Senin' : 'Your'} ${name(s.x.b)} ${ASPECT_INFO[s.x.type].name[lang].replace(/\s*\(.*\)/, '')} ${lang === 'tr' ? 'onun' : 'their'} ${name(s.x.a)}`;
   const shown = cross.filter(x => asteroids || (!ASTS.includes(x.a as BodyId) && !ASTS.includes(x.b as BodyId)));
+  const { inner } = useLayout();
+  const w = Math.min(inner(660), 660);
 
   return (
     <View>
@@ -70,6 +73,10 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
         {data.sum.watch.length ? <><Text style={[st.rowLabel, { marginTop: 8 }]}>{tx('Dikkat edilmesi gerekenler', 'Points to watch', lang)}</Text>{data.sum.watch.map((e, i) => <P key={i}>• {e[lang]}</P>)}</> : null}
       </Section>
 
+      <Section title={tx('İlişki kartınız', 'Your relationship card', lang)}>
+        <ShareCard ar={data.ar} ov={ov} myName={myName} theirName={theirName} status={total !== undefined ? `%${total} · ${data.sum.status[lang]}` : data.sum.status[lang]} theme={(data.sum.easy[0] ?? data.sum.status)[lang]} lang={lang} />
+      </Section>
+
       <Section title={tx('İlişkiye Dair Temel Sorular', 'Key Questions About the Relationship', lang)}>
         {data.qs.map((q, i) => (
           <View key={i} style={st.row}>
@@ -80,8 +87,10 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
         ))}
       </Section>
 
-      <Section title={tx('Sinastri Açıları', 'Synastry Aspects', lang)}>
-        <Expand more={tx('Tümünü göster', 'Show all', lang)} less={tx('Daha az', 'Less', lang)} initial={12} items={shown.map((x, i) => (
+      <Section title={tx('Sinastri Açıları', 'Synastry Aspects', lang)} sub={tx('Bağ haritası: gezegenleriniz arasındaki en güçlü 16 bağ.', 'Bond map: the 16 strongest links between your planets.', lang)}>
+        <BondMap cross={cross} me={me} them={them} myName={myName} theirName={theirName} lang={lang} width={w} />
+        <Text style={[st.rowLabel, { marginTop: 18 }]}>{tx('Tüm açıların yorumları', 'Readings for every aspect', lang)}</Text>
+        <Expand more={tx('Tümünü göster', 'Show all', lang)} less={tx('Daha az', 'Less', lang)} initial={4} items={shown.map((x, i) => (
           <Item key={i} title={synTitle(x.b, x.a, x.type, theirName)[lang]} meta={strength(x.orb, lang)} body={synLongText(x.b, x.a, x.type, theirName, synPair(x.b, x.a, x.type))[lang]} />
         ))} />
       </Section>
@@ -95,21 +104,7 @@ export function SynastryReport({ me, them, cross, myName, theirName, lang, aster
             <View key={gi} style={{ marginBottom: 28 }}>
               <Head>{title}</Head>
               {!rows.length ? <Sub style={{ marginTop: 6 }}>{tx(`${hn || 'Bu kişi'} için doğum saati bilinmediğinden evler hesaplanamıyor.`, `Houses can’t be calculated without ${hn || 'this person'}’s birth time.`, lang)}</Sub> : <>
-                <View style={{ marginTop: 10, borderWidth: 1, borderColor: C.line, borderRadius: 10, overflow: 'hidden' }}>
-                  <View style={{ flexDirection: 'row', backgroundColor: C.roseSoft, paddingVertical: 8, paddingHorizontal: 10 }}>
-                    <Text style={[st.sub, { flex: 1.3, fontWeight: '700' }]}>{tx('Gezegen', 'Planet', lang)}</Text>
-                    <Text style={[st.sub, { flex: 1.5, fontWeight: '700' }]}>{tx('Burç', 'Sign', lang)}</Text>
-                    <Text style={[st.sub, { flex: 2.2, fontWeight: '700' }]}>{lang === 'tr' ? `${trForms(hn || 'Sen').gen} evi` : `${hn || 'Your'} house`}</Text>
-                  </View>
-                  {rows.map(r => (
-                    <View key={r.body} style={{ flexDirection: 'row', paddingVertical: 7, paddingHorizontal: 10, borderTopWidth: 1, borderTopColor: C.line, backgroundColor: [5, 7, 8].includes(r.house) ? C.goldSoft : 'transparent' }}>
-                      <Text style={{ flex: 1.3, fontSize: 14, color: C.ink }}>{BODIES[r.body].glyph} {BODIES[r.body].name[lang]}</Text>
-                      <Text style={{ flex: 1.5, fontSize: 14, color: C.ink }}>{SIGN_GLYPHS[r.sign]} {SIGNS[r.sign][lang]} {Math.floor(r.lon % 30)}°</Text>
-                      <Text style={{ flex: 2.2, fontSize: 14, color: C.ink }}><Text style={{ fontWeight: '700' }}>{r.house}.</Text> {HOUSES[r.house - 1].short[lang]}</Text>
-                    </View>
-                  ))}
-                </View>
-                <Sub style={{ marginTop: 6 }}>{tx('Sarı satırlar: aşk, evlilik ve yakınlık evleri (5, 7, 8).', 'Highlighted rows: houses of romance, marriage and intimacy (5, 7, 8).', lang)}</Sub>
+                <View style={{ marginTop: 10 }}><HouseRing rows={rows} title={lang === 'tr' ? `${trForms(on || 'Partner').gen} gezegenleri, ${trForms(hn || 'Sen').gen} evlerinde` : `${on || 'Partner'}’s planets in ${hn || 'your'} houses`} lang={lang} size={Math.min(w, 320)} /></View>
                 {sum ? <P style={{ marginTop: 10, fontWeight: '600' }}>{sum[lang]}</P> : null}
                 <Expand more={tx('Tüm yorumları göster', 'Show all readings', lang)} less={tx('Daha az', 'Less', lang)} initial={5} items={[...rows].sort((x, y) => rank(y) - rank(x)).map(r => <Item key={r.body} title={r.title[lang]} body={r.text[lang]} />)} />
               </>}
@@ -236,8 +231,21 @@ export function RelChartReport({ chart, kind, lang, asteroids, desc }: { chart: 
   const aspIds = new Set<BodyId>([...PLANETS, 'juno', 'chiron', ...(asteroids ? (['ceres', 'pallas', 'vesta'] as BodyId[]) : [])]);
   const asps = chart.aspects.filter(a => aspIds.has(a.a) && aspIds.has(a.b));
   const H = (t: string) => <Text style={{ fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: 0.3, marginBottom: 2, marginTop: 4 }}>{t}</Text>;
+  const { inner } = useLayout();
+  const w = Math.min(inner(660), 660);
   return (
     <View>
+      <Section title={tx('İlişkinin kimlik kartı', 'The bond’s identity card', lang)}>
+        <IdentityCard chart={chart} lang={lang} />
+      </Section>
+      <Section title={tx('İlişkinin yaşadığı alanlar', 'Where the bond lives', lang)}>
+        <HouseDonut chart={chart} lang={lang} size={Math.min(w, 260)} />
+      </Section>
+      {kind === 'davison' ? (
+        <Section title={tx('İlişki takvimi', 'Relationship calendar', lang)} sub={tx('Önümüzdeki altı yıl: ilişki haritasına gelen gezegen geçişleri.', 'The next six years: planet passages over the relationship chart.', lang)}>
+          <RelTimeline chart={chart} lang={lang} width={w} />
+        </Section>
+      ) : null}
       <Section>
         <Sub style={{ marginBottom: 8 }}>{desc}</Sub>
         {chart.asc !== null ? <Item title={tx(`Yükselen ${SIGNS[Math.floor(chart.asc / 30)].tr} Burcunda`, `Ascendant in ${SIGNS[Math.floor(chart.asc / 30)].en}`, lang)} body={relAscText(Math.floor(chart.asc / 30), kind)[lang]} /> : null}
