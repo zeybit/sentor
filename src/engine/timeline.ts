@@ -204,3 +204,99 @@ function computeTimeline(ch: Chart, fromAge: number, toAge: number): Window[] {
 }
 
 export const strengthOf = (score: number) => (score >= 9 ? 3 : score >= 6 ? 2 : 1);
+
+// ---------------- Tek tek gökyüzü olayları ----------------
+// Dönemlerin arasını doldurmak için: yavaş gezegenlerin doğum noktalarına yaptığı her kavuşum ve
+// sert/uyumlu açı, tutulmalar ve ilerletilmiş Ay kavuşumları ayrı ayrı listelenir.
+export type Pt = 'sun' | 'moon' | 'mercury' | 'venus' | 'mars' | 'jupiter' | 'saturn' | 'asc' | 'mc' | 'dsc' | 'ic';
+export type SkyKind = 'transit' | 'eclipse' | 'pmoon' | 'pmsign' | 'pssign';
+export interface SkyEvent { id: string; kind: SkyKind; t?: BodyId; n?: Pt; type?: 'conjunction' | 'opposition' | 'square' | 'trine'; start: Date; end: Date; peak: Date; topic: Topic; sign?: number; north?: boolean; w: number }
+
+const PT_TOPIC: Record<Pt, Topic> = { venus: 'love', dsc: 'love', sun: 'career', mc: 'career', moon: 'home', ic: 'home', mercury: 'travel', jupiter: 'travel', mars: 'change', saturn: 'change', asc: 'change' };
+const T_W: Partial<Record<BodyId, number>> = { pluto: 5, neptune: 4, uranus: 4, saturn: 4, jupiter: 3, node: 2 };
+const T_ORB: Partial<Record<BodyId, number>> = { jupiter: 1.5, saturn: 1.5, uranus: 1.2, neptune: 1.2, pluto: 1.2, node: 1.5 };
+const ASP = { conjunction: 0, opposition: 180, square: 90, trine: 120 } as const;
+
+const SKY_CACHE = new WeakMap<Chart, SkyEvent[]>();
+export function skyEvents(ch: Chart): SkyEvent[] {
+  const hit = SKY_CACHE.get(ch);
+  if (hit) return hit;
+  const now = Date.now();
+  const from = new Date(now - 5 * YEAR), to = new Date(now + 12 * YEAR);
+  const P = ch.positions;
+  const hasAngles = ch.asc !== null && ch.mc !== null;
+  const pts: [Pt, number][] = (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'] as Pt[]).map(p => [p, P[p as BodyId].lon] as [Pt, number]);
+  if (hasAngles) pts.push(['asc', ch.asc!], ['mc', ch.mc!], ['dsc', norm(ch.asc! + 180)], ['ic', norm(ch.mc! + 180)]);
+  const aspFor = (t: BodyId, n: Pt): (keyof typeof ASP)[] => {
+    if (t === 'node') return ['conjunction'];
+    if (n === 'dsc' || n === 'ic') return ['conjunction'];
+    if (n === 'asc' || n === 'mc') return ['conjunction', 'square'];
+    if (t === 'neptune') return ['conjunction', 'opposition', 'square'];
+    return ['conjunction', 'opposition', 'square', 'trine'];
+  };
+  const out: SkyEvent[] = [];
+  const ayAt = (d: Date) => (ch.zodiac === 'sidereal' ? lahiri(A.MakeTime(d)) : 0);
+
+  // Transitler: haftalık tarama, aynı olayın retro geçişleri (≤ 9 ay arayla) tek olayda birleşir
+  const STEP = 7 * DAY;
+  for (const t of ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'node'] as BodyId[]) {
+    const runs = new Map<string, { s: number; e: number; peak: number; orb: number }[]>();
+    for (let ms = from.getTime(); ms <= to.getTime(); ms += STEP) {
+      const d = new Date(ms);
+      const lon = norm(bodyLon(t, d) - ayAt(d));
+      for (const [n, nl] of pts) {
+        for (const a of aspFor(t, n)) {
+          const orb = Math.abs(angleDiff(lon, nl) - ASP[a]);
+          if (orb > T_ORB[t]!) continue;
+          const key = `${n}|${a}`;
+          const arr = runs.get(key) ?? [];
+          const last = arr[arr.length - 1];
+          if (last && ms - last.e <= 270 * DAY) { last.e = ms; if (orb < last.orb) { last.orb = orb; last.peak = ms; } }
+          else arr.push({ s: ms, e: ms, peak: ms, orb });
+          runs.set(key, arr);
+        }
+      }
+    }
+    for (const [key, arr] of runs) {
+      const [n, a] = key.split('|') as [Pt, keyof typeof ASP];
+      for (const r of arr) out.push({ id: `${t}-${key}-${r.s}`, kind: 'transit', t, n, type: a, start: new Date(r.s), end: new Date(r.e + STEP), peak: new Date(r.peak), topic: PT_TOPIC[n], w: (T_W[t] ?? 1) + (a === 'conjunction' ? 1 : 0) });
+    }
+  }
+
+  // Tutulmalar doğum noktalarına
+  for (const e of eclipses(from, to)) {
+    const ay = ayAt(e.date);
+    const el = norm(e.lon - ay);
+    const nodeAt = norm(bodyLon('node', e.date) - ay);
+    const north = angleDiff(e.kind === 'solar' ? el : norm(el + 180), nodeAt) < 90;
+    for (const [n, nl] of pts) {
+      if (n === 'jupiter' || n === 'saturn') continue;
+      if (angleDiff(el, nl) <= 3) out.push({ id: `ecl-${n}-${e.date.getTime()}`, kind: 'eclipse', n, start: e.date, end: new Date(e.date.getTime() + 30 * DAY), peak: e.date, topic: PT_TOPIC[n], north, w: 3 });
+    }
+  }
+
+  // İkincil progresyon: ilerletilmiş Ay kavuşumları ve burç değişimleri, ilerletilmiş Güneş burç değişimi
+  let prevMS = -1, prevSS = -1;
+  const pRuns = new Map<Pt, { s: number; e: number }>();
+  for (let ms = from.getTime(); ms <= to.getTime(); ms += YEAR / 24) {
+    const age = (ms - ch.utc.getTime()) / YEAR;
+    if (age < 0) continue;
+    const pd = new Date(ch.utc.getTime() + age * DAY);
+    const pMoon = norm(bodyLon('moon', pd) - ch.ayanamsa), pSun = norm(bodyLon('sun', pd) - ch.ayanamsa);
+    const ms_ = Math.floor(pMoon / 30), ss_ = Math.floor(pSun / 30);
+    if (prevMS >= 0 && ms_ !== prevMS) out.push({ id: `pms-${ms}`, kind: 'pmsign', start: new Date(ms), end: new Date(ms + 2.5 * YEAR), peak: new Date(ms), topic: 'home', sign: ms_, w: 2 });
+    if (prevSS >= 0 && ss_ !== prevSS) out.push({ id: `pss-${ms}`, kind: 'pssign', start: new Date(ms), end: new Date(ms + YEAR), peak: new Date(ms), topic: 'change', sign: ss_, w: 4 });
+    prevMS = ms_; prevSS = ss_;
+    for (const [n, nl] of pts) {
+      const on = angleDiff(pMoon, nl) <= 1;
+      const r = pRuns.get(n);
+      if (on) { if (r && ms - r.e <= YEAR / 12 + 1) r.e = ms; else pRuns.set(n, { s: ms, e: ms }); }
+      else if (r) { out.push({ id: `pm-${n}-${r.s}`, kind: 'pmoon', n, start: new Date(r.s), end: new Date(r.e + YEAR / 24), peak: new Date((r.s + r.e) / 2), topic: PT_TOPIC[n], w: 2 }); pRuns.delete(n); }
+    }
+  }
+  for (const [n, r] of pRuns) out.push({ id: `pm-${n}-${r.s}`, kind: 'pmoon', n, start: new Date(r.s), end: new Date(r.e + YEAR / 24), peak: new Date((r.s + r.e) / 2), topic: PT_TOPIC[n], w: 2 });
+
+  out.sort((a, b) => a.peak.getTime() - b.peak.getTime());
+  SKY_CACHE.set(ch, out);
+  return out;
+}

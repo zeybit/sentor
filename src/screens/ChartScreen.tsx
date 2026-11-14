@@ -9,7 +9,7 @@ import { T2S } from '../i18n2';
 import Wheel from '../ui/Wheel';
 import DateBar from '../ui/DateBar';
 import Tables from '../ui/Tables';
-import { NatalReading, KindReading } from '../ui/Readings';
+import { NatalReading, KindReading, CharacterBook } from '../ui/Readings';
 import { Cartography, Finder } from '../ui/Tools';
 import FutureScreen, { ActiveWindows } from './FutureScreen';
 import { takePendingKind } from '../nav';
@@ -85,7 +85,15 @@ export default function ChartScreen() {
             <View>
               <Segmented items={[{ key: 'readings', label: t.views.readings }, { key: 'tables', label: t.views.tables }]} value={view} onChange={v => setView(v as any)} />
               {view === 'tables' ? (
-                <Tables chart={shown ?? chart} t={t} lang={lang} natal={kind === 'natal'} asteroids={showAsteroids} />
+<>
+                  <Tables chart={shown ?? chart} t={t} lang={lang} natal={kind === 'natal'} asteroids={showAsteroids} />
+                  {kind === 'natal' ? (
+                    <View style={{ marginTop: 32 }}>
+                      <Text accessibilityRole="header" style={{ fontFamily: serif, fontSize: 28, lineHeight: 34, color: C.ink, marginBottom: 6 }}>{lang === 'tr' ? 'Karakterin, yerleşim yerleşim' : 'Your character, placement by placement'}</Text>
+                      <CharacterBook chart={chart} lang={lang} />
+                    </View>
+                  ) : null}
+                </>
               ) : kind === 'natal' ? (
                 <NatalReading chart={chart} s={s} t={t} lang={lang} asteroids={showAsteroids} />
               ) : other ? (

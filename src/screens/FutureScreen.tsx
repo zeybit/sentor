@@ -3,10 +3,14 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useStore } from '../store';
 import type { Chart } from '../engine/astro';
-import { lifeTimeline, Topic, TOPICS, Window, strengthOf } from '../engine/timeline';
+import { lifeTimeline, skyEvents, SkyEvent, Pt, Topic, TOPICS, Window, strengthOf } from '../engine/timeline';
 import { Chips, H1, P, Section, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
 import { EVENTS, LOVE_TIP, Rel } from '../content/lifeEvents';
+import { CONCRETE, REL_LINE, PMOON, Cls } from '../content/skyTexts';
+import { PROG_MOON_SIGN, progSunText } from '../content/techniqueTexts';
+import { lifeAspect } from '../content/lifeTexts';
+import { BODIES, SIGNS, ASPECT_INFO } from '../content/base';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -111,8 +115,83 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
   );
 }
 
+
+const PT_NAME: Record<Pt, { tr: string; en: string }> = {
+  sun: BODIES.sun.name, moon: BODIES.moon.name, mercury: BODIES.mercury.name, venus: BODIES.venus.name, mars: BODIES.mars.name, jupiter: BODIES.jupiter.name, saturn: BODIES.saturn.name,
+  asc: { tr: 'Yükselen', en: 'Ascendant' }, mc: { tr: 'Kariyer noktası (MC)', en: 'Career point (MC)' }, dsc: { tr: 'Partner noktası', en: 'Partner point' }, ic: { tr: 'Yuva noktası', en: 'Home point' },
+};
+const CLS: Partial<Record<string, Cls>> = { jupiter: 'up', saturn: 'test', uranus: 'shake', neptune: 'fog', pluto: 'deep', node: 'node' };
+const fmtSpan = (a: Date, b: Date, lang: Lang) => { const x = fmtMonth(a, lang), y = fmtMonth(new Date(b.getTime() - 5 * 864e5), lang); return x === y ? x : `${x} – ${y}`; };
+
+function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
+  const col = TOPIC_INFO[e.topic].color();
+  let title = '', sub: string | null = null;
+  const lines: { label?: string; text: string }[] = [];
+  if (e.kind === 'transit' && e.t && e.n && e.type) {
+    const tName = e.t === 'node' ? tx('Kuzey Ay Düğümü', 'North Node', lang) : BODIES[e.t].name[lang];
+    title = `${tName} → ${PT_NAME[e.n][lang]} · ${ASPECT_INFO[e.type].name[lang].toLocaleLowerCase(lang)}`;
+    if (e.n !== 'dsc' && e.n !== 'ic') sub = lifeAspect(e.t, e.n, e.type, 'progressed').title[lang];
+    const c = CLS[e.t]!;
+    lines.push({ text: CONCRETE[e.n][c][lang] });
+    if (e.n === 'venus' || e.n === 'dsc') {
+      if (rel) lines.push({ text: REL_LINE[c][rel][lang] });
+      else (['single', 'partner', 'married'] as Rel[]).forEach(k => lines.push({ label: REL_LABEL[k][lang], text: REL_LINE[c][k][lang] }));
+    }
+  } else if (e.kind === 'eclipse' && e.n) {
+    title = `${e.north ? tx('Kuzey düğüm tutulması', 'North-node eclipse', lang) : tx('Güney düğüm tutulması', 'South-node eclipse', lang)} → ${PT_NAME[e.n][lang]}`;
+    sub = e.north ? tx('Bir kapı açılır, yeni bir başlangıç', 'A door opens, a new beginning', lang) : tx('Bir şey tamamlanır, bırakma zamanı', 'Something completes, time to let go', lang);
+    lines.push({ text: CONCRETE[e.n][e.north ? 'up' : 'test'][lang] });
+  } else if (e.kind === 'pmoon' && e.n) {
+    title = `${tx('İlerletilmiş Ay', 'Progressed Moon', lang)} → ${PT_NAME[e.n][lang]} · ${tx('kavuşum', 'conjunction', lang)}`;
+    lines.push({ text: PMOON[e.n][lang] });
+  } else if (e.kind === 'pmsign' && e.sign !== undefined) {
+    title = `${tx('İlerletilmiş Ay', 'Progressed Moon', lang)} → ${SIGNS[e.sign][lang]}`;
+    sub = tx('Yaklaşık 2,5 yıllık yeni bir duygusal dönem', 'A new ~2.5-year emotional chapter', lang);
+    lines.push({ text: PROG_MOON_SIGN[e.sign][lang] });
+  } else if (e.kind === 'pssign' && e.sign !== undefined) {
+    title = `${tx('İlerletilmiş Güneş', 'Progressed Sun', lang)} → ${SIGNS[e.sign][lang]}`;
+    sub = tx('Yaklaşık 30 yılda bir yaşanan kimlik değişimi', 'An identity shift that comes about every 30 years', lang);
+    lines.push({ text: progSunText(e.sign)[lang] });
+  }
+  return (
+    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 18 }}>
+      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: col, marginTop: 7 }} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub }}>{fmtSpan(e.start, e.end, lang)} · {TOPIC_INFO[e.topic].name[lang]}</Text>
+        <Text style={{ fontFamily: F.serif, fontSize: 19, lineHeight: 25, color: C.ink }}>{title}</Text>
+        {sub ? <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 16, lineHeight: 23, color: C.sub }}>{sub}</Text> : null}
+        {lines.map((x, i) => (
+          <Text key={i} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 3 }}>
+            {x.label ? <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{x.label}: </Text> : null}{x.text}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function SkyList({ list, lang, rel }: { list: SkyEvent[]; lang: Lang; rel?: Rel }) {
+  const [n, setN] = useState(15);
+  const shown = list.slice(0, n);
+  let year = -1;
+  return (
+    <View>
+      {shown.map(e => {
+        const y = e.start.getFullYear();
+        const hdr = y !== year ? (year = y, <Text key={`y${y}`} style={{ fontFamily: F.serif, fontSize: 26, color: C.gold, marginTop: 10, marginBottom: 8 }}>{y}</Text>) : null;
+        return <React.Fragment key={e.id}>{hdr}<SkyCard e={e} lang={lang} rel={rel} /></React.Fragment>;
+      })}
+      {list.length > n ? (
+        <Pressable accessibilityRole="button" onPress={() => setN(n + 20)} style={{ paddingVertical: 8 }}>
+          <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{tx(`Daha fazla göster (${list.length - n} olay daha)`, `Show more (${list.length - n} more)`, lang)}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 /** Yıllara yayılmış görsel zaman çizelgesi */
-function TimelineChart({ ch, list, lang, width }: { ch: Chart; list: Window[]; lang: Lang; width: number }) {
+function TimelineChart({ ch, list, sky, lang, width }: { ch: Chart; list: Window[]; sky: SkyEvent[]; lang: Lang; width: number }) {
   const birthY = ch.utc.getUTCFullYear() + ch.utc.getUTCMonth() / 12;
   const y0 = Math.floor(birthY + 16), y1 = Math.ceil(birthY + 75);
   const pxPerYear = 26, labelW = 92, rowH = 26;
@@ -139,6 +218,9 @@ function TimelineChart({ ch, list, lang, width }: { ch: Chart; list: Window[]; l
             {list.filter(w => w.topic === t).map((w, i) => (
               <Rect key={i} x={x(w.start)} y={r * rowH + 6} width={Math.max(4, x(w.end) - x(w.start))} height={14} rx={3} fill={TOPIC_INFO[t].color()} opacity={0.35 + strengthOf(w.score) * 0.2} />
             ))}
+            {sky.filter(e => e.topic === t).map(e => (
+              <Rect key={e.id} x={x(e.peak) - 1} y={r * rowH + 20} width={2} height={5} fill={TOPIC_INFO[t].color()} />
+            ))}
           </React.Fragment>
         ))}
         <Line x1={x(now)} y1={0} x2={x(now)} y2={H - 22} stroke={C.ink} strokeWidth={2} />
@@ -153,15 +235,17 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
   const { inner } = useLayout();
   const [list, setList] = useState<Window[] | null>(null);
   const [topic, setTopic] = useState<'all' | Topic>('all');
+  const [sky, setSky] = useState<SkyEvent[]>([]);
   // Hesap birkaç yüz milisaniye sürdüğü için önce ekranı çizip sonra hesaplıyoruz
   useEffect(() => {
     setList(null);
     if (!chart) return;
-    const id = setTimeout(() => setList(lifeTimeline(chart, { fromAge: 16, toAge: 75 })), 30);
+    const id = setTimeout(() => { setList(lifeTimeline(chart, { fromAge: 16, toAge: 75 })); setSky(skyEvents(chart)); }, 30);
     return () => clearTimeout(id);
   }, [chart]);
   const now = new Date();
   const filtered = useMemo(() => (list ?? []).filter(w => topic === 'all' || w.topic === topic), [list, topic]);
+  const skyF = useMemo(() => sky.filter(e => topic === 'all' || e.topic === topic), [sky, topic]);
   if (!chart || !profile) return null;
   const future = filtered.filter(w => w.end > now);
   const upcoming = future.filter(w => w.start.getTime() < now.getTime() + 12 * YEAR);
@@ -187,8 +271,12 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
             {upcoming.length ? upcoming.slice(0, 8).map((w, i) => <WindowCard key={i} w={w} lang={lang} />) : <P>{tx('Bu konu için önümüzdeki 12 yılda belirgin bir dönem çıkmadı; bu, sakin ve istikrarlı bir akış anlamına gelir.', 'No marked period for this topic in the next 12 years; that means a calm, steady flow.', lang)}</P>}
           </Section>
 
+          <Section title={tx('Aradaki gezegen olayları', 'Planet events in between', lang)} sub={tx('Gezegenlerin doğum haritandaki noktalara yaptığı her kavuşum ve açı, tutulmalar ve iç saatini gösteren ilerletilmiş Ay. Yukarıdaki büyük dönemlerin arasında hayatına neler yansıyacağını tek tek gösterir.', 'Every conjunction and aspect planets make to your birth chart, eclipses, and the progressed Moon that shows your inner clock. It fills in what reaches your life between the big periods above.', lang)}>
+            {(() => { const now2 = Date.now(); const up = skyF.filter(e => e.end.getTime() > now2); return up.length ? <SkyList key={topic} list={up} lang={lang} rel={profile.rel} /> : <P>{tx('Bu konu için yakın zamanda belirgin bir gezegen olayı yok.', 'No notable planet events for this topic soon.', lang)}</P>; })()}
+          </Section>
+
           <Section title={tx('Bütün hayatın tek bakışta', 'Your whole life at a glance', lang)} sub={tx('Renkli çubuklar öne çıkan dönemleri gösterir; koyu olanlar daha güçlüdür. Yana kaydırabilirsin.', 'Coloured bars mark the standout periods; darker ones are stronger. Scroll sideways.', lang)}>
-            <TimelineChart ch={chart} list={filtered} lang={lang} width={inner(1180)} />
+            <TimelineChart ch={chart} list={filtered} sky={skyF} lang={lang} width={inner(1180)} />
           </Section>
 
           <Section title={tx('Geçmişini kontrol et', 'Check your past', lang)} sub={tx('Bu dönemlerde gerçekten önemli bir şey yaşadın mı? Geçmişte tutan dönemler, gelecekteki tarihlerin senin haritanda ne kadar işe yaradığını gösterir. Hiçbiri tutmuyorsa doğum saatini kontrol etmeye değer.', 'Did something important really happen in these periods? Past periods that match show how well the future dates work for your chart. If none match, it’s worth checking your birth time.', lang)}>

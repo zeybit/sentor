@@ -14,7 +14,7 @@ import { lillyScore, mannersFor, CLASSICAL, Classical } from '../content/lillyDi
 import * as N from '../content/lillyNatal';
 import { LILLY_NOTE } from './LillyBlocks';
 import { natalStory } from '../content/story';
-import { Expand, P, Section, Segmented, Sub, st } from './kit';
+import { Expand, P, Section, Sub, st } from './kit';
 import { characterReading, CHAR_INTRO, CharItem } from '../content/character';
 import { C, ELEMENT_COLOR, F, serif } from '../theme';
 import type { Strings } from '../i18n';
@@ -57,18 +57,10 @@ export function angleAspects(c: Chart): { a: K; b: K; type: AspectType; orb: num
 
 // ---------------- Doğum haritası: kitap gibi akıcı anlatım ----------------
 export function NatalReading({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; lang: Lang; asteroids: boolean }) {
-  const [mode, setMode] = useState<'story' | 'places'>('story');
-  return (
-    <View>
-      <View style={{ marginBottom: 20 }}>
-        <Segmented items={[{ key: 'story', label: lang === 'tr' ? 'Hikâyen' : 'Your story' }, { key: 'places', label: lang === 'tr' ? 'Karakterin, yerleşim yerleşim' : 'Your character, placement by placement' }]} value={mode} onChange={v => setMode(v as any)} />
-      </View>
-      {mode === 'story' ? <NatalStory chart={chart} s={s} t={t} lang={lang} /> : <CharacterBook chart={chart} lang={lang} />}
-    </View>
-  );
+  return <NatalStory chart={chart} s={s} t={t} lang={lang} />;
 }
 
-function CharacterBook({ chart, lang }: { chart: Chart; lang: Lang }) {
+export function CharacterBook({ chart, lang }: { chart: Chart; lang: Lang }) {
   const items = useMemo(() => characterReading(chart, lang), [chart, lang]);
   return (
     <View>
