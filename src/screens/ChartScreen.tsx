@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { chartAt } from '../engine/astro';
@@ -11,14 +11,17 @@ import DateBar from '../ui/DateBar';
 import Tables from '../ui/Tables';
 import { NatalReading, KindReading, CharacterBook } from '../ui/Readings';
 import { Cartography, Finder } from '../ui/Tools';
+import Rectify from '../ui/Rectify';
 import FutureScreen, { ActiveWindows } from './FutureScreen';
 import { takePendingKind } from '../nav';
 import { Chips, H1, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, serif } from '../theme';
 import { KIND_INFO } from '../content/kindInfo';
 import { fmtLocal, tzOffsetMinutes } from '../util';
+import { ShareToggle, safeName } from '../ui/ShareImage';
+import { bigThreeSvg } from '../content/shareCards';
 
-type Kind = ChartKind | 'timeline' | 'cartography' | 'finder';
+type Kind = ChartKind | 'timeline' | 'cartography' | 'finder' | 'rectify';
 const DATED: Kind[] = ['transit', 'progressed', 'solarArc', 'solarReturn', 'lunarReturn', 'now'];
 const BIWHEEL: Kind[] = ['transit', 'progressed', 'solarArc'];
 
@@ -45,19 +48,21 @@ export default function ChartScreen() {
     }
   }, [chart, kind, date, opts, loc?.lat, loc?.lon]);
   const cross = useMemo(() => (other && chart && BIWHEEL.includes(kind) ? crossAspects(other, chart, kind === 'transit' ? 3 : 1) : undefined), [other, chart, kind]);
+  const buildBig = useCallback(() => (chart && profile ? bigThreeSvg(chart, profile.name, lang) : ''), [chart, profile, lang]);
   if (!chart || !profile) return null;
 
   const tz = loc?.tz ?? profile.birth.tz;
   const wheelChart = kind === 'natal' || BIWHEEL.includes(kind) || kind === 'antiscia' ? chart : other!;
   const outer = BIWHEEL.includes(kind) ? other : kind === 'antiscia' ? other : null;
   const shown = kind === 'natal' || kind === 'antiscia' ? chart : other;
-  const kinds: Kind[] = ['natal', 'transit', 'progressed', 'timeline', 'solarArc', 'solarReturn', 'lunarReturn', 'antiscia', 'now', 'cartography', 'finder'];
+  const kinds: Kind[] = ['natal', 'transit', 'progressed', 'timeline', 'solarArc', 'solarReturn', 'lunarReturn', 'antiscia', 'now', 'cartography', 'finder', 'rectify'];
 
   return (
     <View>
       <H1>{profile.name || s.tabs.chart}</H1>
       <Sub>{profile.place}, {chart.input.timeKnown ? `${String(chart.input.hour).padStart(2, '0')}:${String(chart.input.minute).padStart(2, '0')}` : '—'}. {s.hsNames[chart.houseSystemUsed]}, {chart.zodiac === 'sidereal' ? t.sidereal : t.tropical}{chart.isDayChart !== null ? `, ${(chart.isDayChart ? s.dayChart : s.nightChart).toLocaleLowerCase(lang)}` : ''}.</Sub>
       {chart.houseSystemUsed !== chart.houseSystem ? <Sub style={{ color: C.rose }}>{s.polarNote}</Sub> : null}
+      <ShareToggle label={lang === 'tr' ? 'Büyük üçlü kartın' : 'Your Big Three card'} build={buildBig} filename={`buyuk-uclu-${safeName(profile.name)}.png`} lang={lang} />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
         <Chips items={kinds.map(k => ({ key: k, label: t.kinds[k] }))} value={kind} onChange={k => setKind(k as Kind)} />
@@ -68,6 +73,7 @@ export default function ChartScreen() {
       {kind === 'timeline' ? <FutureScreen embedded />
         : kind === 'cartography' ? <Cartography natal={chart} t={t} lang={lang} />
         : kind === 'finder' ? <Finder natal={chart} t={t} lang={lang} tz={tz} />
+        : kind === 'rectify' ? <Rectify />
         : (() => {
           const wheelSize = twoCol ? 460 : Math.min(inner(wide ? 1180 : 760), 520);
           const left = (

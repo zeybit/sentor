@@ -70,4 +70,10 @@ export const KIND_INFO: Record<string, KindInfo> = {
     when: l('Belirli bir etkinin tam tarihini merak ettiğinde. Örneğin şans gezegeni Jüpiter\'in Güneş\'ine ne zaman dokunacağı.', 'When you want the exact date of a specific influence, for example when lucky Jupiter will touch your Sun.'),
     ask: l('Jüpiter Venüs\'üme ne zaman gelecek?', 'When will Jupiter reach my Venus?'),
   },
+  rectify: {
+    what: l('Doğum saatini bilmiyorsan ya da emin değilsen, hayatındaki önemli olayların tarihlerinden en olası saati bulur. Saat doğru olunca yükselen burcun, evler ve bütün zamanlamalar netleşir.',
+      'If you don\'t know or aren\'t sure of your birth time, it finds the most likely time from the dates of important life events. With the right time your rising sign, houses and all timings become accurate.'),
+    when: l('Doğum saatin hiç bilinmiyorsa, “sabaha karşı” gibi yaklaşık biliyorsan ya da geçmiş dönemler hayatına uymuyorsa.', 'When your birth time is unknown, only approximate (“around dawn”), or past periods don\'t match your life.'),
+    ask: l('Ben gerçekten saat kaçta doğdum?', 'What time was I really born?'),
+  },
 };

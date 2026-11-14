@@ -1,7 +1,7 @@
 // Aşk ve uyum görselleri: uyum radarı, bağ haritası, ev çemberi, ilişkinin kimlik kartı,
 // ilişkinin yaşadığı alanlar, Davison ilişki takvimi ve paylaşılabilir ilişki kartı.
 import React, { useMemo, useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 import type { BodyId, Chart } from '../engine/astro';
 import type { CrossAspect } from '../engine/techniques';
@@ -11,6 +11,7 @@ import { relName, synTitle, synWhy, SIGN_REL } from '../content/relationship';
 import { AreaResult, AreaId, score } from '../content/synastryAreas';
 import type { OverlayRow } from '../content/overlays';
 import { Sub, st } from './kit';
+import { ShareSvg, safeName } from './ShareImage';
 import { C, F, ELEMENT_COLOR } from '../theme';
 
 type Lang = 'tr' | 'en';
@@ -336,44 +337,5 @@ ${themeLines}
 }
 export function ShareCard({ ar, myName, theirName, status, theme, lang, ov }: { ar: AreaResult[]; myName: string; theirName: string; status: string; theme: string; lang: Lang; ov?: RadarOverride }) {
   const svg = useMemo(() => cardSvg(ar, myName || tx('Sen', 'You', lang), theirName || 'Partner', status, theme, lang, ov), [ar, myName, theirName, status, theme, lang, ov]);
-  const uri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  const [msg, setMsg] = useState('');
-  const download = () => {
-    if (Platform.OS !== 'web') return;
-    const g = globalThis as any;
-    const fname = `iliski-karti-${(myName || 'sen').toLowerCase()}-${(theirName || 'partner').toLowerCase()}.png`.replace(/[^a-z0-9ğüşıöç.-]/gi, '-');
-    const img = new g.Image();
-    img.onload = () => {
-      const cv = g.document.createElement('canvas'); cv.width = 1080; cv.height = 1920;
-      cv.getContext('2d').drawImage(img, 0, 0);
-      cv.toBlob(async (blob: any) => {
-        if (!blob) { setMsg(tx('Görsel oluşturulamadı.', 'Could not create the image.', lang)); return; }
-        // claude.ai içinde açıldıysa platformun güvenli indirme izni kullanılır
-        const dl = g.claude?.use ? await g.claude.use('downloads').catch(() => null) : null;
-        if (dl) {
-          try { await dl.save({ filename: fname, data: blob }); setMsg(tx('Görsel kaydedildi.', 'Image saved.', lang)); }
-          catch (e: any) { setMsg(e?.code === 'declined' ? tx('İndirme iptal edildi.', 'Download cancelled.', lang) : tx('Bu görünümde indirme kullanılamıyor.', 'Downloads are unavailable in this view.', lang)); }
-          return;
-        }
-        const a = g.document.createElement('a');
-        a.href = g.URL.createObjectURL(blob); a.download = fname;
-        g.document.body.appendChild(a); a.click(); a.remove();
-        setMsg(tx('Görsel indirildi.', 'Image downloaded.', lang));
-      }, 'image/png');
-    };
-    img.onerror = () => setMsg(tx('Görsel oluşturulamadı.', 'Could not create the image.', lang));
-    img.src = uri;
-  };
-  return (
-    <View style={{ alignItems: 'center' }}>
-      {Platform.OS === 'web' ? <Image source={{ uri }} style={{ width: 252, height: 448, borderRadius: 16 }} accessibilityLabel={tx('İlişki kartı önizlemesi', 'Relationship card preview', lang)} /> : null}
-      {Platform.OS === 'web' ? (
-        <Pressable accessibilityRole="button" onPress={download} style={{ marginTop: 12, backgroundColor: C.rose, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 20 }}>
-          <Text style={{ color: C.bg, fontFamily: F.sansBold, fontWeight: '700' }}>{tx('Görsel olarak indir', 'Download as image', lang)}</Text>
-        </Pressable>
-      ) : null}
-      {msg ? <Sub style={{ marginTop: 6 }}>{msg}</Sub> : null}
-      <Sub style={{ marginTop: 6, textAlign: 'center' }}>{tx('Hikâye boyutunda (1080×1920) bir görsel; Instagram ya da WhatsApp’ta paylaşabilirsin.', 'A story-sized (1080×1920) image to share on Instagram or WhatsApp.', lang)}</Sub>
-    </View>
-  );
+  return <ShareSvg svg={svg} filename={`iliski-karti-${safeName(myName || 'sen')}-${safeName(theirName || 'partner')}.png`} lang={lang} />;
 }

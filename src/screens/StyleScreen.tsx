@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ShareToggle, safeName } from '../ui/ShareImage';
+import { styleSvg } from '../content/shareCards';
 import { Linking, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { STYLE, buildStyleReport } from '../content/style';
@@ -16,6 +18,12 @@ export default function StyleScreen() {
   const narrow = useLayout().inner(1180) < 560;
   const r = useMemo(() => chart && buildStyleReport(chart), [chart]);
   const [side, setSide] = useState<'venus' | 'asc'>('venus');
+  const buildStyle = useCallback(() => {
+    if (!r) return '';
+    const aes = `${STYLE[r.venus].aesthetic[lang]}${r.asc !== null && r.asc !== r.venus ? ` × ${STYLE[r.asc].aesthetic[lang]}` : ''}`;
+    const signs = lang === 'tr' ? `Venüs ${SIGNS[r.venus].tr}${r.asc !== null ? ` · Yükselen ${SIGNS[r.asc].tr}` : ''}` : `Venus ${SIGNS[r.venus].en}${r.asc !== null ? ` · ${SIGNS[r.asc].en} Rising` : ''}`;
+    return styleSvg(profile?.name ?? '', aes, r.palette.map(p => ({ hex: p.hex, name: p.name[lang] })), r.elementTip[lang], signs, lang);
+  }, [r, lang, profile]);
   if (!chart || !r) return null;
   const v = STYLE[r.venus];
   const a = r.asc !== null ? STYLE[r.asc] : null;
@@ -29,6 +37,7 @@ export default function StyleScreen() {
         ? `Venüs ${SIGNS[r.venus].tr}${r.asc !== null ? `, Yükselen ${SIGNS[r.asc].tr}` : ''}, Ay ${SIGNS[r.moon].tr}`
         : `Venus in ${SIGNS[r.venus].en}${r.asc !== null ? `, ${SIGNS[r.asc].en} Rising` : ''}, Moon in ${SIGNS[r.moon].en}`}</Sub>
 
+      <ShareToggle label={lang === 'tr' ? 'Stil kartın' : 'Your style card'} build={buildStyle} filename={`stil-karti-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
       <Section title={s.palette}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
           {r.palette.map((c, i) => (

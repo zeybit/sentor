@@ -13,7 +13,9 @@ import { HARMONY } from '../content/techniqueTexts';
 import { spouseProfile, marriageWindows, spouseArchetype, spouseJob } from '../content/spouse';
 import { derivedSpouse, junoRules, VENUS_ADMIRED, attractionText } from '../content/loveExtras';
 import { WindowCard } from './FutureScreen';
-import { useNav } from '../nav';
+import { useNav, takePendingKind } from '../nav';
+import GroupCompat from '../ui/GroupCompat';
+import { inviteLink, shareLink } from '../invite';
 import { F } from '../theme';
 import { ActivityIndicator, Pressable } from 'react-native';
 import { useEffect } from 'react';
@@ -36,11 +38,13 @@ export default function LoveScreen() {
   const { inner } = useLayout();
   const width = inner(1180) + 32;
   const others = people.filter(p => p.id !== profile?.id);
-  const [pid, setPid] = useState<string | null>(others[0]?.id ?? null);
+  const [pend] = useState(() => takePendingKind());
+  const [pid, setPid] = useState<string | null>(pend?.startsWith('compat:') ? pend.slice(7) : others[0]?.id ?? null);
   const [adding, setAdding] = useState(others.length === 0);
   const [rel, setRel] = useState<Rel>('synastry');
   const [view, setView] = useState<'readings' | 'tables'>('readings');
-  const [part, setPart] = useState<'spouse' | 'compat'>('spouse');
+  const [part, setPart] = useState<'spouse' | 'compat' | 'group'>(pend?.startsWith('compat') ? 'compat' : pend === 'group' ? 'group' : 'spouse');
+  const [inviteMsg, setInviteMsg] = useState('');
   const partner = others.find(p => p.id === pid) ?? null;
   const pc = useMemo(() => (partner ? chartOf(partner) : null), [partner, opts]);
   const data = useMemo(() => {
@@ -68,8 +72,8 @@ export default function LoveScreen() {
     <View>
       <H1>{lang === 'tr' ? 'Aşk ve uyum' : 'Love and compatibility'}</H1>
       <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{lang === 'tr' ? 'Haritana göre hayatına girecek partner, evlilik zamanı ve seçtiğin biriyle uyumun.' : 'The partner your chart describes, marriage timing, and your compatibility with someone you choose.'}</Sub>
-      <Segmented items={[{ key: 'spouse', label: lang === 'tr' ? 'Gelecekteki eşin' : 'Your future partner' }, { key: 'compat', label: lang === 'tr' ? 'Biriyle uyum' : 'Compatibility' }]} value={part} onChange={v => setPart(v as 'spouse' | 'compat')} />
-      {part === 'spouse' ? <SpouseBlock /> : <>
+      <Segmented items={[{ key: 'spouse', label: lang === 'tr' ? 'Gelecekteki eşin' : 'Your future partner' }, { key: 'compat', label: lang === 'tr' ? 'Biriyle uyum' : 'Compatibility' }, { key: 'group', label: lang === 'tr' ? 'Grup uyumu' : 'Group' }]} value={part} onChange={v => setPart(v as any)} />
+      {part === 'spouse' ? <SpouseBlock /> : part === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setPart('compat'); }} /> : <>
 
       <Section title={s.compat} sub={s.compatSub}>
         {others.length ? (
@@ -81,6 +85,18 @@ export default function LoveScreen() {
         {adding ? (
           <BirthForm nameLabel={s.partnerName} submitLabel={s.calcCompat} onSubmit={v => { const np = addPerson(v); setPid(np.id); setAdding(false); }} />
         ) : <Btn kind="ghost" title={t.addPerson} onPress={() => setAdding(true)} />}
+        <View style={[st.panel, { marginTop: 14, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
+          <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink }}>{lang === 'tr' ? 'Doğum bilgisini bilmiyor musun? Davet gönder' : 'Don’t know their birth details? Send an invite'}</Text>
+          <P style={{ marginTop: 4 }}>{lang === 'tr' ? 'Bağlantıyı açan kişi kendi doğum bilgisini girer ve ikinizin uyumunu görür. O da sana kendi bağlantısını gönderince sonucu sen de görürsün.' : 'Whoever opens the link enters their birth details and sees your compatibility. When they send you their own link back, you see it too.'}</P>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8, alignItems: 'center' }}>
+            <Btn title={lang === 'tr' ? 'Uyum davetini paylaş' : 'Share compatibility invite'} onPress={async () => {
+              const r = await shareLink(inviteLink(profile), lang === 'tr' ? `${profile.name || 'Ben'} seninle yıldız uyumumuza bakmak istiyor:` : `${profile.name || 'I'} want to check our star compatibility:`);
+              setInviteMsg(r === 'copied' ? (lang === 'tr' ? 'Bağlantı kopyalandı; istediğin yere yapıştırabilirsin.' : 'Link copied; paste it anywhere.') : r === 'shared' ? (lang === 'tr' ? 'Paylaşıldı.' : 'Shared.') : (lang === 'tr' ? `Kopyalanamadı. Bağlantı: ${inviteLink(profile)}` : `Could not copy. Link: ${inviteLink(profile)}`));
+            }} />
+            {inviteMsg ? <Sub style={{ flex: 1 }}>{inviteMsg}</Sub> : null}
+          </View>
+          <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? 'Bağlantı doğum tarihini, saatini ve yerini içerir; yalnızca güvendiğin kişilerle paylaş. Bilgiler hiçbir sunucuya gönderilmez, sadece bağlantının içindedir.' : 'The link contains your birth date, time and place; share it only with people you trust. Nothing is sent to a server; it lives only in the link.'}</Sub>
+        </View>
       </Section>
 
       {data && partner ? (

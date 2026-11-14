@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { ShareToggle, safeName } from '../ui/ShareImage';
+import { monthSvg } from '../content/shareCards';
 import { Text, View } from 'react-native';
 import { useStore } from '../store';
 import { computeDaily, MOON_SIGN_DAY, MOON_HOUSE_DAY } from '../content/forecast';
@@ -19,6 +21,7 @@ export default function TodayScreen() {
   const { inner } = useLayout();
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
+  const buildMonth = useCallback(() => (chart ? monthSvg(chart, profile?.name ?? '', lang) : ''), [chart, profile, lang]);
   if (!chart || !daily) return null;
   const fmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -26,6 +29,7 @@ export default function TodayScreen() {
     <View>
       <Sub>{fmt.format(now)}</Sub>
       <H1>{profile?.name ? `${profile.name}, ${s.todayFor.toLocaleLowerCase(lang)}` : s.todayFor}</H1>
+      <ShareToggle label={lang === 'tr' ? 'Aylık enerji kartın' : 'Your monthly energy card'} build={buildMonth} filename={`aylik-enerji-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
 
       <View style={{ marginTop: 8, marginBottom: 32 }}>
         <SkyBand natal={chart} width={inner(1180)} lang={lang} />

@@ -18,6 +18,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import MatrixScreen from './src/screens/MatrixScreen';
 import HelpScreen from './src/screens/HelpScreen';
 import { NavCtx, setPendingKind } from './src/nav';
+import { readInviteFromUrl, sameBirth } from './src/invite';
 
 type Main = 'today' | 'chart' | 'portfolio' | 'love' | 'matrix' | 'ask';
 type Tab = Main | 'settings' | 'help';
@@ -74,7 +75,8 @@ function Wordmark({ size = 21 }: { size?: number }) {
 }
 
 function Shell() {
-  const { ready, profile, chart, s, setProfile, lang } = useStore();
+  const { ready, profile, chart, s, setProfile, lang, people, addPerson } = useStore();
+  const [invite, setInvite] = useState(() => readInviteFromUrl());
   // Tarayıcı çevirisinin Türkçe metni bozmasını önle: sayfa dilini uygulama diliyle eşle
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
@@ -90,6 +92,21 @@ function Shell() {
   const go = (t: Tab) => { setTab(t); scroll.current?.scrollTo({ y: 0, animated: false }); };
   const label = (t: Tab) => LABEL[t][lang];
 
+  // Uygulama açıkken bağlantı yapıştırılırsa da daveti yakala
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const h = () => { const inv = readInviteFromUrl(); if (inv) setInvite(inv); };
+    window.addEventListener('hashchange', h);
+    return () => window.removeEventListener('hashchange', h);
+  }, []);
+  // Uyum daveti: davet edeni kişilere ekle ve doğrudan uyum sayfasını aç
+  useEffect(() => {
+    if (!ready || !profile || !invite) return;
+    const ex = sameBirth(invite, profile) ? null : people.find(p => sameBirth(p, invite)) ?? addPerson(invite);
+    if (ex) { setPendingKind(`compat:${ex.id}`); go('love'); }
+    setInvite(null);
+  }, [ready, profile, invite]);
+
   if (!ready) return <View style={styles.center}><ActivityIndicator color={C.rose} /></View>;
 
   if (!profile || !chart) {
@@ -101,6 +118,12 @@ function Shell() {
               <Wordmark size={18} />
               <H1 style={{ fontSize: wide ? 52 : 38, lineHeight: wide ? 58 : 44, marginTop: 28 }}>{s.welcome}</H1>
               <P style={{ color: C.sub, marginTop: 8, maxWidth: 440 }}>{s.welcomeSub}</P>
+              {invite ? (
+                <View style={{ marginTop: 18, padding: 14, borderRadius: 14, backgroundColor: C.goldSoft, maxWidth: 440 }}>
+                  <Text style={{ fontFamily: F.serif, fontSize: 20, color: C.ink }}>{lang === 'tr' ? `${invite.name || 'Bir arkadaşın'} seninle uyumuna bakmak istiyor` : `${invite.name || 'A friend'} wants to check your compatibility`}</Text>
+                  <P style={{ marginTop: 4 }}>{lang === 'tr' ? 'Doğum bilgini gir; haritan oluşunca ikinizin uyumu hemen açılacak.' : 'Enter your birth details; once your chart is ready, your compatibility opens right away.'}</P>
+                </View>
+              ) : null}
               {wide ? <Sub style={{ marginTop: 32, maxWidth: 400 }}>{s.disclaimer}</Sub> : null}
             </View>
             <View style={{ flex: wide ? 1 : undefined, marginTop: wide ? 0 : 20 }}>

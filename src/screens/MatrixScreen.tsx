@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { useStore } from '../store';
@@ -8,6 +8,8 @@ import { ARCANA, POS, CHAKRA, MxPos, mxStory, SECTION_INTRO, ADVICE } from '../c
 import { Chips, Expand, H1, H3, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
 import { TarotCard, TAROT_CREDIT } from '../ui/TarotCard';
+import { ShareToggle, safeName } from '../ui/ShareImage';
+import { matrixSvg } from '../content/shareCards';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -90,6 +92,7 @@ export default function MatrixScreen() {
     return compatMatrix(a, destinyMatrix(partner.birth.day, partner.birth.month, partner.birth.year));
   }, [person, partner]);
   const hm = useMemo(() => healthMap(m), [m]);
+  const buildMx = useCallback(() => matrixSvg(m, person.name, lang), [m, person, lang]);
   const ages = useMemo(() => ageMap(m), [m]);
   const now = new Date();
   const age = (now.getTime() - Date.UTC(person.birth.year, person.birth.month - 1, person.birth.day)) / (365.2425 * 864e5);
@@ -150,6 +153,7 @@ export default function MatrixScreen() {
     <View>
       <Section title={tx('Ana enerjilerin', 'Your core energies', lang)}>
         <Spread />
+        <ShareToggle label={tx('Matris açılım kartın', 'Your matrix spread card', lang)} build={buildMx} filename={`kader-matrisi-${safeName(person.name)}.png`} lang={lang} />
         <Intro k="core" />
         <Item pos="A" n={m.A} /><Item pos="B" n={m.B} /><Item pos="C" n={m.C} /><Item pos="D" n={m.D} label={tx('Bu hayattaki görevin', 'Your task in this life', lang)} /><Item pos="E" n={m.E} />
       </Section>
