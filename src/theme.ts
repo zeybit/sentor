@@ -2,42 +2,47 @@ import { Platform } from 'react-native';
 
 export type ThemeMode = 'light' | 'dark';
 
-// "Siyanotip": eski gök fotoğraf plakalarının Prusya mavisi mürekkebi, serin kâğıt ve tek sıcak vurgu (kadife çiçeği).
+// "Gece göğü": derin çivit gece, lavanta ışığı ve yıldız altını. Açık tema: şafak vakti lavanta kâğıt.
 const LIGHT = {
-  bg: '#E8EEF2',        // serin kâğıt
-  card: '#F6F9FB',      // kabarık yüzey
-  ink: '#0F2A46',       // Prusya mürekkebi
-  sub: '#4F6578',
-  line: '#C8D5DF',
-  rose: '#1E4F8A',      // vurgu (Prusya mavisi) — eski adı korunur
-  roseSoft: '#D6E3EF',  // vurgu zemini
-  gold: '#A86A12',      // kadife çiçeği (Güneş, "şimdi")
-  goldSoft: '#F5E6C8',
+  bg: '#F2EEFA',        // şafak lavantası
+  card: '#FBF9FF',      // opak yüzey (açılır menüler)
+  glass: 'rgba(255,255,255,0.72)', // buzlu cam paneller
+  ink: '#1E1747',       // gece mürekkebi
+  sub: '#5E5784',
+  line: '#DDD5F0',
+  rose: '#5A3EC8',      // vurgu (ametist) — eski adı korunur
+  roseSoft: '#E8E1FA',
+  gold: '#A4640C',      // yıldız altını
+  goldSoft: '#F7E9CC',
   onAccent: '#FFFFFF',
   danger: '#B3261E',
-  fire: '#C2410C', earth: '#4D7C0F', air: '#0369A1', water: '#5B4BB7',
-  second: '#B4472F',    // ikinci harita (pas kırmızısı)
+  fire: '#C2410C', earth: '#4D7C0F', air: '#0369A1', water: '#6D4FD8',
+  second: '#B4472F',
+  glow: 'rgba(90,62,200,0.18)',
 };
 const DARK: typeof LIGHT = {
-  bg: '#0B1A2B',
-  card: '#10243A',
-  ink: '#E3ECF3',
-  sub: '#93A9BB',
-  line: '#22405C',
-  rose: '#8DBCEB',
-  roseSoft: '#17334F',
-  gold: '#F2B84B',
-  goldSoft: '#3A2E14',
-  onAccent: '#0B1A2B',
+  bg: '#0A0820',
+  card: '#17133A',
+  glass: 'rgba(30,24,72,0.62)',
+  ink: '#EEEAFF',
+  sub: '#A7A1CF',
+  line: 'rgba(170,150,255,0.18)',
+  rose: '#B9A6FF',
+  roseSoft: 'rgba(150,125,255,0.16)',
+  gold: '#F6C86E',
+  goldSoft: 'rgba(246,200,110,0.14)',
+  onAccent: '#0A0820',
   danger: '#FF8A80',
-  fire: '#F28A5B', earth: '#9BC26B', air: '#6CC0F0', water: '#A99BF5',
-  second: '#F08F6F',
+  fire: '#FF9A6B', earth: '#A6D477', air: '#73C8F5', water: '#B7A6FF',
+  second: '#F59A7A',
+  glow: 'rgba(185,166,255,0.35)',
 };
 
 /** Etkin renkler. Tema değiştiğinde yerinde güncellenir ve uygulama yeniden çizilir. */
-export const C = { ...LIGHT };
+export const C = { ...DARK };
 export const ELEMENT_COLOR = [C.fire, C.earth, C.air, C.water];
-export let themeMode: ThemeMode = 'light';
+export let themeMode: ThemeMode = 'dark';
+export const isDark = () => themeMode === 'dark';
 const listeners: (() => void)[] = [];
 export const onThemeChange = (f: () => void) => { listeners.push(f); };
 

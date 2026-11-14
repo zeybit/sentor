@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Platform } from 'react-native';
 import { Pressable, Text, TextInput, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { C, F, onThemeChange } from '../theme';
 
@@ -21,7 +22,7 @@ export const P = ({ children, style }: { children: React.ReactNode; style?: any 
 /** Bölüm: kutu yok; başlık, isteğe bağlı açıklama ve içerik. `panel` vurgulu zemin verir. */
 export function Section({ title, sub, children, style, panel }: { title?: string; sub?: string; children: React.ReactNode; style?: ViewStyle; panel?: boolean }) {
   return (
-    <View style={[st.section, panel && st.panel, style]}>
+    <View style={[st.section, panel && st.panel, style]} {...(panel ? ({ dataSet: { lift: '1' } } as any) : {})}>
       {title ? <H2>{title}</H2> : null}
       {sub ? <Sub style={{ marginBottom: 12, maxWidth: 620 }}>{sub}</Sub> : null}
       {children}
@@ -40,7 +41,7 @@ export function Row({ label, children }: { label: string; children: React.ReactN
 
 export function Btn({ title, onPress, kind = 'primary', disabled, small }: { title: string; onPress: () => void; kind?: 'primary' | 'ghost' | 'outline'; disabled?: boolean; small?: boolean }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} onPress={onPress}
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} onPress={onPress} {...({ dataSet: { btn: kind } } as any)}
       style={({ pressed, hovered }: any) => [st.btn, small && st.btnSmall, kind === 'ghost' && st.btnGhost, kind === 'outline' && st.btnOutline,
         hovered && !disabled && { opacity: 0.88 }, (pressed || disabled) && { opacity: 0.55 }]}>
       <Text style={[st.btnText, small && { fontSize: 14 }, kind !== 'primary' && { color: C.rose }]}>{title}</Text>
@@ -72,7 +73,7 @@ export function Chips<T extends string>({ items, value, onChange, wrap = true }:
         return (
           <Pressable key={i.key} onPress={() => onChange(i.key)} accessibilityRole="radio" accessibilityState={{ selected: on, checked: on }}
             style={({ hovered }: any) => [st.chip, on && st.chipOn, hovered && !on && { borderColor: C.sub }]}>
-            <Text style={[st.chipText, on && { color: C.bg, fontFamily: F.sansMed }]}>{i.label}</Text>
+            <Text style={[st.chipText, on && { color: C.onAccent, fontFamily: F.sansBold, fontWeight: '700' }]}>{i.label}</Text>
           </Pressable>
         );
       })}
@@ -145,25 +146,25 @@ export function Notice({ text, action, onAction, tone = 'info' }: { text: string
 }
 
 const makeSt = () => ({
-  h1: { fontFamily: F.serif, fontSize: 36, lineHeight: 42, color: C.ink, marginBottom: 6, letterSpacing: -0.4, fontWeight: '500' },
+  h1: { fontFamily: F.serif, fontSize: 40, lineHeight: 46, color: C.ink, marginBottom: 6, letterSpacing: -0.4, fontWeight: '500' },
   h2: { fontFamily: F.serif, fontSize: 25, lineHeight: 31, color: C.ink, marginBottom: 6, fontWeight: '500' },
   h3: { fontFamily: F.serifBold, fontSize: 19, lineHeight: 25, color: C.ink, fontWeight: '700' },
   sub: { fontFamily: F.sans, fontSize: 14, lineHeight: 21, color: C.sub },
   p: { fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink },
   section: { marginBottom: 36 },
-  panel: { backgroundColor: C.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: C.line },
+  panel: { backgroundColor: C.glass, borderRadius: 18, padding: 20, borderWidth: 1, borderColor: C.line, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(14px)' } : {}) },
   row: { paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
   rowLabel: { fontFamily: F.sansBold, fontSize: 13, fontWeight: '700', color: C.rose, marginBottom: 4, letterSpacing: 0.2 },
-  btn: { backgroundColor: C.rose, borderRadius: 12, minHeight: 48, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  btn: { backgroundColor: C.rose, borderRadius: 999, minHeight: 48, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   btnSmall: { minHeight: 38, paddingHorizontal: 12 },
   btnGhost: { backgroundColor: 'transparent', alignSelf: 'flex-start', paddingHorizontal: 0 },
   btnOutline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.rose },
   btnText: { color: C.onAccent, fontFamily: F.sansBold, fontWeight: '700', fontSize: 16 },
   label: { fontFamily: F.sansMed, fontSize: 14, color: C.ink, marginBottom: 6, fontWeight: '500' },
-  input: { fontFamily: F.sans, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: C.ink, backgroundColor: C.card, minHeight: 48 },
+  input: { fontFamily: F.sans, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: C.ink, backgroundColor: C.glass, minHeight: 48 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  chip: { borderRadius: 10, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center', backgroundColor: 'transparent' },
-  chipOn: { backgroundColor: C.ink, borderColor: C.ink },
+  chip: { borderRadius: 999, borderWidth: 1, borderColor: C.line, paddingHorizontal: 16, minHeight: 38, justifyContent: 'center', backgroundColor: C.glass },
+  chipOn: { backgroundColor: C.rose, borderColor: C.rose },
   chipText: { fontFamily: F.sans, fontSize: 14, color: C.ink },
   seg: { flexDirection: 'row', gap: 22, borderBottomWidth: 1, borderBottomColor: C.line, marginBottom: 20 },
   segItem: { paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },

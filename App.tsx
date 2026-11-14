@@ -17,6 +17,8 @@ import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import MatrixScreen from './src/screens/MatrixScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
+import Cosmos, { Enter } from './src/ui/Cosmos';
+import Sigil from './src/ui/Sigil';
 import HelpScreen from './src/screens/HelpScreen';
 import { NavCtx, setPendingKind } from './src/nav';
 import { readInviteFromUrl, sameBirth } from './src/invite';
@@ -72,7 +74,14 @@ function PersonSwitch({ onManage, compact }: { onManage: () => void; compact?: b
 
 function Wordmark({ size = 21 }: { size?: number }) {
   const { s } = useStore();
-  return <Text style={{ fontFamily: F.serif, fontSize: size, color: C.ink, letterSpacing: -0.2 }}>{s.appName}</Text>;
+  const { width } = useLayout();
+  if (width < 440 && size === 21) size = 17;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <Sigil size={size + 10} />
+      <Text numberOfLines={1} style={{ fontFamily: F.serif, fontSize: size, color: C.ink, letterSpacing: -0.2 }} {...({ dataSet: { shine: '1' } } as any)}>{s.appName}</Text>
+    </View>
+  );
 }
 
 function Shell() {
@@ -121,6 +130,7 @@ function Shell() {
           <View style={{ flexDirection: wide ? 'row' : 'column', gap: wide ? 64 : 8 }}>
             <View style={{ flex: wide ? 1 : undefined }}>
               <Wordmark size={18} />
+              {wide ? <View style={{ marginTop: 36 }} {...({ dataSet: { float: '1' } } as any)}><Sigil size={120} /></View> : null}
               <H1 style={{ fontSize: wide ? 52 : 38, lineHeight: wide ? 58 : 44, marginTop: 28 }}>{s.welcome}</H1>
               <P style={{ color: C.sub, marginTop: 8, maxWidth: 440 }}>{s.welcomeSub}</P>
               {invite ? (
@@ -154,7 +164,7 @@ function Shell() {
               <Text style={{ fontSize: 18, color: C.sub }}>×</Text>
             </Pressable>
           ) : null}
-          {tab === 'settings' ? <SettingsScreen onDone={() => go('chart')} /> : Screen ? <Screen key={navKey} /> : null}
+          <Enter k={`${tab}-${navKey}`}>{tab === 'settings' ? <SettingsScreen onDone={() => go('chart')} /> : Screen ? <Screen key={navKey} /> : null}</Enter>
         </NavCtx.Provider>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -165,9 +175,9 @@ function Shell() {
       const on = tab === k;
       return (
         <Pressable onPress={() => go(k)} accessibilityRole="link" accessibilityState={{ selected: on }}
-          style={({ hovered }: any) => [styles.railItem, on && { backgroundColor: C.card }, hovered && !on && { backgroundColor: C.roseSoft }]}>
+          style={({ hovered }: any) => [styles.railItem, on && { backgroundColor: C.roseSoft }, hovered && !on && { backgroundColor: C.glass }]}>
           <View style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, backgroundColor: on ? C.gold : 'transparent', marginRight: 10 }} />
-          <Icon name={icon} size={20} color={on ? C.ink : C.sub} filled={on} />
+          <View {...({ dataSet: { glow: on ? 'on' : 'off' } } as any)}><Icon name={icon} size={20} color={on ? C.gold : C.sub} filled={on} /></View>
           <Text style={{ marginLeft: 12, fontFamily: on ? F.sansBold : F.sansMed, fontWeight: on ? '700' : '500', fontSize: 15, color: on ? C.ink : C.sub }}>{label(k)}</Text>
         </Pressable>
       );
@@ -175,7 +185,7 @@ function Shell() {
     return (
       <View style={{ flex: 1, flexDirection: 'row' }}>
         <View style={styles.rail} accessibilityRole="navigation">
-          <View style={{ paddingHorizontal: 16, marginBottom: 22 }}><Wordmark size={24} /></View>
+          <View style={{ paddingHorizontal: 16, marginBottom: 22 }}><Wordmark size={22} /></View>
           <View style={{ paddingHorizontal: 12, marginBottom: 22, zIndex: 50, position: 'relative' }}><PersonSwitch onManage={() => go('settings')} /></View>
           {MAIN.map(m => <NavItem key={m.key} k={m.key} icon={m.icon} />)}
           <View style={{ flex: 1 }} />
@@ -208,7 +218,7 @@ function Shell() {
           return (
             <Pressable key={key} onPress={() => go(key)} style={styles.tab} accessibilityRole="tab" accessibilityLabel={label(key)} accessibilityState={{ selected: on }}>
               <View style={{ width: 18, height: 2, borderRadius: 1, backgroundColor: on ? C.gold : 'transparent', marginBottom: 6 }} />
-              <Icon name={icon} size={22} color={on ? C.ink : C.sub} filled={on} />
+              <View {...({ dataSet: { glow: on ? 'on' : 'off' } } as any)}><Icon name={icon} size={22} color={on ? C.gold : C.sub} filled={on} /></View>
               <Text style={[styles.tabText, on && { color: C.ink, fontFamily: F.sansBold, fontWeight: '700' }]} numberOfLines={1}>{label(key)}</Text>
             </Pressable>
           );
@@ -223,8 +233,9 @@ function Themed() {
   const fonts = useAppFonts();
   if (!fonts) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
   return (
-    <SafeAreaView key={theme} style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
+    <SafeAreaView key={theme} style={{ flex: 1, backgroundColor: Platform.OS === 'web' ? 'transparent' : C.bg }} edges={['top', 'bottom']}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <Cosmos />
       <Shell />
     </SafeAreaView>
   );
@@ -243,12 +254,12 @@ export default function App() {
 const makeStyles = () => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   page: { paddingHorizontal: 16, paddingBottom: 64, width: '100%', alignSelf: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, paddingRight: 8, paddingVertical: 8, zIndex: 10 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 16, paddingRight: 8, paddingVertical: 8, zIndex: 10, backgroundColor: C.glass, borderBottomWidth: 1, borderBottomColor: C.line, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(18px)' } : {}) } as any,
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  tabbar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.bg, paddingBottom: 4 },
+  tabbar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.glass, paddingBottom: 4, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(18px)' } : {}) } as any,
   tab: { flex: 1, alignItems: 'center', paddingBottom: 4, minHeight: 56 },
   tabText: { fontFamily: F.sansMed, fontSize: 11, color: C.sub, marginTop: 3 },
-  rail: { width: 248, paddingTop: 28, paddingBottom: 20, paddingRight: 12, borderRightWidth: 1, borderRightColor: C.line, zIndex: 10 },
+  rail: { width: 248, paddingTop: 28, paddingBottom: 20, paddingRight: 12, borderRightWidth: 1, borderRightColor: C.line, zIndex: 10, backgroundColor: C.glass, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(18px)' } : {}) } as any,
   railItem: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopRightRadius: 10, borderBottomRightRadius: 10, paddingRight: 12, marginBottom: 2 },
 }) as const;
 const styles: ReturnType<typeof makeStyles> = makeStyles();

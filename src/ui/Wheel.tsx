@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 import type { BodyId, Chart } from '../engine/astro';
 import { SIGN_GLYPHS, BODIES, ASPECT_INFO } from '../content/base';
@@ -39,6 +40,7 @@ export default function Wheel({ chart, outer, cross, size = 320, asteroids = tru
   const gsize = size < 330 ? 13 : 15;
 
   return (
+    <View {...({ dataSet: { reveal: 'wheel' } } as any)}>
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} accessibilityLabel="Harita çarkı">
       <Circle cx={cx} cy={cy} r={R} fill={C.card} stroke={C.ink} strokeWidth={1.2} />
       <Circle cx={cx} cy={cy} r={rSign} fill="none" stroke={C.ink} strokeWidth={1} />
@@ -94,5 +96,6 @@ export default function Wheel({ chart, outer, cross, size = 320, asteroids = tru
       })}
       {chart.asc !== null ? <SvgText x={4} y={cy - 4} fontSize={9} fill={C.rose} fontWeight="bold">ASC</SvgText> : null}
     </Svg>
+    </View>
   );
 }
