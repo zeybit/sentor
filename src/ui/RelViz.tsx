@@ -340,14 +340,26 @@ export function ShareCard({ ar, myName, theirName, status, theme, lang, ov }: { 
   const [msg, setMsg] = useState('');
   const download = () => {
     if (Platform.OS !== 'web') return;
-    const img = new (globalThis as any).Image();
+    const g = globalThis as any;
+    const fname = `iliski-karti-${(myName || 'sen').toLowerCase()}-${(theirName || 'partner').toLowerCase()}.png`.replace(/[^a-z0-9ğüşıöç.-]/gi, '-');
+    const img = new g.Image();
     img.onload = () => {
-      const cv = (globalThis as any).document.createElement('canvas'); cv.width = 1080; cv.height = 1920;
+      const cv = g.document.createElement('canvas'); cv.width = 1080; cv.height = 1920;
       cv.getContext('2d').drawImage(img, 0, 0);
-      const a = (globalThis as any).document.createElement('a');
-      a.href = cv.toDataURL('image/png'); a.download = `iliski-karti-${(myName || 'sen').toLowerCase()}-${(theirName || 'partner').toLowerCase()}.png`;
-      (globalThis as any).document.body.appendChild(a); a.click(); a.remove();
-      setMsg(tx('Görsel indirildi.', 'Image downloaded.', lang));
+      cv.toBlob(async (blob: any) => {
+        if (!blob) { setMsg(tx('Görsel oluşturulamadı.', 'Could not create the image.', lang)); return; }
+        // claude.ai içinde açıldıysa platformun güvenli indirme izni kullanılır
+        const dl = g.claude?.use ? await g.claude.use('downloads').catch(() => null) : null;
+        if (dl) {
+          try { await dl.save({ filename: fname, data: blob }); setMsg(tx('Görsel kaydedildi.', 'Image saved.', lang)); }
+          catch (e: any) { setMsg(e?.code === 'declined' ? tx('İndirme iptal edildi.', 'Download cancelled.', lang) : tx('Bu görünümde indirme kullanılamıyor.', 'Downloads are unavailable in this view.', lang)); }
+          return;
+        }
+        const a = g.document.createElement('a');
+        a.href = g.URL.createObjectURL(blob); a.download = fname;
+        g.document.body.appendChild(a); a.click(); a.remove();
+        setMsg(tx('Görsel indirildi.', 'Image downloaded.', lang));
+      }, 'image/png');
     };
     img.onerror = () => setMsg(tx('Görsel oluşturulamadı.', 'Could not create the image.', lang));
     img.src = uri;
