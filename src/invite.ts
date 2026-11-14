@@ -4,7 +4,7 @@ import type { Profile } from './store';
 
 type P = Omit<Profile, 'id'>;
 /** Uygulamanın herkese açık adresi; boşsa sayfanın kendi adresi kullanılır */
-export const APP_URL = '';
+export const APP_URL = 'https://sentor.zziv.workers.dev/';
 
 const b64 = (s: string) => (globalThis as any).btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64 = (s: string) => decodeURIComponent(escape((globalThis as any).atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
@@ -23,7 +23,9 @@ export function decodeInvite(code: string): P | null {
 }
 export function inviteLink(p: P): string {
   const g = globalThis as any;
-  const base = APP_URL || (Platform.OS === 'web' && g.location ? g.location.origin + g.location.pathname : '');
+  // Uygulamanın kendi adresinde açıksa (ör. yerel deneme) o adres, aksi hâlde herkese açık adres kullanılır
+  const here = Platform.OS === 'web' && g.location && /^https?:/.test(g.location.protocol) && !/claude|usercontent/.test(g.location.hostname) ? g.location.origin + g.location.pathname : '';
+  const base = here && !/workers\.dev$/.test(g.location.hostname) && !/^localhost|127\./.test(g.location.hostname) ? here : APP_URL;
   return `${base}#uyum=${encodeInvite(p)}`;
 }
 /** Açılışta adres çubuğundaki daveti okur ve adresi temizler */
