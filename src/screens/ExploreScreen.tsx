@@ -20,22 +20,23 @@ import { ShareToggle, safeName } from '../ui/ShareImage';
 import { Chips, H1, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F, serif, ELEMENT_COLOR } from '../theme';
 import { takePendingKind } from '../nav';
+import { SkyAge } from '../ui/ExtrasUI';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
-type Part = 'year' | 'twin' | 'tests' | 'cities';
+type Part = 'year' | 'twin' | 'tests' | 'cities' | 'sky';
 const YEAR = 365.2422 * 864e5, DAY = 864e5;
 
 export default function ExploreScreen() {
-  const { lang } = useStore();
-  const [part, setPart] = useState<Part>(() => { const k = takePendingKind(); return (['year', 'twin', 'tests', 'cities'] as Part[]).includes(k as Part) ? (k as Part) : 'year'; });
+  const { lang, chart } = useStore();
+  const [part, setPart] = useState<Part>(() => { const k = takePendingKind(); return (['year', 'twin', 'tests', 'cities', 'sky'] as Part[]).includes(k as Part) ? (k as Part) : 'year'; });
   return (
     <View>
       <H1>{tx('Keşfet', 'Discover', lang)}</H1>
       <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{tx('Haritanla oynamanın eğlenceli yolları: yeni yaşının hikâyesi, ünlü ikizlerin, kısa testler ve sana iyi gelen şehirler. Hepsinin sonunda paylaşabileceğin bir kart var.', 'Fun ways to play with your chart: the story of your new year, celebrity twins, quick tests and the cities that suit you. Each ends with a card you can share.', lang)}</Sub>
-      <Segmented items={[{ key: 'year', label: tx('Yeni yaşın', 'New year', lang) }, { key: 'twin', label: tx('Ünlü ikizin', 'Celeb twin', lang) }, { key: 'tests', label: tx('Testler', 'Tests', lang) }, { key: 'cities', label: tx('Şehirlerin', 'Cities', lang) }]} value={part} onChange={v => setPart(v as Part)} />
+      <Segmented items={[{ key: 'year', label: tx('Yeni yaşın', 'New year', lang) }, { key: 'twin', label: tx('Ünlü ikizin', 'Celeb twin', lang) }, { key: 'tests', label: tx('Testler', 'Tests', lang) }, { key: 'cities', label: tx('Şehirlerin', 'Cities', lang) }, { key: 'sky', label: tx('Gökyüzü yaşın', 'Sky age', lang) }]} value={part} onChange={v => setPart(v as Part)} />
       <View style={{ height: 16 }} />
-      {part === 'year' ? <YearStory /> : part === 'twin' ? <Twins /> : part === 'tests' ? <Tests /> : <Cities />}
+      {part === 'year' ? <YearStory /> : part === 'twin' ? <Twins /> : part === 'tests' ? <Tests /> : part === 'sky' ? (chart ? <SkyAge chart={chart} lang={lang} /> : null) : <Cities />}
     </View>
   );
 }

@@ -14,6 +14,7 @@ import { strength } from '../ui/Readings';
 import { lifeAspect } from '../content/lifeTexts';
 import { YearCard } from '../ui/LillyBlocks';
 import { MonthlyTransits, LunarCalendar, PlanetaryHours, VoidMoon } from '../ui/TodayExtras';
+import { PersonalMoon, BestDays } from '../ui/ExtrasUI';
 import { T2S } from '../i18n2';
 import { C, serif } from '../theme';
 
@@ -67,6 +68,8 @@ export default function TodayScreen() {
         {daily.moonHouse ? <P style={{ marginTop: 6 }}>{MOON_HOUSE_DAY(daily.moonHouse)[lang]}</P> : null}
       </Section>
 
+      <PersonalMoon chart={chart} lang={lang} />
+
       <Section title={s.activeTransits}>
         {daily.hits.length === 0 ? <P>{s.noTransits}</P> : (
           <Expand more={s.showMore} less={s.showLess} initial={5} items={daily.hits.map((h, i) => {
@@ -80,6 +83,8 @@ export default function TodayScreen() {
       {location ? <PlanetaryHours t={t2} lang={lang} lat={location.lat} lon={location.lon} tz={location.tz} /> : null}
 
       <MonthlyTransits natal={chart} t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} />
+
+      <BestDays chart={chart} kind="career" lang={lang} />
 
       <YearCard chart={chart} lang={lang} />
 
