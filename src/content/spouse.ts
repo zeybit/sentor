@@ -3,10 +3,11 @@
 // 7. evdeki gezegenler, Venüs (kadın ve erkek haritası farkı gözetmeden), Juno, Vertex ve Satürn bağlantıları.
 // Metinler özgündür; kesin hüküm değil, eğilim anlatır.
 import type { BodyId, Chart } from '../engine/astro';
-import { SIGN_RULERS, angleDiff } from '../engine/astro';
-import { L, SIGNS } from './base';
+import { SIGN_RULERS, angleDiff, houseOf, norm } from '../engine/astro';
+import { lots } from '../engine/techniques';
+import { L, SIGNS, HOUSES, SIGN_ADVERB } from './base';
 import { LILLY_SIGN_FORM, LILLY_PLANET_FORM } from './lilly';
-import { lifeTimeline, Window } from '../engine/timeline';
+import { lifeTimeline, Window, PersonCtx } from '../engine/timeline';
 
 const l = (tr: string, en: string): L => ({ tr, en });
 type Lang = 'tr' | 'en';
@@ -75,11 +76,38 @@ function foreignHint(ch: Chart, r7: BodyId, s7: number): L | null {
 }
 
 /** Evlilik zamanına dair en güçlü gelecek dönemler */
-export function marriageWindows(ch: Chart, now = new Date(), n = 3, all?: Window[]): Window[] {
-  const list = (all ?? lifeTimeline(ch, { fromAge: 16, toAge: 75 })).filter(w => w.topic === 'love' && w.end > now);
+export function marriageWindows(ch: Chart, now = new Date(), n = 3, all?: Window[], person: PersonCtx = {}): Window[] {
+  const list = (all ?? lifeTimeline(ch, { fromAge: 16, toAge: 75, ...person })).filter(w => w.topic === 'love' && w.end > now);
   const horizon = now.getTime() + 20 * 365.25 * 864e5;
   const near = list.filter(w => w.start.getTime() < horizon);
-  return (near.length ? near : list).sort((a, b) => b.score - a.score).slice(0, n).sort((a, b) => a.start.getTime() - b.start.getTime());
+  // Önce kaç tekniğin buluştuğu, sonra puan: birden çok yöntemin aynı döneme işaret etmesi en güvenilir göstergedir
+  const rank = (w: Window) => w.techs.length * 4 + w.score + (w.calib?.length ?? 0) * 2;
+  return (near.length ? near : list).sort((a, b) => rank(b) - rank(a)).slice(0, n).sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+/** Kader noktası (Vertex) ve Evlilik noktası (Arap noktası): doğum saati gerekir */
+export function fateSections(ch: Chart, gender?: 'f' | 'm' | null): SpouseSection[] {
+  if (ch.asc === null || !ch.cusps.length) return [];
+  const out: SpouseSection[] = [];
+  if (ch.vertex !== null) {
+    const sg = Math.floor(ch.vertex / 30), h = houseOf(ch.vertex, ch.cusps);
+    const meet = RULER_HOUSE[h - 1]?.meet;
+    out.push({ id: 'vertex', title: l('Kader gibi karşılaşmaların', 'Your fated meetings'),
+      text: l(`Vertex, astrolojide “hayatın karşına çıkardığı kişiler” noktası olarak bilinir. Senin Vertex’in ${SIGNS[sg].tr} burcunda: hayatını değiştiren karşılaşmalar çoğu zaman ${CHAR[sg].tr.split(';')[0]} insanlarla olur.${meet ? ` Bu nokta ${h}. evinde, yani böyle karşılaşmalar şöyle gelişir: ${low(meet.tr, 'tr')}` : ''}`,
+        `The Vertex is known in astrology as the point of “the people life brings to you”. Yours is in ${SIGNS[sg].en}: life-changing meetings often happen with people who are ${CHAR[sg].en.split(';')[0]}.${meet ? ` It sits in house ${h}, so such meetings tend to unfold like this: ${low(meet.en, 'en')}` : ''}`),
+      why: l('Vertex, doğum yeri ve saatine göre hesaplanan bir eksen noktasıdır; Ay düğümleri, tutulmalar ya da Venüs bu noktaya değdiğinde önemli tanışmalar beklenir. Bu tarihler “Ne zaman?” bölümünde hesaba katılır.', 'The Vertex is an axis point calculated from your birth place and time; important meetings are expected when the nodes, eclipses or Venus touch it. These dates are included under “When?”.') });
+  }
+  const P = ch.positions;
+  const lot = gender === 'f' ? norm(ch.asc + P.saturn.lon - P.venus.lon) : lots(ch).find(x => x.id === 'marriage')?.lon;
+  if (lot !== undefined) {
+    const sg = Math.floor(lot / 30), h = houseOf(lot, ch.cusps);
+    out.push({ id: 'lot', title: l('Evlilik noktan', 'Your Lot of Marriage'),
+      text: l(`Antik astrolojide evliliği gösteren özel bir nokta vardır. Seninki ${SIGNS[sg].tr} burcunda: evliliğini ${SIGN_ADVERB[sg].tr} bir biçimde yaşarsın. Bu nokta ${h}. evinde; evlilik konusu hayatında en çok ${HOUSES[h - 1].area.tr} ile bağlantılıdır.`,
+        `Ancient astrology uses a special point for marriage. Yours is in ${SIGNS[sg].en}: you live marriage ${SIGN_ADVERB[sg].en}. It sits in house ${h}, so marriage is linked most with ${HOUSES[h - 1].area.en} in your life.`),
+      why: l(gender === 'f' ? 'Kadın haritasında Yükselen + Satürn − Venüs formülüyle hesaplanır (Valens). Jüpiter ya da Venüs bu noktaya ulaştığında evlilik için güçlü bir dönem sayılır.' : 'Yükselen + Venüs − Satürn formülüyle hesaplanır (Valens; kadın haritasında formül ters çevrilir, cinsiyet eklersen ona göre hesaplanır). Jüpiter ya da Venüs bu noktaya ulaştığında evlilik için güçlü bir dönem sayılır.',
+        gender === 'f' ? 'In a woman’s chart it is Ascendant + Saturn − Venus (Valens). When Jupiter or Venus reaches it, it counts as a strong time for marriage.' : 'Calculated as Ascendant + Venus − Saturn (Valens; reversed for a woman’s chart, so adding gender refines it). When Jupiter or Venus reaches it, it counts as a strong time for marriage.') });
+  }
+  return out;
 }
 
 export function spouseProfile(ch: Chart, lang: Lang): SpouseSection[] | null {

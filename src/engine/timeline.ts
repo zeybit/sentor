@@ -6,6 +6,7 @@
 import * as A from 'astronomy-engine';
 import type { BodyId, Chart } from './astro';
 import { bodyLon, houseOf, norm, angleDiff, lahiri, SIGN_RULERS } from './astro';
+import { lots, solarReturnChart } from './techniques';
 
 export type Topic = 'love' | 'career' | 'home' | 'travel' | 'change';
 export const TOPICS: Topic[] = ['love', 'career', 'home', 'travel', 'change'];
@@ -13,7 +14,19 @@ type L = { tr: string; en: string };
 const l = (tr: string, en: string): L => ({ tr, en });
 
 export interface Factor { id: string; w: number; text: L }
-export interface Window { topic: Topic; start: Date; end: Date; peak: Date; score: number; reasons: Factor[]; gen?: boolean }
+export interface Window {
+  topic: Topic; start: Date; end: Date; peak: Date; score: number; reasons: Factor[]; gen?: boolean;
+  /** Bu döneme işaret eden farklı teknik aileleri (transit, progresyon, solar arc, profeksiyon, tutulma, Güneş dönüşü) */
+  techs: Tech[];
+  /** Kişinin geçmiş olay tarihlerinde de etkin olmuş işaretler (kişisel ayar) */
+  calib?: string[];
+}
+export type Tech = 'transit' | 'progression' | 'solarArc' | 'profection' | 'eclipse' | 'solarReturn';
+/** Bir işaretin hangi teknikten geldiği */
+export const techOf = (id: string): Tech => /^SR/.test(id) ? 'solarReturn' : /^sa/.test(id) ? 'solarArc' : /^p[A-Z]/.test(id) ? 'progression' : /^(prof|lord)/.test(id) ? 'profection' : /^E/.test(id) ? 'eclipse' : 'transit';
+/** Kişiye özel ayarlar: cinsiyet (klasik eş göstergesi) ve geçmiş ilişki olaylarının tarihleri */
+export interface PersonCtx { gender?: 'f' | 'm' | null; loveDates?: Date[] }
+interface Ctx { sig: BodyId[]; lotM: number | null; juno: number | null; vx: number | null; sr: (d: Date) => Chart | null; boost: Set<string> }
 /** Kuşak etkileri: yaklaşık aynı yıllarda doğan herkeste aynı tarihlere denk gelir (Satürn dönüşü gibi). */
 export const GEN_IDS = new Set(['Sret', 'Sopp', 'Uopp', 'Jret']);
 
@@ -39,9 +52,9 @@ function eclipses(from: Date, to: Date): Ecl[] {
 }
 
 /** Her ay için etkin faktörler */
-function factorsAt(ch: Chart, d: Date, ecl: Ecl[]): Record<Topic, Factor[]> {
+function factorsAt(ch: Chart, d: Date, ecl: Ecl[], cx?: Ctx): Record<Topic, Factor[]> {
   const out: Record<Topic, Factor[]> = { love: [], career: [], home: [], travel: [], change: [] };
-  const add = (t: Topic, id: string, w: number, tr: string, en: string) => out[t].push({ id, w, text: l(tr, en) });
+  const add = (t: Topic, id: string, w: number, tr: string, en: string) => out[t].push({ id, w: w + (t === 'love' && cx?.boost.has(id) ? 1 : 0), text: l(tr, en) });
   const ay = ch.zodiac === 'sidereal' ? lahiri(A.MakeTime(d)) : 0;
   const tr = (id: BodyId) => norm(bodyLon(id, d) - ay);
   const P = ch.positions;
@@ -175,28 +188,106 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[]): Record<Topic, Factor[]> {
     if (near(sa(P.jupiter.lon), ASC, 1)) add('travel', 'saJasc', 1, 'Jüpiter ilerleyerek yükselenine ulaşıyor: genişleme ve yeni ufuklar.', 'Jupiter is directed onto your ascendant: expansion and new horizons.');
     if ((['sun', 'moon', 'mars', 'saturn', 'uranus', 'pluto'] as BodyId[]).some(x => near(sa(P[x].lon), ASC, 1))) add('change', 'saAsc', 2, 'Önemli bir gezegen ilerleyerek yükselenine ulaşıyor: kişisel hayatında belirgin bir değişim.', 'A key planet is directed onto your ascendant: a marked change in your personal life.');
   }
+
+  // ---- Aşk ve evlilik: ek göstergeler (Juno, Vertex, klasik eş göstergesi, Evlilik noktası, Güneş dönüşü) ----
+  if (cx) {
+    const { juno, vx, lotM, sig } = cx;
+    if (juno !== null) {
+      if (near(J, juno, 3)) add('love', 'Jjuno', 2, 'Jüpiter evlilik asteroidi Juno’nun üzerinden geçiyor: bağlılık ve evlilik için en olumlu geçişlerden biri.', 'Jupiter passes over Juno, the asteroid of marriage: one of the most favourable passages for commitment.');
+      if (near(S, juno, 2)) add('love', 'Sjuno', 2, 'Satürn Juno’nun üzerinde: ilişkiyi resmîleştirme, söz verme ve kalıcı bağ zamanı.', 'Saturn is on Juno: a time to make it official, to promise and to commit.');
+      if (near(pMoon, juno, 1.5)) add('love', 'pMjuno', 2, 'İlerletilmiş Ay Juno’nun üzerinde: içinden gelen bağlanma isteği güçleniyor.', 'The progressed Moon is on Juno: your inner wish to commit grows.');
+      if (near(sa(P.venus.lon), juno, 1) || near(sa(juno), P.venus.lon, 1) || near(sa(P.sun.lon), juno, 1)) add('love', 'saJuno', 2, 'Venüs ya da Güneş ilerleyerek Juno ile buluşuyor: evlilik temalı bir dönem.', 'Venus or the Sun is directed onto Juno: a marriage-themed period.');
+      for (const e of ecl) if (Math.abs(e.date.getTime() - d.getTime()) <= 92 * DAY && near(norm(e.lon - ay), juno, 3)) { add('love', 'Ejuno', 1, 'Bir tutulma Juno’ya düşüyor: bağlılık konusunda dönüm noktası.', 'An eclipse falls on Juno: a turning point in commitment.'); break; }
+    }
+    if (vx !== null) {
+      if (near(ND, vx, 3) || near(norm(ND + 180), vx, 3)) add('love', 'Nvx', 2, 'Ay düğümleri kader noktan Vertex’ten geçiyor: “kader” gibi hissettiren bir karşılaşma.', 'The lunar nodes cross your Vertex, the point of fate: a meeting that feels destined.');
+      if (near(J, vx, 3)) add('love', 'Jvx', 1, 'Jüpiter kader noktan Vertex’in üzerinde: hayatını genişleten biriyle karşılaşma.', 'Jupiter is on your Vertex: meeting someone who widens your life.');
+      if (near(pMoon, vx, 1.5)) add('love', 'pMvx', 2, 'İlerletilmiş Ay Vertex’e ulaşıyor: duygusal olarak kader gibi bir bağa hazırsın.', 'The progressed Moon reaches your Vertex: you are emotionally ready for a fated bond.');
+      if (near(sa(P.venus.lon), vx, 1) || near(sa(vx), P.venus.lon, 1)) add('love', 'saVvx', 2, 'Venüs ilerleyerek Vertex ile buluşuyor: kader gibi bir aşk.', 'Venus is directed onto your Vertex: a fated-feeling love.');
+      for (const e of ecl) if (Math.abs(e.date.getTime() - d.getTime()) <= 92 * DAY && near(norm(e.lon - ay), vx, 3)) { add('love', 'Evx', 2, 'Bir tutulma Vertex’e düşüyor: hayatına önemli birinin girmesi için klasik bir işaret.', 'An eclipse falls on your Vertex: a classic sign of someone important entering your life.'); break; }
+    }
+    if (lotM !== null) {
+      if (near(J, lotM, 3)) add('love', 'Jlot', 2, 'Jüpiter Evlilik noktanın üzerinden geçiyor: evlilik için açılan bir kapı.', 'Jupiter passes over your Lot of Marriage: a door opening for marriage.');
+      if (near(S, lotM, 2)) add('love', 'Slot', 1, 'Satürn Evlilik noktanda: ilişkide ciddi ve kalıcı kararlar.', 'Saturn is on your Lot of Marriage: serious, lasting decisions in a relationship.');
+      if (near(sa(P.venus.lon), lotM, 1) || near(sa(lotM), P.venus.lon, 1)) add('love', 'saVlot', 2, 'Venüs ilerleyerek Evlilik noktana ulaşıyor: evlilik için güçlü bir işaret.', 'Venus is directed onto your Lot of Marriage: a strong sign for marriage.');
+    }
+    for (const g of sig) {
+      if (near(J, P[g].lon, 3)) { add('love', 'Jsig', 1, 'Jüpiter, klasik astrolojide eşini temsil eden gezegenin üzerinden geçiyor.', 'Jupiter passes over the planet that classically represents your spouse.'); break; }
+    }
+    for (const g of sig) {
+      if (near(S, P[g].lon, 2)) { add('love', 'Ssig', 1, 'Satürn, eşini temsil eden gezegene değiyor: ilişkide ciddiyet ve söz.', 'Saturn touches the planet of your spouse: seriousness and commitment.'); break; }
+    }
+    if (sig.some(g => near(pMoon, P[g].lon, 1.5))) add('love', 'pMsig', 1, 'İlerletilmiş Ay eşini temsil eden gezegenin üzerinde.', 'The progressed Moon is on the planet that represents your spouse.');
+    if (hasAngles && sig.some(g => near(sa(P[g].lon), DSC, 1) || near(sa(P[g].lon), ASC, 1))) add('love', 'saSig', 2, 'Eşini temsil eden gezegen ilerleyerek kimlik–ilişki eksenine ulaşıyor: evlilik için klasik bir işaret.', 'The planet of your spouse is directed onto your self–partner axis: a classic sign of marriage.');
+    if (hasAngles && r7 && near(S, P[r7].lon, 2)) add('love', 'Sr7', 2, 'Satürn partnerini temsil eden gezegenin üzerinde: ilişkiyi resmîleştirme zamanı. Evlilikler çoğu zaman Jüpiter kadar Satürn geçişlerinde de gerçekleşir.', 'Saturn is on the planet that represents your partner: time to make it official. Marriages happen under Saturn as often as under Jupiter.');
+    if (hard(U, P.venus.lon, 2) || (hasAngles && near(U, DSC, 2))) add('love', 'Uven', 1, 'Uranüs aşk noktalarına dokunuyor: ani başlayan ya da ani değişen ilişkiler.', 'Uranus touches your love points: relationships that start or change suddenly.');
+    const sr = cx.sr(d);
+    if (sr && sr.asc !== null && sr.mc !== null) {
+      const v = sr.positions.venus.lon;
+      if ([sr.asc, sr.mc, norm(sr.asc + 180), norm(sr.mc + 180)].some(a => near(v, a, 6)) || sr.positions.venus.house === 7) add('love', 'SRven', 2, 'Bu yılın Güneş dönüşü haritasında Venüs öne çıkıyor: aşk ve ilişki yılı.', 'In this year’s solar return chart Venus is prominent: a year of love and relationships.');
+      if (hasAngles && Math.floor(sr.asc / 30) === Math.floor(ch.cusps[6] / 30)) add('love', 'SR7', 1, 'Bu yılın Güneş dönüşü yükseleni doğum haritandaki evlilik evinin burcunda.', 'This year’s solar return ascendant is in the sign of your birth marriage house.');
+    }
+  }
   return out;
 }
 
-const THRESH: Record<Topic, number> = { love: 5, career: 5, home: 4, travel: 4, change: 3 };
+const THRESH: Record<Topic, number> = { love: 7, career: 5, home: 4, travel: 4, change: 3 };
 const MIN_AGE: Record<Topic, number> = { love: 17, career: 18, home: 18, travel: 16, change: 16 };
 
 const CACHE = new WeakMap<Chart, Map<string, Window[]>>();
-export function lifeTimeline(ch: Chart, opts: { fromAge?: number; toAge?: number } = {}): Window[] {
+export function lifeTimeline(ch: Chart, opts: { fromAge?: number; toAge?: number } & PersonCtx = {}): Window[] {
   const fromAge = opts.fromAge ?? 16, toAge = opts.toAge ?? 75;
-  const key = `${fromAge}-${toAge}`;
+  const dates = (opts.loveDates ?? []).filter(x => !isNaN(x.getTime()));
+  const key = `${fromAge}-${toAge}-${opts.gender ?? ''}-${dates.map(x => x.getTime()).join(',')}`;
   const hit = CACHE.get(ch)?.get(key);
   if (hit) return hit;
-  const res = computeTimeline(ch, fromAge, toAge);
+  const res = computeTimeline(ch, fromAge, toAge, { gender: opts.gender, loveDates: dates });
   if (!CACHE.has(ch)) CACHE.set(ch, new Map());
   CACHE.get(ch)!.set(key, res);
   return res;
 }
-function computeTimeline(ch: Chart, fromAge: number, toAge: number): Window[] {
+
+/** Kişiye özel bağlam: Juno, Vertex, Evlilik noktası, eş göstergesi, Güneş dönüşleri ve geçmiş olaylardan öğrenilen işaretler */
+function buildCtx(ch: Chart, person: PersonCtx, ecl: Ecl[]): Ctx {
+  const timed = ch.asc !== null && ch.cusps.length === 12;
+  const P = ch.positions;
+  let lotM: number | null = null;
+  if (timed) {
+    if (person.gender === 'f') lotM = norm(ch.asc! + P.saturn.lon - P.venus.lon);
+    else lotM = lots(ch).find(x => x.id === 'marriage')?.lon ?? null;
+  }
+  const srCache = new Map<number, Chart | null>();
+  const opts = { houseSystem: ch.houseSystem, zodiac: ch.zodiac } as any;
+  const sr = (d: Date): Chart | null => {
+    if (!timed) return null;
+    const y = Math.floor((d.getTime() - ch.utc.getTime()) / YEAR);
+    if (!srCache.has(y)) {
+      try { srCache.set(y, solarReturnChart(ch, new Date(ch.utc.getTime() + (y + 0.5) * YEAR), opts)); } catch { srCache.set(y, null); }
+    }
+    return srCache.get(y)!;
+  };
+  const cx: Ctx = {
+    sig: person.gender === 'f' ? ['sun', 'mars'] : person.gender === 'm' ? ['moon'] : [],
+    lotM, juno: P.juno ? P.juno.lon : null, vx: timed ? ch.vertex : null, sr, boost: new Set(),
+  };
+  // Kişisel ayar: geçmiş ilişki olaylarının (±3 ay) etrafında etkin olan işaretler bu kişide "tutmuş" sayılır
+  for (const ev of person.loveDates ?? []) {
+    for (const off of [-2, 0, 2]) {
+      const f = factorsAt(ch, new Date(ev.getTime() + off * YEAR / 12), ecl, { ...cx, boost: new Set() });
+      f.love.forEach(x => cx.boost.add(x.id));
+    }
+  }
+  return cx;
+}
+
+function computeTimeline(ch: Chart, fromAge: number, toAge: number, person: PersonCtx): Window[] {
   const start = new Date(ch.utc.getTime() + fromAge * YEAR), end = new Date(ch.utc.getTime() + toAge * YEAR);
-  const ecl = eclipses(new Date(start.getTime() - 100 * DAY), new Date(end.getTime() + 100 * DAY));
+  const evs = person.loveDates ?? [];
+  const eFrom = Math.min(start.getTime(), ...evs.map(x => x.getTime() - YEAR / 2)), eTo = Math.max(end.getTime(), ...evs.map(x => x.getTime() + YEAR / 2));
+  const ecl = eclipses(new Date(eFrom - 100 * DAY), new Date(eTo + 100 * DAY));
+  const cx = buildCtx(ch, person, ecl);
   const months: { d: Date; f: Record<Topic, Factor[]> }[] = [];
-  for (let d = new Date(start); d < end; d = new Date(d.getTime() + YEAR / 12)) months.push({ d, f: factorsAt(ch, d, ecl) });
+  for (let d = new Date(start); d < end; d = new Date(d.getTime() + YEAR / 12)) months.push({ d, f: factorsAt(ch, d, ecl, cx) });
   const out: Window[] = [];
   const timed = ch.asc !== null && ch.cusps.length === 12;
   const thr: Record<Topic, number> = timed ? THRESH : { love: 3, career: 3, home: 3, travel: 3, change: 3 };
@@ -211,13 +302,17 @@ function computeTimeline(ch: Chart, fromAge: number, toAge: number): Window[] {
         const seen = new Set<string>();
         const reasons = months[best].f[t].filter(x => (seen.has(x.id) ? false : (seen.add(x.id), true))).sort((a, b) => b.w - a.w);
         const personal = reasons.filter(r => !GEN_IDS.has(r.id)).reduce((a, b) => a + b.w, 0);
-        out.push({ topic: t, start: months[cur.s].d, end: new Date(months[cur.e].d.getTime() + YEAR / 12), peak: months[best].d, score: bestScore, reasons, gen: personal < 2 });
+        // Teknikler: en güçlü ayın çevresinde (±3 ay) görülen farklı teknik aileleri
+        const techs = new Set<Tech>();
+        for (let i = Math.max(cur.s, best - 3); i <= Math.min(cur.e, best + 3); i++) months[i].f[t].forEach(x => techs.add(techOf(x.id)));
+        const calib = t === 'love' && cx.boost.size ? reasons.filter(r => cx.boost.has(r.id)).map(r => r.id) : undefined;
+        out.push({ topic: t, start: months[cur.s].d, end: new Date(months[cur.e].d.getTime() + YEAR / 12), peak: months[best].d, score: bestScore, reasons, gen: personal < 2, techs: [...techs], calib: calib?.length ? calib : undefined });
       }
       cur = null;
     };
     months.forEach((m, i) => {
       const sc = m.f[t].reduce((a, b) => a + b.w, 0);
-      if (sc >= thr[t]) { if (cur && i - cur.e <= 4) cur.e = i; else { flush(); cur = { s: i, e: i }; } }
+      if (sc >= thr[t]) { if (cur && i - cur.e <= (t === 'love' ? 2 : 4)) cur.e = i; else { flush(); cur = { s: i, e: i }; } }
     });
     flush();
   }

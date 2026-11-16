@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { useNav } from '../nav';
+import { personCtx } from '../engine/person';
 import { lifeTimeline, Window } from '../engine/timeline';
 import { TOPIC_INFO, fmtRange } from '../screens/FutureScreen';
 import { C, F } from '../theme';
@@ -9,14 +10,14 @@ import { st } from './kit';
 
 /** Bugün ekranında hayat takvimine kısa yol: sıradaki önemli dönem */
 export default function NextPeriod() {
-  const { chart, lang } = useStore();
+  const { chart, lang, profile } = useStore();
   const nav = useNav();
   const [next, setNext] = useState<Window[] | null>(null);
   useEffect(() => {
     if (!chart) return;
     const id = setTimeout(() => {
       const now = new Date();
-      const all = lifeTimeline(chart, { fromAge: 16, toAge: 75 }).filter(w => w.end > now);
+      const all = lifeTimeline(chart, { fromAge: 16, toAge: 75, ...personCtx(profile) }).filter(w => w.end > now);
       // Kişiye özel dönemler önce; kuşak etkilerinden (yaşıtlarla ortak) en fazla biri
       const pick: Window[] = []; let gens = 0;
       for (const w of all) { if (w.gen) { if (gens) continue; gens++; } pick.push(w); if (pick.length === 3) break; }

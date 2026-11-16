@@ -10,7 +10,9 @@ import { synastry, SYN_LABEL } from '../content/forecast';
 import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import { HARMONY } from '../content/techniqueTexts';
-import { spouseProfile, marriageWindows, spouseArchetype, spouseJob } from '../content/spouse';
+import { spouseProfile, marriageWindows, spouseArchetype, spouseJob, fateSections } from '../content/spouse';
+import { personCtx } from '../engine/person';
+import { lifeTimeline } from '../engine/timeline';
 import { derivedSpouse, junoRules, VENUS_ADMIRED, attractionText } from '../content/loveExtras';
 import { WindowCard } from './FutureScreen';
 import { useNav, takePendingKind } from '../nav';
@@ -20,6 +22,9 @@ import { F } from '../theme';
 import { ActivityIndicator, Pressable } from 'react-native';
 import { useEffect } from 'react';
 import type { Window } from '../engine/timeline';
+import type { Chart } from '../engine/astro';
+import type { Profile } from '../store';
+import { EVENTS } from '../content/lifeEvents';
 import { SynastryReport, SynastryTables, RelChartReport, synAspects } from '../ui/RelationshipViews';
 import { RadarChart, RadarOverride } from '../ui/RelViz';
 import { areas, score } from '../content/synastryAreas';
@@ -133,6 +138,7 @@ export default function LoveScreen() {
                 <RadarChart ar={data.ar} ov={data.ov} lang={lang} size={Math.min(width - 210, 360)} />
                 <Sub style={{ marginTop: 6, textAlign: 'center' }}>{lang === 'tr' ? 'Her köşe bir alandaki uyumu gösterir: 0–30 zayıf, 30–50 orta, 50–80 iyi, 80–100 mükemmel.' : 'Each corner shows harmony in one area: 0–30 weak, 30–50 average, 50–80 good, 80–100 perfect.'}</Sub>
               </Section>
+              <SharedWindows me={chart} them={pc!} meP={profile} themP={partner} lang={lang} />
               <SynastryReport me={chart} them={pc!} cross={data.cross} myName={profile.name} theirName={partner.name} lang={lang} asteroids={showAsteroids} ov={data.ov} total={data.sy.total} />
               <Section title={data.lilly ? data.lilly.title[lang] : ''}>
                 {data.lilly?.items.map((it, i) => <View key={i} style={st.row}><P>{it.text[lang]}</P></View>)}
@@ -148,6 +154,47 @@ export default function LoveScreen() {
   );
 }
 
+/** İki kişinin hayat takviminde aşk ve evlilik dönemlerinin çakıştığı aralıklar */
+function SharedWindows({ me, them, meP, themP, lang }: { me: Chart; them: Chart; meP: Profile; themP: Profile; lang: 'tr' | 'en' }) {
+  const [list, setList] = useState<{ s: Date; e: Date; a: Window; b: Window }[] | null>(null);
+  useEffect(() => {
+    setList(null);
+    const id = setTimeout(() => {
+      const now = Date.now(), horizon = now + 15 * 365.25 * 864e5;
+      const pick = (c: Chart, p: Profile) => lifeTimeline(c, { fromAge: 16, toAge: 80, ...personCtx(p) }).filter(w => w.topic === 'love' && w.end.getTime() > now && w.start.getTime() < horizon);
+      const A = pick(me, meP), B = pick(them, themP);
+      const out: { s: Date; e: Date; a: Window; b: Window }[] = [];
+      for (const a of A) for (const b of B) {
+        const s0 = Math.max(a.start.getTime(), b.start.getTime(), now), e0 = Math.min(a.end.getTime(), b.end.getTime());
+        if (e0 - s0 >= 25 * 864e5) out.push({ s: new Date(s0), e: new Date(e0), a, b });
+      }
+      setList(out.sort((x, y) => x.s.getTime() - y.s.getTime()).slice(0, 4));
+    }, 60);
+    return () => clearTimeout(id);
+  }, [me, them, meP, themP]);
+  const fmt = (d: Date) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long', year: 'numeric' }).format(d);
+  const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
+  const head = (w: Window) => w.reasons.map(r => EVENTS[r.id]?.head?.[lang]).find(Boolean) ?? '';
+  return (
+    <Section title={L('Birlikte önemli dönemleriniz', 'Your shared key periods')} sub={L(`Önümüzdeki 15 yılda ikinizin hayat takviminde aşk ve evlilik dönemlerinin aynı aylara denk geldiği aralıklar. İki haritanın aynı anda tetiklendiği zamanlar, ilişkide adım atmak (birlikte yaşama, nişan, evlilik) için en güçlü zamanlardır.`, `Ranges in the next 15 years when love and marriage periods in both your life calendars fall in the same months. When both charts are triggered at once, it is the strongest time to take a step together (moving in, engagement, marriage).`)}>
+      {list === null ? <ActivityIndicator color={C.rose} style={{ alignSelf: 'flex-start' }} />
+        : list.length ? list.map((x, i) => {
+          const a = fmt(x.s), b = fmt(new Date(x.e.getTime() - 15 * 864e5));
+          return (
+            <View key={i} style={{ borderLeftWidth: 3, borderLeftColor: C.second, paddingLeft: 12, marginBottom: 14 }}>
+              <Text style={{ fontFamily: F.serif, fontSize: 20, lineHeight: 26, color: C.ink }}>{a === b ? a : `${a} – ${b}`}</Text>
+              <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 23, color: C.ink, marginTop: 2 }}>
+                <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{meP.name || L('Sen', 'You')}: </Text>{head(x.a)}{'   '}
+                <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{themP.name || L('O', 'Them')}: </Text>{head(x.b)}
+              </Text>
+              <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub, marginTop: 2 }}>{L(`${new Set([...x.a.techs, ...x.b.techs]).size} farklı teknik bu aralığa işaret ediyor`, `${new Set([...x.a.techs, ...x.b.techs]).size} different techniques point to this range`)}</Text>
+            </View>
+          );
+        }) : <P>{L('Önümüzdeki 15 yılda iki takvimin çakıştığı belirgin bir aşk dönemi çıkmadı; bu, adım atmak için kendi uygun zamanınızı seçebileceğiniz anlamına gelir.', 'No clear overlapping love period in the next 15 years; you are free to pick your own moment.')}</P>}
+    </Section>
+  );
+}
+
 /** Gelecekteki eş tahmini ve evlilik zamanı */
 function SpouseBlock() {
   const { chart, lang, s, profile, setProfile } = useStore();
@@ -157,15 +204,16 @@ function SpouseBlock() {
   useEffect(() => {
     setWins(null);
     if (!chart) return;
-    const id = setTimeout(() => setWins(marriageWindows(chart)), 30);
+    const id = setTimeout(() => setWins(marriageWindows(chart, new Date(), 3, undefined, personCtx(profile))), 30);
     return () => clearTimeout(id);
-  }, [chart]);
+  }, [chart, profile]);
   if (!chart) return null;
   const base = spouseProfile(chart, lang) ?? [];
   const job = spouseJob(chart);
   const prof = chart.cusps.length || gender ? [
     ...(gender ? [spouseArchetype(chart, gender)] : []),
     ...base.filter(x => x.id !== 'life'),
+    ...fateSections(chart, gender),
     ...(job ? [job] : []),
     ...base.filter(x => x.id === 'life'),
   ] : null;
@@ -216,10 +264,21 @@ function SpouseBlock() {
       {wins === null ? <ActivityIndicator color={C.rose} style={{ alignSelf: 'flex-start', marginVertical: 12 }} />
         : wins.length ? (
           <>
-            <Sub style={{ marginBottom: 12, maxWidth: 640 }}>{L('Önümüzdeki yıllarda ciddi bir ilişki ya da evlilik için en güçlü görünen dönemler:', 'The strongest-looking periods ahead for a serious relationship or marriage:')}</Sub>
+            <Sub style={{ marginBottom: 12, maxWidth: 640 }}>{L('Önümüzdeki yıllarda ciddi bir ilişki ya da evlilik için en güçlü görünen dönemler. Bunlar transit, progresyon, solar arc, yaşın teması, tutulmalar ve Güneş dönüşü birlikte taranarak bulunur; Venüs ve 7. evin yanında Juno, Vertex, Evlilik noktası ve klasik eş gezegenin de hesaba katılır. Ne kadar çok teknik aynı döneme işaret ederse dönem o kadar güvenilirdir.', 'The strongest-looking periods ahead for a serious relationship or marriage, found by scanning transits, progressions, solar arcs, annual profections, eclipses and solar returns together; beyond Venus and the 7th house, Juno, the Vertex, the Lot of Marriage and the classical spouse planet are included. The more techniques agree on a period, the more reliable it is.')}</Sub>
             {wins.map((w, i) => <WindowCard key={i} w={w} lang={lang} showTip={false} />)}
           </>
         ) : <P>{L('Önümüzdeki yıllarda belirgin bir dönem çıkmadı.', 'No marked period found for the coming years.')}</P>}
+      {(profile?.events ?? []).some(e => e.type === 'love' && e.date) ? (
+        <Sub style={{ marginTop: 4, maxWidth: 640 }}>{L('Geçmiş ilişki tarihlerin hesaba katıldı: o tarihlerde etkin olan işaretler senin haritanda daha güçlü sayılıyor.', 'Your past relationship dates are included: signs active on those dates count more in your chart.')}</Sub>
+      ) : (
+        <View style={[st.panel, { marginTop: 8, marginBottom: 8 }]}>
+          <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink }}>{L('Tahminleri sana göre ayarla', 'Tune the forecast to you')}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 23, color: C.ink, marginTop: 4 }}>{L('Geçmişte ciddi bir ilişkinin başladığı, nişanlandığın ya da evlendiğin bir tarih varsa Saat düzeltme bölümüne “Aşk / evlilik” olayı olarak ekle. Uygulama o tarihlerde hangi işaretlerin tuttuğuna bakar ve gelecekteki dönemleri buna göre ağırlıklandırır. Aynı tarihler doğum saatini düzeltmek için de kullanılır.', 'If a serious relationship began, or you got engaged or married, on a past date, add it as a “Love / marriage” event under Rectification. The app checks which signs worked on those dates and weights future periods accordingly. The same dates also help correct your birth time.')}</Text>
+          <Pressable onPress={() => nav('chart:rectify')} accessibilityRole="link" style={{ alignSelf: 'flex-start', paddingTop: 6 }}>
+            <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{L('Geçmiş tarih ekle', 'Add a past date')}</Text>
+          </Pressable>
+        </View>
+      )}
       <Pressable onPress={() => nav('chart:timeline')} accessibilityRole="link" style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
         <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{L('Bütün hayat takvimini aç', 'Open your full life calendar')}</Text>
       </Pressable>

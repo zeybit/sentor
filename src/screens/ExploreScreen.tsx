@@ -6,6 +6,7 @@ import type { BodyId, Chart } from '../engine/astro';
 import { SIGN_RULERS } from '../engine/astro';
 import { solarReturnChart } from '../engine/techniques';
 import { lifeTimeline, skyEvents } from '../engine/timeline';
+import { personCtx } from '../engine/person';
 import { destinyMatrix } from '../engine/matrix';
 import { BODIES, HOUSES, SIGNS, L } from '../content/base';
 import { ARCANA, ADVICE } from '../content/arcana';
@@ -61,7 +62,7 @@ function YearStory() {
     const start = sr.utc.getTime(), end = start + YEAR;
     const prof = (bi.age % 12) + 1;
     const lord: BodyId = chart.asc !== null ? SIGN_RULERS[(Math.floor(chart.asc / 30) + bi.age) % 12] : SIGN_RULERS[(chart.positions.sun.sign + bi.age) % 12];
-    const wins = lifeTimeline(chart, { fromAge: 16, toAge: 75 }).filter(w => w.end.getTime() > start && w.start.getTime() < end);
+    const wins = lifeTimeline(chart, { fromAge: 16, toAge: 75, ...personCtx(profile) }).filter(w => w.end.getTime() > start && w.start.getTime() < end);
     const months = Array(12).fill(0) as number[];
     const ev = skyEvents(chart).filter(e => e.kind === 'transit' && e.end.getTime() > start && e.start.getTime() < end);
     for (const e of ev) for (let i = 0; i < 12; i++) { const a = start + (i * YEAR) / 12, b = a + YEAR / 12; if (e.start.getTime() < b && e.end.getTime() > a) months[i] += e.w; }

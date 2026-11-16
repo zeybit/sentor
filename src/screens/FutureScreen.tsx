@@ -3,7 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useStore } from '../store';
 import type { Chart } from '../engine/astro';
-import { lifeTimeline, skyEvents, SkyEvent, Pt, Topic, TOPICS, Window, strengthOf } from '../engine/timeline';
+import { lifeTimeline, skyEvents, SkyEvent, Pt, Topic, TOPICS, Window, strengthOf, Tech as TechFamily } from '../engine/timeline';
+import { personCtx } from '../engine/person';
 import { Chips, H1, More, P, Section, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
 import { EVENTS, LOVE_TIP, Rel } from '../content/lifeEvents';
@@ -30,7 +31,25 @@ export const TOPIC_INFO: Record<Topic, { name: { tr: string; en: string }; color
     tip: { tr: 'Hayatını gözden geçirme dönemi; eskiyi bırakıp yeni bir sayfa açmaya hazırlan.', en: 'A time to review your life; get ready to let go of the old and turn a new page.' } },
 };
 
-const techOfId = (id: string): 'transit' | 'progression' | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E)/.test(id) ? 'other' : 'transit');
+const techOfId = (id: string): 'transit' | 'progression' | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E|SR)/.test(id) ? 'other' : 'transit');
+const TECH_NAME: Record<TechFamily, { tr: string; en: string }> = {
+  transit: { tr: 'transit', en: 'transits' }, progression: { tr: 'progresyon', en: 'progressions' }, solarArc: { tr: 'solar arc', en: 'solar arc' },
+  profection: { tr: 'yaşın teması', en: 'annual profection' }, eclipse: { tr: 'tutulma', en: 'eclipses' }, solarReturn: { tr: 'Güneş dönüşü', en: 'solar return' },
+};
+/** Kaç farklı tekniğin aynı döneme işaret ettiği: ne kadar çok teknik buluşursa dönem o kadar güvenilir */
+export function TechAgreement({ w, lang }: { w: Window; lang: Lang }) {
+  const n = w.techs.length;
+  if (!n) return null;
+  const strong = n >= 4;
+  return (
+    <View style={{ marginTop: 6 }}>
+      <Text style={{ fontFamily: F.sansMed, fontSize: 13, lineHeight: 19, color: strong ? C.gold : C.sub }}>
+        {strong ? '✦ ' : ''}{tx(`${n} farklı teknik bu döneme işaret ediyor`, `${n} different techniques point to this period`, lang)}{strong ? tx(' (güçlü uyum)', ' (strong agreement)', lang) : ''}: {w.techs.map(t => TECH_NAME[t][lang]).join(', ')}
+      </Text>
+      {w.calib?.length ? <Text style={{ fontFamily: F.sansMed, fontSize: 13, lineHeight: 19, color: C.rose, marginTop: 2 }}>{tx('✓ Bu işaretlerin bir kısmı, geçmişte ilişki yaşadığın tarihlerde de etkindi; bu yüzden senin haritanda daha güvenilir sayıldı.', '✓ Some of these signs were also active on your past relationship dates, so they count as more reliable in your chart.', lang)}</Text> : null}
+    </View>
+  );
+}
 const fmtMonth = (d: Date, lang: Lang) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long', year: 'numeric' }).format(d);
 export const fmtRange = (w: Window, lang: Lang) => {
   const a = fmtMonth(w.start, lang), b = fmtMonth(new Date(w.end.getTime() - 15 * 864e5), lang);
@@ -94,6 +113,7 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
       </View>
       <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginTop: 2 }}>{fmtRange(w, lang)}</Text>
       {head ? <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 25, color: C.ink, marginTop: 2 }}>{head[lang]}</Text> : null}
+      <TechAgreement w={w} lang={lang} />
       {sc.length ? (
         <View style={{ marginTop: 8 }}>
           <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, marginBottom: 2 }}>{tx('Senin için ne olabilir', 'What it could bring you', lang)}</Text>
@@ -275,9 +295,9 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
   useEffect(() => {
     setList(null);
     if (!chart) return;
-    const id = setTimeout(() => { setList(lifeTimeline(chart, { fromAge: 16, toAge: 75 })); setSky(skyEvents(chart)); }, 30);
+    const id = setTimeout(() => { setList(lifeTimeline(chart, { fromAge: 16, toAge: 75, ...personCtx(profile) })); setSky(skyEvents(chart)); }, 30);
     return () => clearTimeout(id);
-  }, [chart]);
+  }, [chart, profile]);
   const now = new Date();
   const filtered = useMemo(() => (list ?? []).filter(w => topic === 'all' || w.topic === topic), [list, topic]);
   const skyF = useMemo(() => sky.filter(e => topic === 'all' || e.topic === topic), [sky, topic]);
@@ -325,10 +345,11 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
 
 /** Transit ya da Progresyon ekranında: seçili tarihte etkin olan dönemlere o tekniğin katkısı */
 export type Tech = 'transit' | 'progression';
-const techOf = (id: string): Tech | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E)/.test(id) ? 'other' : 'transit');
+const techOf = (id: string): Tech | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E|SR)/.test(id) ? 'other' : 'transit');
 export function ActiveWindows({ ch, date, tech, lang, onOpen }: { ch: Chart; date: Date; tech: Tech; lang: Lang; onOpen: () => void }) {
+  const { profile } = useStore();
   const [list, setList] = useState<Window[] | null>(null);
-  useEffect(() => { const id = setTimeout(() => setList(lifeTimeline(ch, { fromAge: 16, toAge: 75 })), 30); return () => clearTimeout(id); }, [ch]);
+  useEffect(() => { const id = setTimeout(() => setList(lifeTimeline(ch, { fromAge: 16, toAge: 75, ...personCtx(profile) })), 30); return () => clearTimeout(id); }, [ch, profile]);
   if (!list) return null;
   const t = date.getTime();
   const near = list.filter(w => w.start.getTime() - 45 * 864e5 <= t && w.end.getTime() + 45 * 864e5 >= t);
