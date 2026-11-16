@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { StoreProvider, useStore } from './src/store';
 import BirthForm from './src/ui/BirthForm';
 import { H1, P, Sub, useLayout } from './src/ui/kit';
 import Icon, { IconName } from './src/ui/Icon';
-import { C, F, onThemeChange } from './src/theme';
+import { C, F, onThemeChange, setPigments } from './src/theme';
 import { useAppFonts } from './src/fonts';
 import TodayScreen from './src/screens/TodayScreen';
 import ChartScreen from './src/screens/ChartScreen';
@@ -17,7 +17,7 @@ import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import MatrixScreen from './src/screens/MatrixScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
-import Cosmos, { Enter } from './src/ui/Cosmos';
+import Ebru, { Enter } from './src/ui/Ebru';
 import Sigil from './src/ui/Sigil';
 import HelpScreen from './src/screens/HelpScreen';
 import { NavCtx, setPendingKind } from './src/nav';
@@ -133,6 +133,7 @@ function Shell() {
               {wide ? <View style={{ marginTop: 36 }} {...({ dataSet: { float: '1' } } as any)}><Sigil size={120} /></View> : null}
               <H1 style={{ fontSize: wide ? 52 : 38, lineHeight: wide ? 58 : 44, marginTop: 28 }}>{s.welcome}</H1>
               <P style={{ color: C.sub, marginTop: 8, maxWidth: 440 }}>{s.welcomeSub}</P>
+              <P style={{ color: C.sub, marginTop: 10, maxWidth: 440, fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18 }}>{lang === 'tr' ? 'Haritan oluşunca arkadaki ebru, gezegenlerinin yerlerinden ve burçlarından sana özel olarak yeniden çizilir. Hiç kimseninki seninkine benzemez.' : 'Once your chart is ready, the marbling behind is redrawn from your planets’ places and signs. No one else’s will look like yours.'}</P>
               {invite ? (
                 <View style={{ marginTop: 18, padding: 14, borderRadius: 14, backgroundColor: C.goldSoft, maxWidth: 440 }}>
                   <Text style={{ fontFamily: F.serif, fontSize: 20, color: C.ink }}>{lang === 'tr' ? `${invite.name || 'Bir arkadaşın'} seninle uyumuna bakmak istiyor` : `${invite.name || 'A friend'} wants to check your compatibility`}</Text>
@@ -229,13 +230,20 @@ function Shell() {
 }
 
 function Themed() {
-  const { theme } = useStore();
+  const { theme, chart } = useStore();
+  const lead = useMemo(() => {
+    const w = [0, 0, 0, 0];
+    if (chart) (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const).forEach((id, i) => { w[chart.positions[id].sign % 4] += i < 2 ? 2 : 1; });
+    else w.fill(1);
+    setPigments(w);
+    return w.join('');
+  }, [chart]);
   const fonts = useAppFonts();
   if (!fonts) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
   return (
     <SafeAreaView key={theme} style={{ flex: 1, backgroundColor: Platform.OS === 'web' ? 'transparent' : C.bg }} edges={['top', 'bottom']}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      <Cosmos />
+      <Ebru chart={chart} />
       <Shell />
     </SafeAreaView>
   );

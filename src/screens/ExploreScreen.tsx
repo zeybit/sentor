@@ -98,7 +98,7 @@ function YearStory() {
   return (
     <View style={{ alignItems: 'center' }}>
       {noTime ? <Sub style={{ marginBottom: 10, textAlign: 'center' }}>{tx('Doğum saatin bilinmediği için ev yorumları yaklaşık.', 'Your birth time is unknown, so house readings are approximate.', lang)}</Sub> : null}
-      <View style={{ width: w, minHeight: 560, borderRadius: 24, backgroundColor: '#1A1248', borderWidth: 1, borderColor: 'rgba(185,166,255,0.25)', padding: 22, overflow: 'hidden' }} {...({ dataSet: { pulse: '1' } } as any)}>
+      <View style={{ width: w, minHeight: 560, borderRadius: 24, backgroundColor: '#2A2119', borderWidth: 1, borderColor: 'rgba(232,180,90,0.3)', padding: 22, overflow: 'hidden' }} {...({ dataSet: { pulse: '1' } } as any)}>
         <View style={{ flexDirection: 'row', gap: 4, marginBottom: 22 }}>
           {pages.map((_, i) => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= page ? '#F2B84B' : 'rgba(255,255,255,0.2)' }} />)}
         </View>

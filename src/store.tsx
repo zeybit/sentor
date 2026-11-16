@@ -40,7 +40,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>('tr');
   const [hs, setHs] = useState<HouseSystem>('placidus');
   const [zodiac, setZodiac] = useState<Zodiac>('tropical');
-  const [theme, setThemeState] = useState<ThemeMode>('dark');
+  const [theme, setThemeState] = useState<ThemeMode>('light');
   const [showAsteroids, setShowAsteroids] = useState(true);
   const [here, setHere] = useState<Place | null>(null);
   const [people, setPeople] = useState<Profile[]>([]);
@@ -56,8 +56,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (d.lang) setLang(d.lang);
         if (d.hs) setHs(d.hs);
         if (d.zodiac) setZodiac(d.zodiac);
-        // v2 tasarımla gece teması varsayılan oldu; eski kayıtlar bir kez geceye geçer
-        setTheme(d.themeV === 2 && d.theme ? d.theme : 'dark');
+        // v3 ebru tasarımıyla krem kâğıt varsayılan; eski kayıtlar bir kez açık temaya geçer
+        setTheme(d.themeV === 3 && d.theme ? d.theme : 'light');
         if (typeof d.showAsteroids === 'boolean') setShowAsteroids(d.showAsteroids);
         if (d.here) setHere(d.here);
         let ps: Profile[] = d.people ?? [];
@@ -69,7 +69,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (ready) AsyncStorage.setItem(KEY, JSON.stringify({ lang, hs, zodiac, theme, themeV: 2, showAsteroids, here, people, activeId })).catch(() => {});
+    if (ready) AsyncStorage.setItem(KEY, JSON.stringify({ lang, hs, zodiac, theme, themeV: 3, showAsteroids, here, people, activeId })).catch(() => {});
   }, [ready, lang, hs, zodiac, theme, showAsteroids, here, people, activeId]);
 
   const opts = useMemo(() => ({ houseSystem: hs, zodiac }), [hs, zodiac]);

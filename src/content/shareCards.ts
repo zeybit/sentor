@@ -22,7 +22,7 @@ const T = (x: number, y: number, size: number, fill: string, text: string, o: { 
 export function frame(kicker: string, title: string, body: string, sub?: string) {
   const stars = Array.from({ length: 70 }).map((_, i) => `<circle cx="${(i * 197) % W}" cy="${((i * 331) % 1800) + 40}" r="${i % 4 === 0 ? 2.6 : 1.4}" fill="#fff" fill-opacity="${i % 3 ? 0.35 : 0.6}"/>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A0820"/><stop offset="0.6" stop-color="#1A1048"/><stop offset="1" stop-color="#2E1A5E"/></linearGradient></defs>
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E1712"/><stop offset="0.6" stop-color="#2A2119"/><stop offset="1" stop-color="#3B2A1C"/></linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#g)"/>${stars}
 ${T(540, 220, 40, '#93A9BB', kicker, { spacing: 6 })}
 ${T(540, 330, title.length > 22 ? 70 : 88, '#E3ECF3', title, { font: SERIF })}
