@@ -14,7 +14,8 @@ import { lillyScore, mannersFor, CLASSICAL, Classical } from '../content/lillyDi
 import * as N from '../content/lillyNatal';
 import { LILLY_NOTE } from './LillyBlocks';
 import { natalStory } from '../content/story';
-import { Expand, P, Section, Sub, st } from './kit';
+import { Expand, MoreLink, P, Section, Sub, st } from './kit';
+import type { Chapter as StoryChapter } from '../content/story';
 import { characterReading, CHAR_INTRO, CharItem } from '../content/character';
 import { C, ELEMENT_COLOR, F, serif } from '../theme';
 import type { Strings } from '../i18n';
@@ -66,7 +67,7 @@ export function CharacterBook({ chart, lang }: { chart: Chart; lang: Lang }) {
     <View>
       <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 22, maxWidth: 640 }}>{CHAR_INTRO[lang]}</Text>
       {!chart.cusps.length ? <Sub style={{ marginBottom: 16 }}>{lang === 'tr' ? 'Doğum saatin bilinmediği için ev yorumları ve yükselen yok; yalnızca burç yorumları gösteriliyor.' : 'Your birth time is unknown, so house readings and the Ascendant are left out; only sign readings are shown.'}</Sub> : null}
-      {items.map((it, i) => <CharCard key={it.key} it={it} lang={lang} initial={i < 3} />)}
+      {items.map((it, i) => <CharCard key={it.key} it={it} lang={lang} initial={i < 1} />)}
     </View>
   );
 }
@@ -100,6 +101,50 @@ function CharCard({ it, lang, initial }: { it: CharItem; lang: Lang; initial: bo
   );
 }
 
+/** Haritanın en önemli birkaç cümlesi: uzun anlatıdan önce özet */
+const firstSentences = (t: string, n: number) => (t.match(/[^.!?]+[.!?]+/g) ?? [t]).slice(0, n).map(x => x.trim()).join(' ');
+function Highlights({ chart, lang }: { chart: Chart; lang: Lang }) {
+  const P_ = chart.positions;
+  const rows: { label: string; head: string; text: string }[] = [
+    { label: lang === 'tr' ? 'Özün' : 'Your core', head: `${BODIES.sun.name[lang]} · ${SIGNS[P_.sun.sign][lang]}`, text: placementText('sun', P_.sun.sign)[lang] },
+    { label: lang === 'tr' ? 'Duyguların' : 'Your emotions', head: `${BODIES.moon.name[lang]} · ${SIGNS[P_.moon.sign][lang]}`, text: placementText('moon', P_.moon.sign)[lang] },
+  ];
+  if (chart.asc !== null) { const a = Math.floor(chart.asc / 30); rows.push({ label: lang === 'tr' ? 'İlk izlenimin' : 'First impression', head: `${lang === 'tr' ? 'Yükselen' : 'Ascendant'} · ${SIGNS[a][lang]}`, text: ASC[a][lang] }); }
+  rows.push({ label: lang === 'tr' ? 'Aşkta' : 'In love', head: `${BODIES.venus.name[lang]} · ${SIGNS[P_.venus.sign][lang]}`, text: placementText('venus', P_.venus.sign)[lang] });
+  rows.push({ label: lang === 'tr' ? 'Hırsın ve enerjin' : 'Drive and energy', head: `${BODIES.mars.name[lang]} · ${SIGNS[P_.mars.sign][lang]}`, text: placementText('mars', P_.mars.sign)[lang] });
+  return (
+    <View style={[st.panel, { marginBottom: 36 }]} {...({ dataSet: { lift: '1' } } as any)}>
+      <Text style={[st.rowLabel, { marginBottom: 6 }]}>{lang === 'tr' ? 'Öne çıkanlar' : 'Highlights'}</Text>
+      <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 30, color: C.ink, marginBottom: 12 }}>{lang === 'tr' ? 'Haritanın özeti' : 'Your chart in brief'}</Text>
+      {rows.map(r => (
+        <View key={r.label} style={{ paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line }}>
+          <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold }}>{r.label} · {r.head}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 2 }}>{firstSentences(r.text, 2)}</Text>
+        </View>
+      ))}
+      <Sub style={{ marginTop: 8 }}>{lang === 'tr' ? 'Ayrıntılar aşağıdaki bölümlerde; her bölümde “Devamını oku” ile tamamını açabilirsin.' : 'Details follow below; open any chapter in full with “Read more”.'}</Sub>
+    </View>
+  );
+}
+
+/** Bölüm: giriş ve ilk paragrafın başı görünür, "Devamını oku" ile bölümün tamamı açılır */
+function Chapter({ c, i, lang }: { c: StoryChapter; i: number; lang: Lang }) {
+  const [open, setOpen] = useState(false);
+  const pStyle = { fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginBottom: 16, maxWidth: 660 };
+  const long = c.paras.length > 1 || (c.paras[0]?.[lang].length ?? 0) > 420;
+  return (
+    <View style={{ marginBottom: 40 }}>
+      <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{lang === 'tr' ? `Bölüm ${i + 1}` : `Chapter ${i + 1}`}</Text>
+      <Text accessibilityRole="header" style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink, marginBottom: 10 }}>{c.title[lang]}</Text>
+      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 14, maxWidth: 640 }}>{c.intro[lang]}</Text>
+      {(open ? c.paras : c.paras.slice(0, 1)).map((p, j) => (
+        <Text key={j} style={[pStyle, !open && long ? { marginBottom: 4 } : null]} numberOfLines={open || !long ? undefined : 6}>{p[lang]}</Text>
+      ))}
+      {long ? <MoreLink open={open} onPress={() => setOpen(!open)} /> : null}
+    </View>
+  );
+}
+
 function NatalStory({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; lang: Lang }) {
   const chapters = useMemo(() => natalStory(chart, lang), [chart, lang]);
   return (
@@ -109,16 +154,8 @@ function NatalStory({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; la
           ? 'Bu bölüm haritanı baştan sona, bir kitap okur gibi anlatır. Teknik ayrıntıları (dereceler, açılar, ev başlangıçları) merak edersen yukarıdaki Tablolar sekmesine bakabilirsin.'
           : 'This section tells your chart from start to finish, like reading a book. If you are curious about the technical details (degrees, aspects, house cusps), see the Tables tab above.'}
       </Text>
-      {chapters.map((c, i) => (
-        <View key={c.id} style={{ marginBottom: 40 }}>
-          <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{lang === 'tr' ? `Bölüm ${i + 1}` : `Chapter ${i + 1}`}</Text>
-          <Text accessibilityRole="header" style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink, marginBottom: 10 }}>{c.title[lang]}</Text>
-          <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 14, maxWidth: 640 }}>{c.intro[lang]}</Text>
-          {c.paras.map((p, j) => (
-            <Text key={j} style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginBottom: 16, maxWidth: 660 }}>{p[lang]}</Text>
-          ))}
-        </View>
-      ))}
+      <Highlights chart={chart} lang={lang} />
+      {chapters.map((c, i) => <Chapter key={c.id} c={c} i={i} lang={lang} />)}
       <Sub style={{ marginBottom: 20 }}>{LILLY_NOTE[lang]}</Sub>
       {void s}{void t}
     </View>
@@ -129,7 +166,7 @@ function NatalStory({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; la
 function CrossList({ list, tech, lang, s }: { list: CrossAspect[]; tech: Technique; lang: Lang; s: Strings }) {
   if (!list.length) return null;
   return (
-    <Expand more={s.showMore} less={s.showLess} initial={10} items={list.map((x, i) => {
+    <Expand more={s.showMore} less={s.showLess} initial={5} items={list.map((x, i) => {
       const r = lifeAspect(x.a, x.b, x.type, tech);
       const ap = x.applying === undefined ? '' : x.applying ? (lang === 'tr' ? ', etkisi artıyor' : ', building up') : (lang === 'tr' ? ', etkisi azalıyor' : ', fading');
       return <Item key={i} title={r.title[lang]} meta={`${strength(x.orb, lang)}${ap}`} body={r.body[lang]} />;

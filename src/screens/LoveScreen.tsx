@@ -181,7 +181,7 @@ function SpouseBlock() {
       {prof ? prof.map(x => (
         <View key={x.id} style={{ marginBottom: 20 }}>
           <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{x.title[lang]}</Text>
-          <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</Text>
+          <P style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</P>
           <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
         </View>
       )) : <P>{s.needsTime}</P>}
@@ -199,7 +199,7 @@ function SpouseBlock() {
           {derivedSpouse(chart).map((d, i) => (
             <View key={i} style={{ marginBottom: 12 }}>
               <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink }}>{d.title[lang]}</Text>
-              <Text style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, maxWidth: 660 }}>{d.text[lang]}</Text>
+              <P style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, maxWidth: 660 }}>{d.text[lang]}</P>
             </View>
           ))}
         </View>

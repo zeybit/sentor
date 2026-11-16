@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import { Pressable, Text, TextInput, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { C, F, onThemeChange } from '../theme';
+import { useStore } from '../store';
 
 /** Ekran genişliğine göre düzen: telefon / tablet / masaüstü */
 export function useLayout() {
@@ -17,7 +18,48 @@ export const H1 = ({ children, style }: { children: React.ReactNode; style?: any
 export const H2 = ({ children, style }: { children: React.ReactNode; style?: any }) => <Text accessibilityRole="header" style={[st.h2, style]}>{children}</Text>;
 export const H3 = ({ children, style }: { children: React.ReactNode; style?: any }) => <Text style={[st.h3, style]}>{children}</Text>;
 export const Sub = ({ children, style }: { children: React.ReactNode; style?: any }) => <Text style={[st.sub, style]}>{children}</Text>;
-export const P = ({ children, style }: { children: React.ReactNode; style?: any }) => <Text style={[st.p, style]}>{children}</Text>;
+/** Düz metne çevrilebiliyorsa metni döndürür (uzunluk ölçmek için) */
+const plain = (n: React.ReactNode): string | null => typeof n === 'string' || typeof n === 'number' ? String(n) : Array.isArray(n) && n.every(x => typeof x === 'string' || typeof x === 'number' || x == null || x === false) ? n.filter(x => x != null && x !== false).join('') : null;
+const LONG = 300;
+
+/** "Devamını oku / Daha az" bağlantısı */
+export function MoreLink({ open, onPress, count }: { open: boolean; onPress: () => void; count?: number }) {
+  const { lang } = useStore();
+  const label = open ? (lang === 'tr' ? 'Daha az göster' : 'Show less') : `${lang === 'tr' ? 'Devamını oku' : 'Read more'}${count ? ` (${count})` : ''}`;
+  return (
+    <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onPress} hitSlop={6} style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
+      <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 14, color: C.rose }}>{label} {open ? '↑' : '↓'}</Text>
+    </Pressable>
+  );
+}
+
+/**
+ * Paragraf. Uzun düz metinler (yorumlar) önce birkaç satır gösterilir, "Devamını oku" ile açılır.
+ * `full` kısaltmayı kapatır, `lines` görünen satır sayısını değiştirir.
+ */
+export function P({ children, style, full, lines = 4 }: { children: React.ReactNode; style?: any; full?: boolean; lines?: number }) {
+  const [open, setOpen] = useState(false);
+  const txt = full ? null : plain(children);
+  if (!txt || txt.length < LONG) return <Text style={[st.p, style]}>{children}</Text>;
+  return (
+    <View>
+      <Text style={[st.p, style]} numberOfLines={open ? undefined : lines}>{children}</Text>
+      <MoreLink open={open} onPress={() => setOpen(!open)} />
+    </View>
+  );
+}
+
+/** İlk içerik her zaman görünür; geri kalanı "Devamını oku" ile açılır */
+export function More({ preview, children, count }: { preview?: React.ReactNode; children: React.ReactNode; count?: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View>
+      {preview}
+      {open ? children : null}
+      <MoreLink open={open} onPress={() => setOpen(!open)} count={count} />
+    </View>
+  );
+}
 
 /** Bölüm: kutu yok; başlık, isteğe bağlı açıklama ve içerik. `panel` vurgulu zemin verir. */
 export function Section({ title, sub, children, style, panel }: { title?: string; sub?: string; children: React.ReactNode; style?: ViewStyle; panel?: boolean }) {

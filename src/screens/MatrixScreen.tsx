@@ -108,7 +108,7 @@ export default function MatrixScreen() {
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 2 }}>{label}</Text>
         <H3 style={{ fontSize: 22, lineHeight: 28 }}>{title}</H3>
-        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 620 }}>{children}</Text>
+        <P lines={5} style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 6, maxWidth: 620 }}>{children}</P>
       </View>
     </View>
   );
@@ -217,7 +217,7 @@ export default function MatrixScreen() {
       {cr.summary ? (
         <View style={[st.panel, { marginBottom: 24, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
           <Text style={{ fontFamily: F.serif, fontSize: 22, color: C.ink, marginBottom: 6 }}>{tx('İlişkinizin ana teması', 'The main theme of your relationship', lang)}</Text>
-          <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.summary[lang]}</Text>
+          <P lines={5} style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.summary[lang]}</P>
         </View>
       ) : null}
       {cr.sections.map(sec => (
@@ -229,7 +229,7 @@ export default function MatrixScreen() {
         </Section>
       ))}
       <Section title={tx('Ailelerinizin ilişkiye etkisi', 'Your families’ influence on the relationship', lang)}>
-        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.families[lang]}</Text>
+        <P lines={5} style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.families[lang]}</P>
       </Section>
     </View>
   ) : null;

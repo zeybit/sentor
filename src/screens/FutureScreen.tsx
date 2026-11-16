@@ -4,7 +4,7 @@ import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useStore } from '../store';
 import type { Chart } from '../engine/astro';
 import { lifeTimeline, skyEvents, SkyEvent, Pt, Topic, TOPICS, Window, strengthOf } from '../engine/timeline';
-import { Chips, H1, P, Section, Sub, st, useLayout } from '../ui/kit';
+import { Chips, H1, More, P, Section, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
 import { EVENTS, LOVE_TIP, Rel } from '../content/lifeEvents';
 import { CONCRETE, REL_LINE, PMOON, Cls } from '../content/skyTexts';
@@ -78,6 +78,11 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
   const sc = scenarios(w, rel, lang);
   const relMatters = w.reasons.some(r => { const e = EVENTS[r.id]; return e && (e.s || e.p || e.m); });
   const tip = w.topic === 'love' ? LOVE_TIP[rel ?? 'none'][lang] : t.tip[lang];
+  const scLine = (x: { label?: string; text: string }, i: number) => (
+    <Text key={i} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 3 }}>
+      {'• '}{x.label ? <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{x.label}: </Text> : null}{x.text}
+    </Text>
+  );
   return (
     <View style={{ borderLeftWidth: 3, borderLeftColor: t.color(), paddingLeft: 14, paddingVertical: 4, marginBottom: 26 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -92,14 +97,12 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
       {sc.length ? (
         <View style={{ marginTop: 8 }}>
           <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, marginBottom: 2 }}>{tx('Senin için ne olabilir', 'What it could bring you', lang)}</Text>
-          {sc.map((x, i) => (
-            <Text key={i} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 3 }}>
-              {'• '}{x.label ? <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{x.label}: </Text> : null}{x.text}
-            </Text>
-          ))}
-          {!rel && relMatters ? <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{tx('Ayarlar’da ilişki durumunu eklersen yalnızca sana uyan senaryo gösterilir.', 'Add your relationship status in Settings to see only the scenario that fits you.', lang)}</Text> : null}
+          {sc.slice(0, 2).map(scLine)}
         </View>
       ) : null}
+      <More>
+        {sc.slice(2).map((x, i) => scLine(x, i + 2))}
+        {!rel && relMatters ? <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{tx('Ayarlar’da ilişki durumunu eklersen yalnızca sana uyan senaryo gösterilir.', 'Add your relationship status in Settings to see only the scenario that fits you.', lang)}</Text> : null}
       <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink, marginTop: 10 }}>{tx('Gökyüzünde ne oluyor', 'What’s happening in the sky', lang)}</Text>
       {(['transit', 'progression', 'other'] as const).map(g => {
         const rs = w.reasons.filter(r => techOfId(r.id) === g).slice(0, 2);
@@ -111,7 +114,8 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
           </Text>
         );
       })}
-      {showTip ? <Text style={{ fontFamily: F.sans, fontSize: 14, lineHeight: 22, color: C.sub, marginTop: 8 }}>{tip}</Text> : null}
+        {showTip ? <Text style={{ fontFamily: F.sans, fontSize: 14, lineHeight: 22, color: C.sub, marginTop: 8 }}>{tip}</Text> : null}
+      </More>
     </View>
   );
 }
@@ -174,6 +178,11 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
     sub = tx('Yaklaşık 30 yılda bir yaşanan kimlik değişimi', 'An identity shift that comes about every 30 years', lang);
     lines.push({ text: progSunText(e.sign)[lang] });
   }
+  const line = (x: { label?: string; text: string }, i: number) => (
+    <Text key={i} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 3 }}>
+      {x.label ? <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{x.label}: </Text> : null}{x.text}
+    </Text>
+  );
   return (
     <View style={{ flexDirection: 'row', gap: 12, marginBottom: 18 }}>
       <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: col, marginTop: 7 }} />
@@ -181,11 +190,8 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
         <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub }}>{fmtSpan(e.start, e.end, lang)} · {TOPIC_INFO[e.topic].name[lang]}</Text>
         <Text style={{ fontFamily: F.serif, fontSize: 19, lineHeight: 25, color: C.ink }}>{title}</Text>
         {sub ? <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 16, lineHeight: 23, color: C.sub }}>{sub}</Text> : null}
-        {lines.map((x, i) => (
-          <Text key={i} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink, marginTop: 3 }}>
-            {x.label ? <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>{x.label}: </Text> : null}{x.text}
-          </Text>
-        ))}
+        {lines.slice(0, 1).map(line)}
+        {lines.length > 1 ? <More>{lines.slice(1).map((x, i) => line(x, i + 1))}</More> : null}
       </View>
     </View>
   );
@@ -194,7 +200,7 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
 type FeedItem = { k: 'w'; w: Window; d: Date } | { k: 'e'; e: SkyEvent; d: Date };
 /** Büyük dönemler ve tek tek gezegen olayları, yıllara göre tek bir tarih akışında */
 function Feed({ items, lang, rel, tips, upcoming = false }: { items: FeedItem[]; lang: Lang; rel?: Rel; tips: boolean; upcoming?: boolean }) {
-  const [n, setN] = useState(20);
+  const [n, setN] = useState(10);
   const shown = items.slice(0, n);
   let year = -1;
   return (
