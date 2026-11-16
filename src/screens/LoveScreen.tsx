@@ -18,7 +18,6 @@ import { WindowCard } from './FutureScreen';
 import { useNav, takePendingKind } from '../nav';
 import GroupCompat from '../ui/GroupCompat';
 import { BestDays } from '../ui/ExtrasUI';
-import Mirror from '../ui/Mirror';
 import { inviteLink, shareLink } from '../invite';
 import { F } from '../theme';
 import { ActivityIndicator, Pressable } from 'react-native';
@@ -87,7 +86,7 @@ export default function LoveScreen() {
       <H1>{lang === 'tr' ? 'Aşk ve uyum' : 'Love and compatibility'}</H1>
       <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{lang === 'tr' ? 'Haritana göre hayatına girecek partner, evlilik zamanı ve seçtiğin biriyle uyumun.' : 'The partner your chart describes, marriage timing, and your compatibility with someone you choose.'}</Sub>
       <Segmented items={[{ key: 'spouse', label: lang === 'tr' ? 'Gelecekteki eşin' : 'Your future partner' }, { key: 'compat', label: lang === 'tr' ? 'Biriyle uyum' : 'Compatibility' }, { key: 'group', label: lang === 'tr' ? 'Grup uyumu' : 'Group' }]} value={part} onChange={v => setPart(v as any)} />
-      {part === 'spouse' ? <><Mirror chart={chart} lang={lang} only="love" /><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : part === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setPart('compat'); }} /> : <>
+      {part === 'spouse' ? <><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : part === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setPart('compat'); }} /> : <>
 
       <Section title={s.compat} sub={s.compatSub}>
         {others.length ? (
