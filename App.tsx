@@ -7,7 +7,7 @@ import { StoreProvider, useStore } from './src/store';
 import BirthForm from './src/ui/BirthForm';
 import { H1, P, Sub, useLayout } from './src/ui/kit';
 import Icon, { IconName } from './src/ui/Icon';
-import { C, F, onThemeChange, setPigments } from './src/theme';
+import { C, F, onThemeChange } from './src/theme';
 import { useAppFonts } from './src/fonts';
 import TodayScreen from './src/screens/TodayScreen';
 import ChartScreen from './src/screens/ChartScreen';
@@ -17,8 +17,8 @@ import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import MatrixScreen from './src/screens/MatrixScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
-import Ebru, { Enter } from './src/ui/Ebru';
-import Sigil from './src/ui/Sigil';
+import Rasathane, { Enter } from './src/ui/Rasathane';
+import Sigil, { ArrowMark } from './src/ui/Sigil';
 import HelpScreen from './src/screens/HelpScreen';
 import { NavCtx, setPendingKind } from './src/nav';
 import { readInviteFromUrl, sameBirth } from './src/invite';
@@ -75,11 +75,15 @@ function PersonSwitch({ onManage, compact }: { onManage: () => void; compact?: b
 function Wordmark({ size = 21 }: { size?: number }) {
   const { s } = useStore();
   const { width } = useLayout();
-  if (width < 440 && size === 21) size = 17;
+  const small = width < 440 && size === 21;
+  if (small) size = 18;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Sigil size={size + 10} />
-      <Text numberOfLines={1} style={{ fontFamily: F.serif, fontSize: size, color: C.ink, letterSpacing: -0.2 }} {...({ dataSet: { shine: '1' } } as any)}>{s.appName}</Text>
+      <Sigil size={size + 14} />
+      <View>
+        <Text numberOfLines={1} style={{ fontFamily: F.serifBold, fontWeight: '600', fontSize: size, color: C.ink, letterSpacing: size * 0.22 }} {...({ dataSet: { shine: '1' } } as any)}>SENTOR</Text>
+        {small ? null : <Text numberOfLines={1} style={{ fontFamily: F.mono, fontSize: 9.5, color: C.sub, letterSpacing: 2.2, marginTop: 1 }}>{s.appName.toLocaleUpperCase('tr')}</Text>}
+      </View>
     </View>
   );
 }
@@ -133,7 +137,7 @@ function Shell() {
               {wide ? <View style={{ marginTop: 36 }} {...({ dataSet: { float: '1' } } as any)}><Sigil size={120} /></View> : null}
               <H1 style={{ fontSize: wide ? 52 : 38, lineHeight: wide ? 58 : 44, marginTop: 28 }}>{s.welcome}</H1>
               <P style={{ color: C.sub, marginTop: 8, maxWidth: 440 }}>{s.welcomeSub}</P>
-              <P style={{ color: C.sub, marginTop: 10, maxWidth: 440, fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18 }}>{lang === 'tr' ? 'Haritan oluşunca arkadaki ebru, gezegenlerinin yerlerinden ve burçlarından sana özel olarak yeniden çizilir. Hiç kimseninki seninkine benzemez.' : 'Once your chart is ready, the marbling behind is redrawn from your planets’ places and signs. No one else’s will look like yours.'}</P>
+              <P style={{ color: C.sub, marginTop: 10, maxWidth: 440, fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18 }}>{lang === 'tr' ? 'Haritan oluşunca arkadaki usturlap senin doğum gezegenlerinle işaretlenir; köşedeki takımyıldız da Güneş burcunun takımyıldızına dönüşür. Kentaurun oku ara sıra gökyüzünü keser.' : 'Once your chart is ready, the astrolabe behind is marked with your birth planets and the constellation in the corner becomes your Sun sign’s. Now and then the centaur’s arrow crosses the sky.'}</P>
               {invite ? (
                 <View style={{ marginTop: 18, padding: 14, borderRadius: 14, backgroundColor: C.goldSoft, maxWidth: 440 }}>
                   <Text style={{ fontFamily: F.serif, fontSize: 20, color: C.ink }}>{lang === 'tr' ? `${invite.name || 'Bir arkadaşın'} seninle uyumuna bakmak istiyor` : `${invite.name || 'A friend'} wants to check your compatibility`}</Text>
@@ -177,7 +181,7 @@ function Shell() {
       return (
         <Pressable onPress={() => go(k)} accessibilityRole="link" accessibilityState={{ selected: on }}
           style={({ hovered }: any) => [styles.railItem, on && { backgroundColor: C.roseSoft }, hovered && !on && { backgroundColor: C.glass }]}>
-          <View style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, backgroundColor: on ? C.gold : 'transparent', marginRight: 10 }} />
+          <View style={{ width: 22, alignItems: 'center', marginRight: 4, opacity: on ? 1 : 0 }}><ArrowMark size={16} /></View>
           <View {...({ dataSet: { glow: on ? 'on' : 'off' } } as any)}><Icon name={icon} size={20} color={on ? C.gold : C.sub} filled={on} /></View>
           <Text style={{ marginLeft: 12, fontFamily: on ? F.sansBold : F.sansMed, fontWeight: on ? '700' : '500', fontSize: 15, color: on ? C.ink : C.sub }}>{label(k)}</Text>
         </Pressable>
@@ -218,7 +222,7 @@ function Shell() {
           const on = tab === key;
           return (
             <Pressable key={key} onPress={() => go(key)} style={styles.tab} accessibilityRole="tab" accessibilityLabel={label(key)} accessibilityState={{ selected: on }}>
-              <View style={{ width: 18, height: 2, borderRadius: 1, backgroundColor: on ? C.gold : 'transparent', marginBottom: 6 }} />
+              <View style={{ height: 8, marginBottom: 2, opacity: on ? 1 : 0, transform: [{ rotate: '90deg' }] }}><ArrowMark size={12} /></View>
               <View {...({ dataSet: { glow: on ? 'on' : 'off' } } as any)}><Icon name={icon} size={22} color={on ? C.gold : C.sub} filled={on} /></View>
               <Text style={[styles.tabText, on && { color: C.ink, fontFamily: F.sansBold, fontWeight: '700' }]} numberOfLines={1}>{label(key)}</Text>
             </Pressable>
@@ -230,20 +234,13 @@ function Shell() {
 }
 
 function Themed() {
-  const { theme, chart } = useStore();
-  const lead = useMemo(() => {
-    const w = [0, 0, 0, 0];
-    if (chart) (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const).forEach((id, i) => { w[chart.positions[id].sign % 4] += i < 2 ? 2 : 1; });
-    else w.fill(1);
-    setPigments(w);
-    return w.join('');
-  }, [chart]);
+  const { theme, chart, lang } = useStore();
   const fonts = useAppFonts();
   if (!fonts) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
   return (
     <SafeAreaView key={theme} style={{ flex: 1, backgroundColor: Platform.OS === 'web' ? 'transparent' : C.bg }} edges={['top', 'bottom']}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      <Ebru chart={chart} />
+      <Rasathane chart={chart} lang={lang} />
       <Shell />
     </SafeAreaView>
   );

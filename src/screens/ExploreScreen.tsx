@@ -98,13 +98,13 @@ function YearStory() {
   return (
     <View style={{ alignItems: 'center' }}>
       {noTime ? <Sub style={{ marginBottom: 10, textAlign: 'center' }}>{tx('Doğum saatin bilinmediği için ev yorumları yaklaşık.', 'Your birth time is unknown, so house readings are approximate.', lang)}</Sub> : null}
-      <View style={{ width: w, minHeight: 560, borderRadius: 24, backgroundColor: '#2A2119', borderWidth: 1, borderColor: 'rgba(232,180,90,0.3)', padding: 22, overflow: 'hidden' }} {...({ dataSet: { pulse: '1' } } as any)}>
+      <View style={{ width: w, minHeight: 560, borderRadius: 6, backgroundColor: '#0C1517', borderWidth: 1, borderColor: 'rgba(219,182,104,0.35)', padding: 22, overflow: 'hidden' }} {...({ dataSet: { pulse: '1' } } as any)}>
         <View style={{ flexDirection: 'row', gap: 4, marginBottom: 22 }}>
           {pages.map((_, i) => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= page ? '#F2B84B' : 'rgba(255,255,255,0.2)' }} />)}
         </View>
         <View key={page} {...({ dataSet: { enter: '1' } } as any)}>
         <Text style={{ fontFamily: F.sansMed, fontSize: 13, letterSpacing: 2, color: '#93A9BB', textTransform: 'uppercase' }}>{pg.kicker}</Text>
-        {pg.big ? <Text style={{ fontFamily: serif, fontSize: pg.big.length > 6 ? 44 : 84, lineHeight: pg.big.length > 6 ? 54 : 96, color: '#F2B84B', marginTop: 10 }}>{pg.big}</Text> : null}
+        {pg.big ? <Text style={{ fontFamily: serif, fontWeight: '300', fontSize: pg.big.length > 6 ? 44 : 84, lineHeight: pg.big.length > 6 ? 54 : 96, color: '#F2B84B', marginTop: 10 }}>{pg.big}</Text> : null}
         <Text style={{ fontFamily: serif, fontSize: 28, lineHeight: 34, color: '#E3ECF3', marginTop: 8 }}>{pg.title}</Text>
         <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 27, color: '#D5E1EA', marginTop: 12 }}>{pg.text}</Text>
         {pg.extra ? <View style={{ marginTop: 16 }}>{pg.extra}</View> : null}

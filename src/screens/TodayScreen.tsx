@@ -34,7 +34,7 @@ export default function TodayScreen() {
       <H1>{profile?.name ? `${profile.name}, ${s.todayFor.toLocaleLowerCase(lang)}` : s.todayFor}</H1>
       {profile ? (() => { const bi = birthdayInfo(profile.birth); const since = -bi.daysTo; if (bi.daysTo > 30 || since > 14) return null;
         return (
-          <Pressable accessibilityRole="button" onPress={() => nav('explore:year')} style={{ marginTop: 10, marginBottom: 6, padding: 16, borderRadius: 16, backgroundColor: '#2A2119', borderWidth: 1, borderColor: 'rgba(232,180,90,0.4)' }} {...({ dataSet: { pulse: '1' } } as any)}>
+          <Pressable accessibilityRole="button" onPress={() => nav('explore:year')} style={{ marginTop: 10, marginBottom: 6, padding: 16, borderRadius: 6, backgroundColor: '#0C1517', borderWidth: 1, borderColor: 'rgba(219,182,104,0.45)' }} {...({ dataSet: { pulse: '1' } } as any)}>
             <Text style={{ color: '#F2B84B', fontFamily: serif, fontSize: 22 }}>{bi.daysTo > 0 ? (lang === 'tr' ? `${bi.daysTo} gün sonra ${bi.age} yaşındasın ✦` : `${bi.age} in ${bi.daysTo} days ✦`) : (lang === 'tr' ? `Yeni yaşın kutlu olsun ✦ ${bi.age}` : `Happy birthday ✦ ${bi.age}`)}</Text>
             <Text style={{ color: '#D5E1EA', fontSize: 15, marginTop: 4 }}>{lang === 'tr' ? 'Yeni yaşının hikâyesi hazır: aşk, şans, sınav ve en hareketli ayların. Okumak için dokun →' : 'The story of your new year is ready: love, luck, lessons and your busiest months. Tap to read →'}</Text>
           </Pressable>

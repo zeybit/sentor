@@ -324,7 +324,7 @@ function cardSvg(ar: AreaResult[], a: string, b: string, status: string, theme: 
   const wrap = (t: string, n: number) => { const w = t.split(' '); const out: string[] = []; let cur = ''; for (const x of w) { if ((cur + ' ' + x).trim().length > n) { out.push(cur.trim()); cur = x; } else cur += ' ' + x; } if (cur.trim()) out.push(cur.trim()); return out; };
   const themeLines = wrap(theme, 40).slice(0, 3).map((t, i) => `<text x="540" y="${1530 + i * 52}" font-size="38" fill="#E3ECF3" text-anchor="middle" font-family="Helvetica,Arial,sans-serif">${esc(t)}</text>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E1712"/><stop offset="0.6" stop-color="#2A2119"/><stop offset="1" stop-color="#3B2A1C"/></linearGradient></defs>
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06080A"/><stop offset="0.6" stop-color="#0C1517"/><stop offset="1" stop-color="#14262A"/></linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#g)"/>
 ${Array.from({ length: 60 }).map((_, i) => `<circle cx="${(i * 197) % W}" cy="${(i * 331) % 560 + 40}" r="${i % 3 === 0 ? 3 : 1.6}" fill="#fff" fill-opacity="0.6"/>`).join('')}
 <text x="540" y="250" font-size="44" fill="#93A9BB" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" letter-spacing="6">${esc(tx('İLİŞKİ KARTI', 'RELATIONSHIP CARD', lang))}</text>
