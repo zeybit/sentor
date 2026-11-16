@@ -13,7 +13,9 @@ type L = { tr: string; en: string };
 const l = (tr: string, en: string): L => ({ tr, en });
 
 export interface Factor { id: string; w: number; text: L }
-export interface Window { topic: Topic; start: Date; end: Date; peak: Date; score: number; reasons: Factor[] }
+export interface Window { topic: Topic; start: Date; end: Date; peak: Date; score: number; reasons: Factor[]; gen?: boolean }
+/** Kuşak etkileri: yaklaşık aynı yıllarda doğan herkeste aynı tarihlere denk gelir (Satürn dönüşü gibi). */
+export const GEN_IDS = new Set(['Sret', 'Sopp', 'Uopp', 'Jret']);
 
 const DAY = 864e5, YEAR = 365.2422 * DAY;
 const near = (a: number, b: number, orb: number) => angleDiff(a, b) <= orb;
@@ -96,7 +98,15 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[]): Record<Topic, Factor[]> {
   if (near(J, P.venus.lon, 3)) add('love', 'Jven', 2, 'Jüpiter, nasıl sevdiğini anlatan Venüs’ün üzerinden geçiyor: aşkta şans ve sıcaklık.', 'Jupiter passes over your Venus, the planet of how you love: luck and warmth in love.');
   else if (soft(J, P.venus.lon, 2)) add('love', 'Jven2', 1, 'Jüpiter Venüs’üne uyumlu açı yapıyor: sosyal hayat ve romantizm canlanır.', 'Jupiter makes a friendly aspect to your Venus: social life and romance perk up.');
   if (near(S, P.venus.lon, 2) || soft(S, P.venus.lon, 2)) add('love', 'Sven', 1, 'Satürn Venüs’üne değiyor: hafif ilişkiler yerine kalıcı bağ arayışı.', 'Saturn contacts your Venus: you seek lasting bonds rather than light affairs.');
-  if (near(J, P.sun.lon, 3)) add('career', 'Jsun', 1, 'Jüpiter Güneş’inin üzerinden geçiyor: özgüvenin ve görünürlüğün artıyor.', 'Jupiter passes over your Sun: confidence and visibility increase.');
+  if (near(J, P.sun.lon, 3)) add('career', 'Jsun', 2, 'Jüpiter Güneş’inin üzerinden geçiyor: özgüvenin ve görünürlüğün artıyor.', 'Jupiter passes over your Sun: confidence and visibility increase.');
+  else if (soft(J, P.sun.lon, 2)) add('career', 'Jsun2', 1, 'Jüpiter Güneş’ine uyumlu açı yapıyor: fırsatlar kolay geliyor.', 'Jupiter makes a friendly aspect to your Sun: opportunities come easily.');
+  if (Math.abs(angleDiff(J, P.sun.lon) - 180) <= 3) add('love', 'JoSun', 1, 'Jüpiter Güneş’inin karşısında: hayatına cömert, ufuk açan insanlar giriyor.', 'Jupiter opposes your Sun: generous, horizon-widening people enter your life.');
+  if (near(J, P.moon.lon, 3)) add('home', 'Jmoon', 2, 'Jüpiter Ay’ının üzerinden geçiyor: evde ve ailede bereket, içinde huzur.', 'Jupiter passes over your Moon: abundance at home and in the family, inner peace.');
+  if (near(J, P.mercury.lon, 3)) add('travel', 'Jmer', 2, 'Jüpiter Merkür’ünün üzerinden geçiyor: eğitim, yazı, yolculuk ve yeni bağlantılar için şanslı.', 'Jupiter passes over your Mercury: lucky for study, writing, travel and new contacts.');
+  if (near(J, P.mars.lon, 3)) add('career', 'Jmars', 1, 'Jüpiter Mars’ının üzerinden geçiyor: cesaret ve atılım enerjisi.', 'Jupiter passes over your Mars: courage and drive.');
+  if (hard(S, P.sun.lon, 2)) { add('change', 'Ssun', 2, 'Satürn Güneş’ine dokunuyor: olgunlaşma, sorumluluk ve hayatını yeniden düzenleme zamanı.', 'Saturn touches your Sun: a time of maturing, responsibility and reorganising your life.'); add('career', 'Ssun', 1, 'Satürn Güneş’ine değerken işte emek ve sabır karşılığını bulur.', 'With Saturn on your Sun, effort and patience pay off at work.'); }
+  if (near(S, P.moon.lon, 3) || Math.abs(angleDiff(S, P.moon.lon) - 180) <= 3) add('home', 'Smoon', 2, 'Satürn Ay’ına değiyor: ev, aile ve duygusal güvenlik konularında ciddi kararlar.', 'Saturn contacts your Moon: serious decisions about home, family and emotional security.');
+  if (near(S, P.mercury.lon, 2)) add('travel', 'Smer', 1, 'Satürn Merkür’ünün üzerinden geçiyor: sınavlar, ciddi eğitim ve evrak işleri.', 'Saturn passes over your Mercury: exams, serious study and paperwork.');
   if (near(S, P.saturn.lon, 3)) { add('change', 'Sret', 3, 'Satürn dönüşü: Satürn doğduğun andaki yerine dönüyor. Yaklaşık 29 ve 58 yaşlarında yaşanan bu dönem, yetişkinliğin büyük eşiklerinden biridir.', 'Saturn return: Saturn comes back to where it was at your birth. Around ages 29 and 58, it is one of adulthood’s great thresholds.'); add('career', 'Sret', 1, 'Satürn dönüşü kariyerde de “ne inşa ediyorum?” sorusunu getirir.', 'The Saturn return also brings the question “what am I building?” to your career.'); }
   if (Math.abs(angleDiff(S, P.saturn.lon) - 180) <= 3) add('change', 'Sopp', 1, 'Satürn doğum konumunun karşısında: hayatının yarı yolunda bir değerlendirme.', 'Saturn opposes its birth position: a mid-cycle review of your life.');
   if (Math.abs(angleDiff(U, P.uranus.lon) - 180) <= 3) add('change', 'Uopp', 2, 'Uranüs karşıtlığı: 40’lı yaşların başındaki bu dönem özgürlük ve “şimdi değilse ne zaman” duygusu getirir.', 'Uranus opposition: this early-forties period brings a sense of freedom and “if not now, when?”');
@@ -118,6 +128,8 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[]): Record<Topic, Factor[]> {
     if (hasAngles && (near(el, ASC, 4) || near(el, DSC, 4))) add('love', 'Eax' + NS, 2, 'Bir tutulma kimlik–ilişki eksenine düşüyor: ilişki hayatında dönüm noktası.' + pol.tr, 'An eclipse falls on your self–partner axis: a turning point in relationships.' + pol.en);
     if (near(el, P.venus.lon, 3)) add('love', 'Even' + NS, 1, 'Bir tutulma Venüs’üne düşüyor: aşk hayatında dönüm noktası.' + pol.tr, 'An eclipse falls on your Venus: a turning point in love.' + pol.en);
     if (hasAngles && (near(el, MC, 4) || near(el, IC, 4))) { add('career', 'Emc' + NS, 2, 'Bir tutulma kariyer–yuva eksenine düşüyor: iş veya ev hayatında yön değişikliği.' + pol.tr, 'An eclipse falls on your career–home axis: a change of direction at work or home.' + pol.en); add('home', 'Eic', 1, 'Tutulma ev ve aile konularını da hareketlendiriyor.', 'The eclipse also stirs home and family matters.'); }
+    if (near(el, P.mercury.lon, 3)) add('travel', 'Emer' + NS, 1, 'Bir tutulma Merkür’üne düşüyor: eğitim, yolculuk ya da önemli bir haber.' + pol.tr, 'An eclipse falls on your Mercury: study, travel or important news.' + pol.en);
+    if (near(el, P.mars.lon, 3)) add('change', 'Emar' + NS, 1, 'Bir tutulma Mars’ına düşüyor: harekete geçme ve cesur kararlar.' + pol.tr, 'An eclipse falls on your Mars: action and bold decisions.' + pol.en);
     if (near(el, P.sun.lon, 3) || near(el, P.moon.lon, 3)) add('change', 'Elum' + NS, 1, 'Bir tutulma Güneş’ine ya da Ay’ına düşüyor: kişisel bir dönüm noktası.' + pol.tr, 'An eclipse falls on your Sun or Moon: a personal turning point.' + pol.en);
   }
 
@@ -142,6 +154,12 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[]): Record<Topic, Factor[]> {
   // ---- Solar arc: her şey yılda yaklaşık 1° ilerler; köşelere değen direksiyonlar büyük olayları işaretler ----
   const arc = norm(pSun - P.sun.lon);
   const sa = (lon: number) => norm(lon + arc);
+  // Doğum saati gerekmeyen direksiyonlar (Ay hariç): doğum gününe göre kişiye özel
+  if ([P.sun.lon, P.mars.lon].some(x => near(sa(P.venus.lon), x, 1)) || near(sa(P.sun.lon), P.venus.lon, 1)) add('love', 'saVs', 2, 'Venüs ile Güneş ya da Mars ilerleyerek buluşuyor: kalbini hızlandıran bir dönem.', 'Venus and your Sun or Mars meet by direction: a period that quickens your heart.');
+  if (near(sa(P.sun.lon), P.jupiter.lon, 1) || near(sa(P.jupiter.lon), P.sun.lon, 1)) add('career', 'saSj', 2, 'Güneş ile Jüpiter ilerleyerek buluşuyor: büyüme, terfi ve tanınma.', 'The Sun and Jupiter meet by direction: growth, promotion and recognition.');
+  if (near(sa(P.mercury.lon), P.jupiter.lon, 1) || near(sa(P.jupiter.lon), P.mercury.lon, 1)) add('travel', 'saMj', 2, 'Merkür ile Jüpiter ilerleyerek buluşuyor: eğitim, yolculuk ve yayın için güçlü.', 'Mercury and Jupiter meet by direction: strong for study, travel and publishing.');
+  if (near(sa(P.mars.lon), P.sun.lon, 1) || near(sa(P.sun.lon), P.mars.lon, 1) || near(sa(P.saturn.lon), P.sun.lon, 1)) add('change', 'saMs', 2, 'Mars ya da Satürn ilerleyerek Güneş’ine ulaşıyor: kararlı bir değişim ve yeni bir yön.', 'Mars or Saturn is directed onto your Sun: a decisive change and a new direction.');
+  if (Math.floor(pSun / 30) !== Math.floor(norm(bodyLon('sun', new Date(pd.getTime() - DAY / 2)) - ch.ayanamsa) / 30)) add('change', 'pSsign', 3, 'İlerletilmiş Güneş burç değiştiriyor: yaklaşık 30 yılda bir yaşanan, kişiliğinde yeni bir dönemin başlangıcı.', 'Your progressed Sun changes sign: the start of a new chapter in your personality, about once every 30 years.');
   if (hasAngles) {
     const angles = [ASC, MC];
     const toAngle = (lon: number) => angles.some(a => hard(sa(lon), a, 1));
@@ -180,6 +198,8 @@ function computeTimeline(ch: Chart, fromAge: number, toAge: number): Window[] {
   const months: { d: Date; f: Record<Topic, Factor[]> }[] = [];
   for (let d = new Date(start); d < end; d = new Date(d.getTime() + YEAR / 12)) months.push({ d, f: factorsAt(ch, d, ecl) });
   const out: Window[] = [];
+  const timed = ch.asc !== null && ch.cusps.length === 12;
+  const thr: Record<Topic, number> = timed ? THRESH : { love: 3, career: 3, home: 3, travel: 3, change: 3 };
   for (const t of TOPICS) {
     let cur: { s: number; e: number } | null = null;
     const flush = () => {
@@ -190,13 +210,14 @@ function computeTimeline(ch: Chart, fromAge: number, toAge: number): Window[] {
       if (ageAt >= MIN_AGE[t]) {
         const seen = new Set<string>();
         const reasons = months[best].f[t].filter(x => (seen.has(x.id) ? false : (seen.add(x.id), true))).sort((a, b) => b.w - a.w);
-        out.push({ topic: t, start: months[cur.s].d, end: new Date(months[cur.e].d.getTime() + YEAR / 12), peak: months[best].d, score: bestScore, reasons });
+        const personal = reasons.filter(r => !GEN_IDS.has(r.id)).reduce((a, b) => a + b.w, 0);
+        out.push({ topic: t, start: months[cur.s].d, end: new Date(months[cur.e].d.getTime() + YEAR / 12), peak: months[best].d, score: bestScore, reasons, gen: personal < 2 });
       }
       cur = null;
     };
     months.forEach((m, i) => {
       const sc = m.f[t].reduce((a, b) => a + b.w, 0);
-      if (sc >= THRESH[t]) { if (cur && i - cur.e <= 4) cur.e = i; else { flush(); cur = { s: i, e: i }; } }
+      if (sc >= thr[t]) { if (cur && i - cur.e <= 4) cur.e = i; else { flush(); cur = { s: i, e: i }; } }
     });
     flush();
   }

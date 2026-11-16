@@ -80,7 +80,7 @@ export function WindowCard({ w, lang, showTip = true }: { w: Window; lang: Lang;
   return (
     <View style={{ borderLeftWidth: 3, borderLeftColor: t.color(), paddingLeft: 14, paddingVertical: 4, marginBottom: 26 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: t.color() }}>{t.name[lang]}</Text>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: t.color() }}>{t.name[lang]}{w.gen ? <Text style={{ fontFamily: F.sans, color: C.sub }}>{lang === 'tr' ? '  · kuşak etkisi: yaklaşık aynı yıllarda doğan herkeste aynı tarihlerde' : '  · generational: same dates for everyone born around the same years'}</Text> : null}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.sub }}>{s === 3 ? tx('Çok güçlü', 'Very strong', lang) : s === 2 ? tx('Güçlü', 'Strong', lang) : tx('Belirgin', 'Noticeable', lang)}</Text>
           <Dots n={s} />
