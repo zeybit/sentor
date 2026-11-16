@@ -85,7 +85,7 @@ function inReception(ch: Chart, a: BodyId, b: BodyId) {
   return { mutual: !!(recA && recB), aReceivedByB: !!recA, bReceivedByA: !!recB };
 }
 
-export type Verdict = 'yes' | 'yesEffort' | 'yesRegret' | 'viaThird' | 'blocked' | 'notNow';
+export type Verdict = 'yes' | 'yesEffort' | 'yesRegret' | 'likely' | 'viaThird' | 'blocked' | 'notNow';
 
 export interface HoraryResult {
   chart: Chart;
@@ -95,6 +95,16 @@ export interface HoraryResult {
   sameRuler: boolean;
   perfection: Hit | null;
   translation: { by: BodyId; date: Date; type: AspectType } | null;
+  /** Ay, soranın eş göstergesi olarak konunun gezegenine uyguluyor (Lilly) */
+  moonPerf: Hit | null;
+  /** Işığın toplanması: iki gösterge de daha yavaş üçüncü bir gezegene uyguluyor */
+  collection: { by: BodyId; date: Date } | null;
+  /** Konunun gezegeni 1. evde (konu sana geliyor) ya da senin gezegenin konunun evinde (sen konuya gidiyorsun) */
+  comesToYou: boolean; goesToIt: boolean;
+  /** Konunun evindeki gezegenler: yardım eden (Jüpiter, Venüs) ya da zorlaştıran (Mars, Satürn) */
+  helpers: BodyId[]; hinders: BodyId[];
+  /** Ay'ın burcunu terk etmeden yaptığı son açı: işin nasıl sonuçlanacağı */
+  moonLast: Hit | null;
   prohibition: Hit | null;
   refranation: BodyId | null;
   reception: ReturnType<typeof inReception>;
@@ -184,6 +194,30 @@ export function castHorary(date: Date, lat: number, lon: number, house: number):
     }
   }
 
+  // Ay eş gösterge: Ay, burcunu terk etmeden konunun gezegenine (ya da Ay konunun gezegeniyse soranın gezegenine) uyguluyor mu?
+  let moonPerf: Hit | null = null;
+  if (!perfection) {
+    const target = quesited === 'moon' ? querent : querent === 'moon' ? null : quesited;
+    if (target && target !== 'moon') moonPerf = nextAspect('moon', target, date, signExit('moon', date, 3));
+  }
+  // Işığın toplanması: iki gösterge de daha yavaş bir gezegene (kendi burçlarından çıkmadan) uyguluyor
+  let collection: HoraryResult['collection'] = null;
+  if (!perfection && !translation) {
+    const order: BodyId[] = ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury'];
+    for (const by of order) {
+      if (by === querent || by === quesited) continue;
+      if (Math.abs(speed(by, date)) >= Math.min(Math.abs(speed(querent, date)), Math.abs(speed(quesited, date)))) continue;
+      const h1 = nextAspect(querent, by, date, signExit(querent, date, 120));
+      const h2 = nextAspect(quesited, by, date, signExit(quesited, date, 120));
+      if (h1 && h2) { collection = { by, date: h1.date > h2.date ? h1.date : h2.date }; break; }
+    }
+  }
+  const comesToYou = P[quesited].house === 1;
+  const goesToIt = P[querent].house === house;
+  const inQ = SEVEN.filter(p => p !== querent && p !== quesited && P[p].house === house);
+  const helpers = inQ.filter(p => p === 'jupiter' || p === 'venus');
+  const hinders = inQ.filter(p => p === 'mars' || p === 'saturn');
+
   const reception = inReception(chart, querent, quesited);
   const moonDeg = P.moon.lon;
   const ascDeg = chart.asc! % 30;
@@ -194,12 +228,14 @@ export function castHorary(date: Date, lat: number, lon: number, house: number):
     verdict = perfection.type === 'square' ? 'yesEffort' : perfection.type === 'opposition' ? 'yesRegret' : 'yes';
     if ((perfection.type === 'square' || perfection.type === 'opposition') && reception.mutual) verdict = 'yesEffort';
   } else if (perfection && (prohibition || refranation)) verdict = 'blocked';
-  else if (translation) verdict = 'viaThird';
+  else if (translation || collection) verdict = 'viaThird';
+  else if (moonPerf && moonPerf.type !== 'opposition') verdict = 'likely';
   else if (reception.mutual) verdict = 'viaThird';
+  else if ((comesToYou || goesToIt) && !moonVoid) verdict = 'likely';
 
   // Zamanlama: gerçek gökyüzü tarihi + geleneksel sembolik ölçü
   let timing: HoraryResult['timing'] = null;
-  const when = perfection?.date ?? translation?.date;
+  const when = perfection?.date ?? translation?.date ?? moonPerf?.date ?? collection?.date;
   if (when) {
     const days = (when.getTime() - date.getTime()) / DAY;
     const app = faster;
@@ -215,6 +251,7 @@ export function castHorary(date: Date, lat: number, lon: number, house: number):
 
   return {
     chart, house, querent, quesited, sameRuler, perfection, translation, prohibition, refranation, reception,
+    moonPerf, collection, comesToYou, goesToIt, helpers, hinders, moonLast: moonNext.length ? moonNext[moonNext.length - 1] : null,
     moonNext, moonVoid,
     moonViaCombusta: moonDeg >= 195 && moonDeg <= 225,
     moonLate: moonDeg % 30 >= 27,

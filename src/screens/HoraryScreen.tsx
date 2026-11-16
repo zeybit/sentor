@@ -2,12 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useStore } from '../store';
 import { castHorary, HoraryResult } from '../engine/horary';
-import { QUESTIONS, VERDICT_TEXT, sigLine, horaryNotes } from '../content/horaryText';
+import { QUESTIONS, VERDICT_TEXT, Q_LINE, sigLine, horaryNotes } from '../content/horaryText';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HOUSES } from '../content/base';
 import { searchPlaces, Place } from '../ui/BirthForm';
 import Wheel from '../ui/Wheel';
 import { Btn, Field, H1, P, Section, Sub, st, useLayout } from '../ui/kit';
 import { C, serif } from '../theme';
+
+interface Asked { key: string; at: string; lat: number; lon: number; label: string; question: string }
+const HKEY = 'horary.history.v1';
 
 export default function HoraryScreen() {
   const { s, lang, profile } = useStore();
@@ -20,7 +24,16 @@ export default function HoraryScreen() {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Place[]>([]);
   const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState<{ r: HoraryResult; asked: Date; question: string } | null>(null);
+  const [res, setRes] = useState<{ r: HoraryResult; asked: Date; question: string; key: string; repeat?: boolean } | null>(null);
+  const [hist, setHist] = useState<Asked[]>([]);
+  useEffect(() => { AsyncStorage.getItem(HKEY).then(v => { try { setHist(v ? JSON.parse(v) : []); } catch { /* bozuk kayıt */ } }).catch(() => {}); }, []);
+  const saveHist = (h: Asked[]) => { setHist(h); AsyncStorage.setItem(HKEY, JSON.stringify(h)).catch(() => {}); };
+  /** Kayıtlı bir soruyu ilk sorulduğu anın haritasıyla yeniden açar: aynı an, aynı yanıt */
+  const reopen = (a: Asked, repeat = false) => {
+    const qq = QUESTIONS.find(x => x.key === a.key) ?? QUESTIONS[0];
+    const asked = new Date(a.at);
+    setRes({ r: castHorary(asked, a.lat, a.lon, qq.house), asked, question: a.question, key: qq.key, repeat });
+  };
   const timer = useRef<any>(null);
 
   useEffect(() => {
@@ -32,14 +45,20 @@ export default function HoraryScreen() {
 
   const fmt = (d: Date) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: place?.tz }).format(d);
 
-  const ask = () => {
+  const ask = (force = false) => {
     if (!place) return;
+    // Lilly: aynı soru kısa süre içinde yeniden sorulursa ilk haritanın yanıtı geçerlidir
+    const prev = hist.find(h => h.key === qKey && Date.now() - new Date(h.at).getTime() < 24 * 3600e3);
+    if (prev && !force) { reopen(prev, true); return; }
     setBusy(true);
     setTimeout(() => {
       const asked = new Date();
       const qq = QUESTIONS.find(x => x.key === qKey)!;
-      try { setRes({ r: castHorary(asked, place.lat, place.lon, qq.house), asked, question: text.trim() || qq.label[lang] }); }
-      finally { setBusy(false); }
+      const question = text.trim() || qq.label[lang];
+      try {
+        setRes({ r: castHorary(asked, place.lat, place.lon, qq.house), asked, question, key: qq.key });
+        saveHist([{ key: qq.key, at: asked.toISOString(), lat: place.lat, lon: place.lon, label: place.label, question }, ...hist.filter(h => !(h.key === qq.key && force))].slice(0, 12));
+      } finally { setBusy(false); }
     }, 30);
   };
 
@@ -52,9 +71,16 @@ export default function HoraryScreen() {
       <View>
         <Sub>{fmt(res.asked)}, {place?.label}</Sub>
         <H1>{res.question}</H1>
+        {res.repeat ? (
+          <View style={[st.panel, { marginBottom: 16 }]}>
+            <P>{lang === 'tr' ? `Bu soruyu ${fmt(res.asked)} tarihinde zaten sordun. Soru astrolojisinde (horary) harita, sorunun ilk içtenlikle sorulduğu ana göre kurulur; aynı soruyu tekrar sormak yeni bir yanıt vermez, ilk haritanın yanıtı geçerlidir. Bu yüzden o anın yanıtını gösteriyoruz.` : `You already asked this on ${fmt(res.asked)}. In horary the chart is cast for the moment the question was first sincerely asked; asking again gives no new answer, the first chart stands. So here is that moment’s answer.`}</P>
+            <Btn kind="ghost" small title={lang === 'tr' ? 'Durum gerçekten değişti, yeni harita kur' : 'The situation really changed, cast a new chart'} onPress={() => { setRes(null); setTimeout(() => ask(true), 0); }} />
+          </View>
+        ) : null}
         <Section>
           <Text style={{ fontFamily: serif, fontSize: 22, lineHeight: 28, color: col, marginBottom: 6 }}>{v.title[lang]}</Text>
-          <P>{v.body[lang]}</P>
+          <P>{Q_LINE[res.key]?.[v.tone]?.[lang] ?? ''}</P>
+          <P style={{ marginTop: 6 }}>{v.body[lang]}</P>
         </Section>
         <Section title={t.details}>
           <View style={st.row}><P>{sigLine(r.querent, { tr: t.you, en: t.you }, r)[lang]}</P></View>
@@ -117,8 +143,19 @@ export default function HoraryScreen() {
             ))}
           </View>
         )}
-        <Btn title={busy ? '…' : t.ask} onPress={ask} disabled={!place || busy} />
+        <Btn title={busy ? '…' : t.ask} onPress={() => ask()} disabled={!place || busy} />
+        <Sub style={{ marginTop: 8 }}>{lang === 'tr' ? 'Yanıt, sorunun sorulduğu dakikanın gökyüzüne göre çıkar; bu yüzden farklı anlarda farklı, aynı soruyu tekrar sorduğunda ise aynı yanıtı görürsün.' : 'The answer depends on the sky at the minute you ask; so different moments give different answers, and asking the same question again shows the same answer.'}</Sub>
       </Section>
+      {hist.length ? (
+        <Section title={lang === 'tr' ? 'Son soruların' : 'Your recent questions'}>
+          {hist.slice(0, 6).map((h, i) => (
+            <Pressable key={i} onPress={() => reopen(h)} accessibilityRole="button" style={({ pressed }) => [st.row, pressed && { opacity: 0.6 }]}>
+              <Text style={st.p}>{h.question}</Text>
+              <Text style={st.sub}>{fmt(new Date(h.at))}, {h.label}</Text>
+            </Pressable>
+          ))}
+        </Section>
+      ) : null}
     </View>
   );
 }
