@@ -16,6 +16,7 @@ import { LILLY_NOTE } from './LillyBlocks';
 import { natalStory } from '../content/story';
 import { Expand, MoreLink, P, Section, Sub, st } from './kit';
 import { BirthSecrets } from './ExtrasUI';
+import Mirror from './Mirror';
 import type { Chapter as StoryChapter } from '../content/story';
 import { characterReading, CHAR_INTRO, CharItem } from '../content/character';
 import { C, ELEMENT_COLOR, F, serif } from '../theme';
@@ -155,6 +156,7 @@ function NatalStory({ chart, s, t, lang }: { chart: Chart; s: Strings; t: T2; la
           ? 'Bu bölüm haritanı baştan sona, bir kitap okur gibi anlatır. Teknik ayrıntıları (dereceler, açılar, ev başlangıçları) merak edersen yukarıdaki Tablolar sekmesine bakabilirsin.'
           : 'This section tells your chart from start to finish, like reading a book. If you are curious about the technical details (degrees, aspects, house cusps), see the Tables tab above.'}
       </Text>
+      <Mirror chart={chart} lang={lang} />
       <Highlights chart={chart} lang={lang} />
       <BirthSecrets chart={chart} lang={lang} />
       {chapters.map((c, i) => <Chapter key={c.id} c={c} i={i} lang={lang} />)}
