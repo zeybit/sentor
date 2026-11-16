@@ -10,7 +10,8 @@ import { EVENTS, LOVE_TIP, Rel } from '../content/lifeEvents';
 import { CONCRETE, REL_LINE, PMOON, Cls } from '../content/skyTexts';
 import { PROG_MOON_SIGN, progSunText } from '../content/techniqueTexts';
 import { lifeAspect } from '../content/lifeTexts';
-import { BODIES, SIGNS, ASPECT_INFO } from '../content/base';
+import { BODIES, SIGNS, ASPECT_INFO, SIGN_ADVERB, SIGN_KEYWORDS } from '../content/base';
+import { PASPECT, PROG_NOTE, progBond, progSignText, progStationText, pMoonOpp } from '../content/progTexts';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -123,6 +124,8 @@ const PT_NAME: Record<Pt, { tr: string; en: string }> = {
 const CLS: Partial<Record<string, Cls>> = { jupiter: 'up', saturn: 'test', uranus: 'shake', neptune: 'fog', pluto: 'deep', node: 'node' };
 const fmtSpan = (a: Date, b: Date, lang: Lang) => { const x = fmtMonth(a, lang), y = fmtMonth(new Date(b.getTime() - 5 * 864e5), lang); return x === y ? x : `${x} – ${y}`; };
 
+const pName = (p: string, lang: Lang) => p === 'pasc' ? tx('İlerletilmiş Yükselen', 'Progressed Ascendant', lang) : p === 'pmc' ? tx('İlerletilmiş MC', 'Progressed MC', lang) : `${tx('İlerletilmiş', 'Progressed', lang)} ${BODIES[p as keyof typeof BODIES].name[lang]}`;
+
 function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
   const col = TOPIC_INFO[e.topic].color();
   let title = '', sub: string | null = null;
@@ -144,8 +147,24 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
     sub = e.north ? tx('Bir kapı açılır, yeni bir başlangıç', 'A door opens, a new beginning', lang) : tx('Bir şey tamamlanır, bırakma zamanı', 'Something completes, time to let go', lang);
     lines.push({ text: CONCRETE[e.n][e.north ? 'up' : 'test'][lang] });
   } else if (e.kind === 'pmoon' && e.n) {
-    title = `${tx('İlerletilmiş Ay', 'Progressed Moon', lang)} → ${PT_NAME[e.n][lang]} · ${tx('kavuşum', 'conjunction', lang)}`;
-    lines.push({ text: PMOON[e.n][lang] });
+    const opp = e.type === 'opposition';
+    title = `${tx('İlerletilmiş Ay', 'Progressed Moon', lang)} → ${PT_NAME[e.n][lang]} · ${opp ? ASPECT_INFO.opposition.name[lang].toLocaleLowerCase(lang) : tx('kavuşum', 'conjunction', lang)}`;
+    lines.push({ text: opp ? pMoonOpp(e.n)[lang] : PMOON[e.n][lang] });
+  } else if (e.kind === 'prog' && e.p && e.n && e.type) {
+    title = `${pName(e.p, lang)} → ${PT_NAME[e.n][lang]} · ${ASPECT_INFO[e.type].name[lang].toLocaleLowerCase(lang)}`;
+    sub = PASPECT[e.type].sub[lang];
+    const cls: Cls = e.type === 'trine' ? 'up' : e.type === 'conjunction' ? (e.p === 'mars' ? 'shake' : 'up') : 'test';
+    lines.push({ text: `${progBond(e.p, e.n)[lang]} ${PASPECT[e.type].line[lang]}` });
+    lines.push({ text: CONCRETE[e.n][cls][lang] });
+    lines.push({ text: PROG_NOTE[lang] });
+  } else if (e.kind === 'psign' && e.p && e.sign !== undefined) {
+    title = `${pName(e.p, lang)} → ${SIGNS[e.sign][lang]}`;
+    sub = tx('Birkaç yıl sürecek yeni bir tarz', 'A new style for several years', lang);
+    lines.push({ text: progSignText(e.p, SIGN_ADVERB[e.sign], SIGN_KEYWORDS[e.sign])[lang] });
+  } else if (e.kind === 'pstation' && e.p) {
+    title = `${pName(e.p, lang)} ${e.retro ? tx('geri harekete dönüyor', 'turns retrograde', lang) : tx('ileri harekete dönüyor', 'turns direct', lang)}`;
+    sub = tx('Onlarca yılda bir yaşanan bir dönüm noktası', 'A turning point that comes once in decades', lang);
+    lines.push({ text: progStationText(e.p, !!e.retro)[lang] });
   } else if (e.kind === 'pmsign' && e.sign !== undefined) {
     title = `${tx('İlerletilmiş Ay', 'Progressed Moon', lang)} → ${SIGNS[e.sign][lang]}`;
     sub = tx('Yaklaşık 2,5 yıllık yeni bir duygusal dönem', 'A new ~2.5-year emotional chapter', lang);
@@ -279,7 +298,7 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
         </View>
       ) : (
         <>
-          <Section title={tx('Sıradaki önemli dönemlerin', 'Your next important periods', lang)} sub={tx('Önümüzdeki 12 yıl, tarih sırasıyla. Renkli çizgili kartlar birkaç tekniğin birleştiği büyük dönemlerdir; noktalı satırlar o aralıkta haritana dokunan tek tek gezegen olaylarıdır (kavuşumlar, açılar, tutulmalar, ilerletilmiş Ay).', 'The next 12 years in date order. Cards with a coloured bar are major periods where several techniques agree; dotted rows are the single planet events touching your chart in between (conjunctions, aspects, eclipses, progressed Moon).', lang)}>
+          <Section title={tx('Sıradaki önemli dönemlerin', 'Your next important periods', lang)} sub={tx('Önümüzdeki 12 yıl, tarih sırasıyla. Renkli çizgili kartlar birkaç tekniğin birleştiği büyük dönemlerdir; noktalı satırlar o aralıkta haritana dokunan tek tek gezegen olaylarıdır (kavuşumlar, açılar, tutulmalar; ilerletilmiş haritada Ay, Güneş, Merkür, Venüs, Mars ve köşelerin açıları, burç değiştirmeleri ve gezegenlerin yön değiştirmesi).', 'The next 12 years in date order. Cards with a coloured bar are major periods where several techniques agree; dotted rows are the single planet events touching your chart in between (conjunctions, aspects, eclipses; in the progressed chart the aspects and sign changes of the Moon, Sun, Mercury, Venus, Mars and the angles, and planets changing direction).', lang)}>
             {feedUp.length ? <Feed key={`u${topic}`} items={feedUp} lang={lang} rel={profile.rel} tips upcoming /> : <P>{tx('Bu konu için önümüzdeki 12 yılda belirgin bir dönem çıkmadı; bu, sakin ve istikrarlı bir akış anlamına gelir.', 'No marked period for this topic in the next 12 years; that means a calm, steady flow.', lang)}</P>}
           </Section>
 

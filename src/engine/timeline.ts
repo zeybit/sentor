@@ -230,8 +230,10 @@ export const strengthOf = (score: number) => (score >= 9 ? 3 : score >= 6 ? 2 : 
 // Dönemlerin arasını doldurmak için: yavaş gezegenlerin doğum noktalarına yaptığı her kavuşum ve
 // sert/uyumlu açı, tutulmalar ve ilerletilmiş Ay kavuşumları ayrı ayrı listelenir.
 export type Pt = 'sun' | 'moon' | 'mercury' | 'venus' | 'mars' | 'jupiter' | 'saturn' | 'asc' | 'mc' | 'dsc' | 'ic';
-export type SkyKind = 'transit' | 'eclipse' | 'pmoon' | 'pmsign' | 'pssign';
-export interface SkyEvent { id: string; kind: SkyKind; t?: BodyId; n?: Pt; type?: 'conjunction' | 'opposition' | 'square' | 'trine'; start: Date; end: Date; peak: Date; topic: Topic; sign?: number; north?: boolean; w: number }
+export type SkyKind = 'transit' | 'eclipse' | 'pmoon' | 'pmsign' | 'pssign' | 'prog' | 'psign' | 'pstation';
+/** İlerletilmiş haritada hareket eden noktalar: gezegenler + (doğum saati varsa) ilerletilmiş yükselen ve MC */
+export type PBody = BodyId | 'pasc' | 'pmc';
+export interface SkyEvent { id: string; kind: SkyKind; t?: BodyId; p?: PBody; n?: Pt; type?: 'conjunction' | 'opposition' | 'square' | 'trine'; start: Date; end: Date; peak: Date; topic: Topic; sign?: number; north?: boolean; retro?: boolean; w: number }
 
 const PT_TOPIC: Record<Pt, Topic> = { venus: 'love', dsc: 'love', sun: 'career', mc: 'career', moon: 'home', ic: 'home', mercury: 'travel', jupiter: 'travel', mars: 'change', saturn: 'change', asc: 'change' };
 const T_W: Partial<Record<BodyId, number>> = { pluto: 5, neptune: 4, uranus: 4, saturn: 4, jupiter: 3, node: 2 };
@@ -296,26 +298,86 @@ export function skyEvents(ch: Chart): SkyEvent[] {
     }
   }
 
-  // İkincil progresyon: ilerletilmiş Ay kavuşumları ve burç değişimleri, ilerletilmiş Güneş burç değişimi
-  let prevMS = -1, prevSS = -1;
-  const pRuns = new Map<Pt, { s: number; e: number }>();
-  for (let ms = from.getTime(); ms <= to.getTime(); ms += YEAR / 24) {
+  // İkincil progresyon (doğumdan sonraki her gün = hayatının bir yılı), tüm gezegenler:
+  // - ilerletilmiş Ay: doğum noktalarına kavuşum + karşıt açı, burç değişimi
+  // - ilerletilmiş Güneş, Merkür, Venüs, Mars (+ doğum saati varsa ilerletilmiş yükselen/MC): doğum noktalarına
+  //   kavuşum, karşıt, kare, üçgen açılar ve burç değişimleri
+  // - tüm gezegenlerin ilerletilmiş haritada yön değiştirmesi (geri/ileri dönüş): onlarca yılda bir yaşanan dönüm noktası
+  const FAST: BodyId[] = ['sun', 'mercury', 'venus', 'mars'];
+  const STATIONERS: BodyId[] = ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+  const P_W: Record<string, number> = { sun: 4, mercury: 2, venus: 3, mars: 3, pasc: 3, pmc: 3 };
+  const P_STEP = YEAR / 24;
+  const runs = new Map<string, { s: number; e: number; peak: number; orb: number }>();
+  const flush = (key: string, r: { s: number; e: number; peak: number }) => {
+    const [kind, b, n, a] = key.split('|');
+    const birthAge = (r.s - ch.utc.getTime()) / YEAR;
+    if (kind !== 'pm' && birthAge < 1) return; // doğumda zaten var olan açı: olay değil, doğum haritasının parçası
+    if (kind === 'pm') out.push({ id: `pm-${n}-${a}-${r.s}`, kind: 'pmoon', n: n as Pt, type: a as keyof typeof ASP, start: new Date(r.s), end: new Date(r.e + P_STEP), peak: new Date(r.peak), topic: PT_TOPIC[n as Pt], w: a === 'conjunction' ? 2 : 1 });
+    else {
+      const topic: Topic = b === 'venus' ? 'love' : b === 'pmc' ? 'career' : PT_TOPIC[n as Pt];
+      out.push({ id: `pp-${b}-${n}-${a}-${r.s}`, kind: 'prog', p: b as PBody, n: n as Pt, type: a as keyof typeof ASP, start: new Date(r.s), end: new Date(r.e + P_STEP), peak: new Date(r.peak), topic, w: (P_W[b] ?? 2) + (a === 'conjunction' ? 1 : 0) });
+    }
+  };
+  const track = (key: string, orb: number, lim: number, ms: number, gap: number) => {
+    const r = runs.get(key);
+    if (orb <= lim) {
+      if (r && ms - r.e <= gap) { r.e = ms; if (orb < r.orb) { r.orb = orb; r.peak = ms; } }
+      else { if (r) flush(key, r); runs.set(key, { s: ms, e: ms, peak: ms, orb }); }
+    } else if (r && ms - r.e > gap) { flush(key, r); runs.delete(key); }
+  };
+  const SIGN_TOPIC: Partial<Record<BodyId, Topic>> = { mercury: 'travel', venus: 'love', mars: 'change' };
+  const prevSign = new Map<string, number>(), prevLon = new Map<BodyId, number>(), prevDir = new Map<BodyId, number>();
+  for (let ms = from.getTime() - P_STEP; ms <= to.getTime(); ms += P_STEP) {
     const age = (ms - ch.utc.getTime()) / YEAR;
     if (age < 0) continue;
     const pd = new Date(ch.utc.getTime() + age * DAY);
-    const pMoon = norm(bodyLon('moon', pd) - ch.ayanamsa), pSun = norm(bodyLon('sun', pd) - ch.ayanamsa);
-    const ms_ = Math.floor(pMoon / 30), ss_ = Math.floor(pSun / 30);
-    if (prevMS >= 0 && ms_ !== prevMS) out.push({ id: `pms-${ms}`, kind: 'pmsign', start: new Date(ms), end: new Date(ms + 2.5 * YEAR), peak: new Date(ms), topic: 'home', sign: ms_, w: 2 });
-    if (prevSS >= 0 && ss_ !== prevSS) out.push({ id: `pss-${ms}`, kind: 'pssign', start: new Date(ms), end: new Date(ms + YEAR), peak: new Date(ms), topic: 'change', sign: ss_, w: 4 });
-    prevMS = ms_; prevSS = ss_;
-    for (const [n, nl] of pts) {
-      const on = angleDiff(pMoon, nl) <= 1;
-      const r = pRuns.get(n);
-      if (on) { if (r && ms - r.e <= YEAR / 12 + 1) r.e = ms; else pRuns.set(n, { s: ms, e: ms }); }
-      else if (r) { out.push({ id: `pm-${n}-${r.s}`, kind: 'pmoon', n, start: new Date(r.s), end: new Date(r.e + YEAR / 24), peak: new Date((r.s + r.e) / 2), topic: PT_TOPIC[n], w: 2 }); pRuns.delete(n); }
+    const pl = (b: BodyId) => norm(bodyLon(b, pd) - ch.ayanamsa);
+    const inRange = ms >= from.getTime();
+    const pMoon = pl('moon'), pSun = pl('sun');
+    const arc = norm(pSun - P.sun.lon);
+    const movers: [PBody, number][] = FAST.map(b => [b, b === 'sun' ? pSun : pl(b)] as [PBody, number]);
+    if (hasAngles) movers.push(['pasc', norm(ch.asc! + arc)], ['pmc', norm(ch.mc! + arc)]);
+    // burç değişimleri
+    for (const [b, lon] of [['moon', pMoon], ['sun', pSun], ...movers.filter(m => m[0] === 'mercury' || m[0] === 'venus' || m[0] === 'mars')] as [string, number][]) {
+      const sg = Math.floor(lon / 30), prev = prevSign.get(b);
+      if (inRange && prev !== undefined && sg !== prev) {
+        if (b === 'moon') out.push({ id: `pms-${ms}`, kind: 'pmsign', start: new Date(ms), end: new Date(ms + 2.5 * YEAR), peak: new Date(ms), topic: 'home', sign: sg, w: 2 });
+        else if (b === 'sun') out.push({ id: `pss-${ms}`, kind: 'pssign', start: new Date(ms), end: new Date(ms + YEAR), peak: new Date(ms), topic: 'change', sign: sg, w: 4 });
+        else out.push({ id: `psg-${b}-${ms}`, kind: 'psign', p: b as BodyId, start: new Date(ms), end: new Date(ms + YEAR), peak: new Date(ms), topic: SIGN_TOPIC[b as BodyId]!, sign: sg, w: 2 });
+      }
+      prevSign.set(b, sg);
+    }
+    // yön değiştirme (istasyon)
+    for (const b of STATIONERS) {
+      const lon = b === 'mercury' || b === 'venus' || b === 'mars' ? movers.find(m => m[0] === b)![1] : pl(b);
+      const pv = prevLon.get(b);
+      if (pv !== undefined) {
+        const d = ((lon - pv + 540) % 360) - 180;
+        const dir = d > 0 ? 1 : d < 0 ? -1 : 0;
+        const pdir = prevDir.get(b);
+        if (inRange && dir && pdir && dir !== pdir && age >= 1) {
+          out.push({ id: `pst-${b}-${ms}`, kind: 'pstation', p: b, start: new Date(ms), end: new Date(ms + 2 * YEAR), peak: new Date(ms), topic: SIGN_TOPIC[b] ?? (b === 'jupiter' ? 'travel' : 'change'), retro: dir < 0, w: b === 'mercury' || b === 'venus' || b === 'mars' ? 3 : 2 });
+        }
+        if (dir) prevDir.set(b, dir);
+      }
+      prevLon.set(b, lon);
+    }
+    if (!inRange) continue;
+    // ilerletilmiş Ay: kavuşum ve karşıt açı (1°)
+    for (const [n, nl] of pts) for (const a of ['conjunction', 'opposition'] as const) {
+      if (a === 'opposition' && (n === 'dsc' || n === 'ic' || n === 'asc' || n === 'mc')) continue; // eksenin karşı ucu zaten kavuşum olarak sayılıyor
+      track(`pm|moon|${n}|${a}`, Math.abs(angleDiff(pMoon, nl) - ASP[a]), 1, ms, YEAR / 12 + 1);
+    }
+    // diğer ilerletilmiş noktalar: dört ana açı (1°); kendi doğum konumuna açı sayılmaz
+    for (const [b, lon] of movers) for (const [n, nl] of pts) {
+      if (b === n || (b === 'pasc' && (n === 'asc' || n === 'dsc')) || (b === 'pmc' && (n === 'mc' || n === 'ic'))) continue;
+      const angle = n === 'asc' || n === 'mc' || n === 'dsc' || n === 'ic';
+      for (const a of (angle ? ['conjunction'] : ['conjunction', 'opposition', 'square', 'trine']) as (keyof typeof ASP)[]) {
+        track(`pp|${b}|${n}|${a}`, Math.abs(angleDiff(lon, nl) - ASP[a]), 1, ms, 2 * YEAR);
+      }
     }
   }
-  for (const [n, r] of pRuns) out.push({ id: `pm-${n}-${r.s}`, kind: 'pmoon', n, start: new Date(r.s), end: new Date(r.e + YEAR / 24), peak: new Date((r.s + r.e) / 2), topic: PT_TOPIC[n], w: 2 });
+  for (const [key, r] of runs) flush(key, r);
 
   out.sort((a, b) => a.peak.getTime() - b.peak.getTime());
   SKY_CACHE.set(ch, out);
