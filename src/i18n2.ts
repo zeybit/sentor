@@ -2,7 +2,7 @@
 import type { Lang } from './content/base';
 
 const tr = {
-  kinds: { natal: 'Doğum', transit: 'Transit', progressed: 'Progresyon', timeline: 'Önemli dönemler', solarArc: 'Solar Arc', solarReturn: 'Güneş Dönüşü', lunarReturn: 'Ay Dönüşü', antiscia: 'Antiscia', now: 'Şimdi', cartography: 'Kartografi', finder: 'Bulucu', rectify: 'Saat düzeltme' },
+  kinds: { natal: 'Doğum', transit: 'Transit', progressed: 'Progresyon', timeline: 'Önemli dönemler', solarArc: 'Solar Arc', solarReturn: 'Güneş Dönüşü', lunarReturn: 'Ay Dönüşü', antiscia: 'Antiscia', draconic: 'Drakonik', primary: 'Primer direksiyon', now: 'Şimdi', cartography: 'Kartografi', finder: 'Bulucu', rectify: 'Saat düzeltme' },
   views: { readings: 'Yorumlar', tables: 'Tablolar' },
   date: 'Tarih', today: 'Bugün', play: 'Oynat', pause: 'Durdur', step: 'Adım',
   steps: { hour: 'Saat', day: 'Gün', week: 'Hafta', month: 'Ay', year: 'Yıl' },
@@ -43,7 +43,7 @@ const tr = {
 };
 export type T2 = typeof tr;
 const en: T2 = {
-  kinds: { natal: 'Natal', transit: 'Transit', progressed: 'Progressed', timeline: 'Key periods', solarArc: 'Solar Arc', solarReturn: 'Solar Return', lunarReturn: 'Lunar Return', antiscia: 'Antiscia', now: 'Now', cartography: 'Cartography', finder: 'Finder', rectify: 'Rectification' },
+  kinds: { natal: 'Natal', transit: 'Transit', progressed: 'Progressed', timeline: 'Key periods', solarArc: 'Solar Arc', solarReturn: 'Solar Return', lunarReturn: 'Lunar Return', antiscia: 'Antiscia', draconic: 'Draconic', primary: 'Primary directions', now: 'Now', cartography: 'Cartography', finder: 'Finder', rectify: 'Rectification' },
   views: { readings: 'Readings', tables: 'Tables' },
   date: 'Date', today: 'Today', play: 'Play', pause: 'Pause', step: 'Step',
   steps: { hour: 'Hour', day: 'Day', week: 'Week', month: 'Month', year: 'Year' },

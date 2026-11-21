@@ -7,6 +7,7 @@ import * as A from 'astronomy-engine';
 import type { BodyId, Chart } from './astro';
 import { bodyLon, houseOf, norm, angleDiff, lahiri, SIGN_RULERS } from './astro';
 import { lots, solarReturnChart } from './techniques';
+import { primaryDirections, Direction } from './primary';
 
 export type Topic = 'love' | 'career' | 'home' | 'travel' | 'change';
 export const TOPICS: Topic[] = ['love', 'career', 'home', 'travel', 'change'];
@@ -21,12 +22,12 @@ export interface Window {
   /** Kişinin geçmiş olay tarihlerinde de etkin olmuş işaretler (kişisel ayar) */
   calib?: string[];
 }
-export type Tech = 'transit' | 'progression' | 'solarArc' | 'profection' | 'eclipse' | 'solarReturn';
+export type Tech = 'transit' | 'progression' | 'solarArc' | 'primary' | 'profection' | 'eclipse' | 'solarReturn';
 /** Bir işaretin hangi teknikten geldiği */
-export const techOf = (id: string): Tech => /^SR/.test(id) ? 'solarReturn' : /^sa/.test(id) ? 'solarArc' : /^p[A-Z]/.test(id) ? 'progression' : /^(prof|lord)/.test(id) ? 'profection' : /^E/.test(id) ? 'eclipse' : 'transit';
+export const techOf = (id: string): Tech => /^pd[A-Z]/.test(id) ? 'primary' : /^SR/.test(id) ? 'solarReturn' : /^sa/.test(id) ? 'solarArc' : /^p[A-Z]/.test(id) ? 'progression' : /^(prof|lord)/.test(id) ? 'profection' : /^E/.test(id) ? 'eclipse' : 'transit';
 /** Kişiye özel ayarlar: cinsiyet (klasik eş göstergesi) ve geçmiş ilişki olaylarının tarihleri */
 export interface PersonCtx { gender?: 'f' | 'm' | null; loveDates?: Date[] }
-interface Ctx { sig: BodyId[]; lotM: number | null; juno: number | null; vx: number | null; sr: (d: Date) => Chart | null; boost: Set<string> }
+interface Ctx { pds: Direction[]; sig: BodyId[]; lotM: number | null; juno: number | null; vx: number | null; sr: (d: Date) => Chart | null; boost: Set<string> }
 /** Kuşak etkileri: yaklaşık aynı yıllarda doğan herkeste aynı tarihlere denk gelir (Satürn dönüşü gibi). */
 export const GEN_IDS = new Set(['Sret', 'Sopp', 'Uopp', 'Jret']);
 
@@ -191,6 +192,15 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[], cx?: Ctx): Record<Topic, Fact
 
   // ---- Aşk ve evlilik: ek göstergeler (Juno, Vertex, klasik eş göstergesi, Evlilik noktası, Güneş dönüşü) ----
   if (cx) {
+    // Primer direksiyonlar: gezegen köşeye ulaştığı yılın ±6 ayı
+    const ageNow = (d.getTime() - ch.utc.getTime()) / YEAR;
+    for (const pd of cx.pds) {
+      if (Math.abs(pd.age - ageNow) > 0.5) continue;
+      const t: Topic = pd.prom === 'venus' && pd.angle !== 'mc' ? 'love' : PD_TOPIC[pd.angle];
+      const nm = PD_NM[pd.prom] ?? [pd.prom, pd.prom];
+      add(t, `pd${pd.angle.toUpperCase()}`, 3, `Primer direksiyon: ${nm[0]} doğum haritanın ${PD_ANG[pd.angle][0]} noktasına ulaşıyor. Klasik astrolojide hayatın büyük olaylarını zamanlamak için kullanılan en eski tekniklerden biri.`, `Primary direction: ${nm[1]} reaches your ${PD_ANG[pd.angle][1]}. One of the oldest classical techniques for timing major life events.`);
+      if (pd.prom === 'venus' && pd.angle === 'mc') add('love', 'pdVEN', 1, 'Venüs MC’ye ulaşıyor: aşk hayatın görünür hâle gelir.', 'Venus reaches the MC: your love life becomes visible.');
+    }
     const { juno, vx, lotM, sig } = cx;
     if (juno !== null) {
       if (near(J, juno, 3)) add('love', 'Jjuno', 2, 'Jüpiter evlilik asteroidi Juno’nun üzerinden geçiyor: bağlılık ve evlilik için en olumlu geçişlerden biri.', 'Jupiter passes over Juno, the asteroid of marriage: one of the most favourable passages for commitment.');
@@ -231,6 +241,9 @@ function factorsAt(ch: Chart, d: Date, ecl: Ecl[], cx?: Ctx): Record<Topic, Fact
   return out;
 }
 
+const PD_TOPIC: Record<string, Topic> = { asc: 'change', mc: 'career', dsc: 'love', ic: 'home' };
+const PD_ANG: Record<string, [string, string]> = { asc: ['Yükselen', 'Ascendant'], mc: ['MC (kariyer)', 'MC (career)'], dsc: ['Alçalan (ilişki)', 'Descendant (partnership)'], ic: ['IC (ev ve aile)', 'IC (home and family)'] };
+const PD_NM: Record<string, [string, string]> = { sun: ['Güneş', 'The Sun'], moon: ['Ay', 'The Moon'], mercury: ['Merkür', 'Mercury'], venus: ['Venüs', 'Venus'], mars: ['Mars', 'Mars'], jupiter: ['Jüpiter', 'Jupiter'], saturn: ['Satürn', 'Saturn'], uranus: ['Uranüs', 'Uranus'], neptune: ['Neptün', 'Neptune'], pluto: ['Plüton', 'Pluto'] };
 const THRESH: Record<Topic, number> = { love: 7, career: 5, home: 4, travel: 4, change: 3 };
 const MIN_AGE: Record<Topic, number> = { love: 17, career: 18, home: 18, travel: 16, change: 16 };
 
@@ -268,7 +281,7 @@ function buildCtx(ch: Chart, person: PersonCtx, ecl: Ecl[]): Ctx {
   };
   const cx: Ctx = {
     sig: person.gender === 'f' ? ['sun', 'mars'] : person.gender === 'm' ? ['moon'] : [],
-    lotM, juno: P.juno ? P.juno.lon : null, vx: timed ? ch.vertex : null, sr, boost: new Set(),
+    pds: primaryDirections(ch), lotM, juno: P.juno ? P.juno.lon : null, vx: timed ? ch.vertex : null, sr, boost: new Set(),
   };
   // Kişisel ayar: geçmiş ilişki olaylarının (±3 ay) etrafında etkin olan işaretler bu kişide "tutmuş" sayılır
   for (const ev of person.loveDates ?? []) {
@@ -325,10 +338,10 @@ export const strengthOf = (score: number) => (score >= 9 ? 3 : score >= 6 ? 2 : 
 // Dönemlerin arasını doldurmak için: yavaş gezegenlerin doğum noktalarına yaptığı her kavuşum ve
 // sert/uyumlu açı, tutulmalar ve ilerletilmiş Ay kavuşumları ayrı ayrı listelenir.
 export type Pt = 'sun' | 'moon' | 'mercury' | 'venus' | 'mars' | 'jupiter' | 'saturn' | 'asc' | 'mc' | 'dsc' | 'ic';
-export type SkyKind = 'transit' | 'eclipse' | 'pmoon' | 'pmsign' | 'pssign' | 'prog' | 'psign' | 'pstation';
+export type SkyKind = 'transit' | 'eclipse' | 'pmoon' | 'pmsign' | 'pssign' | 'prog' | 'psign' | 'pstation' | 'primary';
 /** İlerletilmiş haritada hareket eden noktalar: gezegenler + (doğum saati varsa) ilerletilmiş yükselen ve MC */
 export type PBody = BodyId | 'pasc' | 'pmc';
-export interface SkyEvent { id: string; kind: SkyKind; t?: BodyId; p?: PBody; n?: Pt; type?: 'conjunction' | 'opposition' | 'square' | 'trine'; start: Date; end: Date; peak: Date; topic: Topic; sign?: number; north?: boolean; retro?: boolean; w: number }
+export interface SkyEvent { id: string; kind: SkyKind; t?: BodyId; p?: PBody; n?: Pt; angle?: 'asc' | 'mc' | 'dsc' | 'ic'; type?: 'conjunction' | 'opposition' | 'square' | 'trine'; start: Date; end: Date; peak: Date; topic: Topic; sign?: number; north?: boolean; retro?: boolean; w: number }
 
 const PT_TOPIC: Record<Pt, Topic> = { venus: 'love', dsc: 'love', sun: 'career', mc: 'career', moon: 'home', ic: 'home', mercury: 'travel', jupiter: 'travel', mars: 'change', saturn: 'change', asc: 'change' };
 const T_W: Partial<Record<BodyId, number>> = { pluto: 5, neptune: 4, uranus: 4, saturn: 4, jupiter: 3, node: 2 };
@@ -473,6 +486,11 @@ export function skyEvents(ch: Chart): SkyEvent[] {
     }
   }
   for (const [key, r] of runs) flush(key, r);
+  // Primer direksiyonlar (doğum saati gerekir)
+  for (const pd of primaryDirections(ch)) {
+    if (pd.date < from || pd.date > to) continue;
+    out.push({ id: `pd-${pd.prom}-${pd.angle}`, kind: 'primary', p: pd.prom, angle: pd.angle, start: new Date(pd.date.getTime() - YEAR / 2), end: new Date(pd.date.getTime() + YEAR / 2), peak: pd.date, topic: pd.prom === 'venus' && pd.angle !== 'mc' ? 'love' : PD_TOPIC[pd.angle], w: 4 });
+  }
 
   out.sort((a, b) => a.peak.getTime() - b.peak.getTime());
   SKY_CACHE.set(ch, out);

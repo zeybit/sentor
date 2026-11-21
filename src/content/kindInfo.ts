@@ -52,6 +52,18 @@ export const KIND_INFO: Record<string, KindInfo> = {
     when: l('Doğum haritanı okuduktan sonra, daha derine inmek istediğinde. İleri düzey bir bakıştır.', 'After you have read your birth chart and want to go deeper. It is an advanced view.'),
     ask: l('Haritamda göze çarpmayan ama beni etkileyen bir bağlantı var mı?', 'Is there a hidden link in my chart that still affects me?'),
   },
+  draconic: {
+    what: l('Bütün haritanın Kuzey Ay Düğümü 0° Koç olacak şekilde kaydırılmış hâli. “Ruhun haritası” olarak bilinir: doğum haritan bu hayattaki kişiliğini, drakonik harita ise içinde taşıdığın özü ve neden burada olduğunu anlatır.',
+      'Your whole chart shifted so the North Node sits at 0° Aries. Known as the “soul chart”: your birth chart shows this life’s personality, the draconic chart the essence you carry and why you are here.'),
+    when: l('Doğum haritanı tanıdıktan sonra, kendini “içten” anlamak ya da bir ilişkinin neden kaderle ilgili hissettirdiğini görmek istediğinde.', 'Once you know your birth chart, when you want to understand yourself from the inside, or why a bond feels fated.'),
+    ask: l('İçimde taşıdığım ama dışarıya göstermediğim öz ne?', 'What essence do I carry inside but rarely show?'),
+  },
+  primary: {
+    what: l('Doğduğun günün gökyüzü, doğumundan sonraki saatlerde dönmeye devam eder; gezegenler sırayla haritanın köşelerine ulaşır. Dönen her derece hayatın yaklaşık bir yılıdır. Batlamyus’tan beri hayatın büyük olaylarını zamanlamak için kullanılan en eski tekniktir.',
+      'After your birth the sky keeps turning; planets reach the angles of your chart one by one. Each degree is about a year of life. Since Ptolemy it has been the oldest technique for timing major life events.'),
+    when: l('Hayatındaki büyük dönüm noktalarının (iş, evlilik, taşınma) hangi yaşlara denk geldiğini görmek istediğinde. Doğum saatin doğru olmalı.', 'When you want to see at which ages your big turning points (work, marriage, moving) fall. Your birth time must be accurate.'),
+    ask: l('Hayatımın büyük dönüm noktaları hangi yaşlarda?', 'At what ages do my big turning points come?'),
+  },
   now: {
     what: l('Şu anın gökyüzü, kendi başına. Gezegenler şu an hangi burçta, hangisi geri gidiyor, aralarında hangi açılar var; herkes için geçerli genel havayı gösterir.',
       'The sky right now, on its own. Which signs the planets are in, which are retrograde, what angles they make: the general weather that applies to everyone.'),

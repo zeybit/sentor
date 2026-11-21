@@ -5,6 +5,8 @@ import { chartAt } from '../engine/astro';
 import {
   ChartKind, crossAspects, transitChart, progressedChart, solarArcChart, solarReturnChart, lunarReturnChart, antisciaChart,
 } from '../engine/techniques';
+import { draconicChart } from '../engine/primary';
+import { DraconicReading, PrimaryList } from '../ui/PrimaryUI';
 import { T2S } from '../i18n2';
 import Wheel from '../ui/Wheel';
 import DateBar from '../ui/DateBar';
@@ -21,7 +23,7 @@ import { fmtLocal, tzOffsetMinutes } from '../util';
 import { ShareToggle, safeName } from '../ui/ShareImage';
 import { bigThreeSvg } from '../content/shareCards';
 
-type Kind = ChartKind | 'timeline' | 'cartography' | 'finder' | 'rectify';
+type Kind = ChartKind | 'timeline' | 'primary' | 'cartography' | 'finder' | 'rectify';
 const DATED: Kind[] = ['transit', 'progressed', 'solarArc', 'solarReturn', 'lunarReturn', 'now'];
 const BIWHEEL: Kind[] = ['transit', 'progressed', 'solarArc'];
 
@@ -43,6 +45,7 @@ export default function ChartScreen() {
       case 'solarReturn': return solarReturnChart(chart, date, opts, loc.lat, loc.lon);
       case 'lunarReturn': return lunarReturnChart(chart, date, opts, loc.lat, loc.lon);
       case 'antiscia': return antisciaChart(chart, opts);
+      case 'draconic': return draconicChart(chart, opts);
       case 'now': return chartAt(date, loc.lat, loc.lon, opts);
       default: return null;
     }
@@ -53,9 +56,9 @@ export default function ChartScreen() {
 
   const tz = loc?.tz ?? profile.birth.tz;
   const wheelChart = kind === 'natal' || BIWHEEL.includes(kind) || kind === 'antiscia' ? chart : other!;
-  const outer = BIWHEEL.includes(kind) ? other : kind === 'antiscia' ? other : null;
+  const outer = BIWHEEL.includes(kind) ? other : kind === 'antiscia' ? other : kind === 'draconic' ? chart : null;
   const shown = kind === 'natal' || kind === 'antiscia' ? chart : other;
-  const kinds: Kind[] = ['natal', 'transit', 'progressed', 'timeline', 'solarArc', 'solarReturn', 'lunarReturn', 'antiscia', 'now', 'cartography', 'finder', 'rectify'];
+  const kinds: Kind[] = ['natal', 'transit', 'progressed', 'timeline', 'solarArc', 'solarReturn', 'lunarReturn', 'primary', 'antiscia', 'draconic', 'now', 'cartography', 'finder', 'rectify'];
 
   return (
     <View>
@@ -74,6 +77,7 @@ export default function ChartScreen() {
         : kind === 'cartography' ? <Cartography natal={chart} t={t} lang={lang} />
         : kind === 'finder' ? <Finder natal={chart} t={t} lang={lang} tz={tz} />
         : kind === 'rectify' ? <Rectify />
+        : kind === 'primary' ? <PrimaryList natal={chart} lang={lang} />
         : (() => {
           const wheelSize = twoCol ? 460 : Math.min(inner(wide ? 1180 : 760), 520);
           const left = (
@@ -83,7 +87,9 @@ export default function ChartScreen() {
               {(kind === 'solarReturn' || kind === 'lunarReturn') && other ? <Sub style={{ marginBottom: 6 }}>{t.returnAt}: {fmtLocal(other.utc, tz)}, {loc?.label}</Sub> : null}
               <View style={{ alignItems: 'center', marginVertical: 12 }}>
                 <Wheel chart={wheelChart} outer={outer} cross={cross} size={wheelSize} asteroids={showAsteroids} />
-                {outer ? <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds[kind as ChartKind]}</Text>   {t.innerLegend}</Text> : null}
+                {outer ? (kind === 'draconic'
+                  ? <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds.natal}</Text>   {lang === 'tr' ? 'İç halka: drakonik harita' : 'Inner ring: draconic chart'}</Text>
+                  : <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds[kind as ChartKind]}</Text>   {t.innerLegend}</Text>) : null}
               </View>
             </View>
           );
@@ -102,6 +108,8 @@ export default function ChartScreen() {
                 </>
               ) : kind === 'natal' ? (
                 <NatalReading chart={chart} s={s} t={t} lang={lang} asteroids={showAsteroids} />
+              ) : kind === 'draconic' && other ? (
+                <DraconicReading natal={chart} dr={other} lang={lang} />
               ) : other ? (
                 <KindReading kind={kind as ChartKind} natal={chart} other={other} s={s} t={t} lang={lang} />
               ) : null}

@@ -154,6 +154,15 @@ export const EVENTS: Record<string, Ev> = {
     m: l('Evlilikte rutini kırma ihtiyacı; birlikte yeni bir şey denemek iyi gelir.', 'A need to break routine in marriage; trying something new together helps.') },
   SRven: { head: l('Güneş dönüşünde Venüs öne çıkıyor', 'Venus prominent in your solar return'), all: l('Bu doğum gününden sonraki yıl ilişkiler ve aşk hayatının merkezinde.', 'In the year after this birthday, love and relationships are at the centre of your life.') },
   SR7: { head: l('Güneş dönüşü yükseleni evlilik burcunda', 'Solar return rising in your marriage sign'), all: l('Bu yıl kendini ilişkiler üzerinden tanımlarsın; ortaklık konuları öne çıkar.', 'This year you define yourself through relationships; partnership comes forward.') },
+  // Primer direksiyonlar
+  pdASC: { head: l('Primer direksiyon: bir gezegen Yükselen’e ulaşıyor', 'Primary direction: a planet reaches the Ascendant'), all: l('Kendinle ilgili büyük bir yeni başlangıç: görünüşünde, hayat yönünde ya da yaşadığın yerde değişim.', 'A big new start about yourself: a change in your looks, life direction or where you live.') },
+  pdMC: { head: l('Primer direksiyon: bir gezegen MC’ye ulaşıyor', 'Primary direction: a planet reaches the MC'), all: l('Kariyerde dönüm noktası: terfi, iş değişikliği, görünür bir başarı ya da sorumluluk.', 'A career turning point: promotion, job change, visible success or responsibility.') },
+  pdDSC: { head: l('Primer direksiyon: bir gezegen Alçalan’a ulaşıyor', 'Primary direction: a planet reaches the Descendant'),
+    s: l('Hayatına önemli birinin girmesi için klasik bir işaret.', 'A classic sign of someone important entering your life.'),
+    p: l('İlişkide resmîleşme ya da büyük bir karar.', 'Making it official or a big decision in the relationship.'),
+    m: l('Evlilikte yeni bir evre ya da eşle ilgili büyük bir gelişme.', 'A new phase in marriage or a big development with your spouse.') },
+  pdIC: { head: l('Primer direksiyon: bir gezegen IC’ye ulaşıyor', 'Primary direction: a planet reaches the IC'), all: l('Ev ve ailede büyük değişim: taşınma, ev alma, aile yapısında değişiklik.', 'A big change in home and family: moving, buying a home, a change in family structure.') },
+  pdVEN: { head: l('Venüs MC’ye ulaşıyor', 'Venus reaches the MC'), all: l('Aşk hayatın görünür olur; ilişkin çevrene duyurulur.', 'Your love life becomes visible; your relationship is announced.') },
   // ---------------- Kariyer ----------------
   prof10: { head: l('Kariyer evinin yılı', 'Your career-house year'), all: l('İş, statü ve hedefler merkezde: terfi, yeni iş ya da sorumluluk artışı beklenir.', 'Work, status and goals take centre stage: a promotion, new job or more responsibility.') },
   lord10: { head: l('Yılı kariyer gezegenin yönetiyor', 'Your career planet rules the year'), all: l('İş kararları bu yıl ağırlık kazanır; kariyer değişikliğini düşünüyorsan zamanı bu.', 'Work decisions carry weight; if you’re thinking of a career change, this is the time.') },

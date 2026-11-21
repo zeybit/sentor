@@ -12,7 +12,7 @@ import { CONCRETE, REL_LINE, PMOON, Cls } from '../content/skyTexts';
 import { PROG_MOON_SIGN, progSunText } from '../content/techniqueTexts';
 import { lifeAspect } from '../content/lifeTexts';
 import { BODIES, SIGNS, ASPECT_INFO, SIGN_ADVERB, SIGN_KEYWORDS } from '../content/base';
-import { PASPECT, PROG_NOTE, progBond, progSignText, progStationText, pMoonOpp } from '../content/progTexts';
+import { PASPECT, PROG_NOTE, progBond, progSignText, progStationText, pMoonOpp, ANGLE_NAME, pdText, PD_NOTE } from '../content/progTexts';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -31,9 +31,9 @@ export const TOPIC_INFO: Record<Topic, { name: { tr: string; en: string }; color
     tip: { tr: 'Hayatını gözden geçirme dönemi; eskiyi bırakıp yeni bir sayfa açmaya hazırlan.', en: 'A time to review your life; get ready to let go of the old and turn a new page.' } },
 };
 
-const techOfId = (id: string): 'transit' | 'progression' | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E|SR)/.test(id) ? 'other' : 'transit');
+const techOfId = (id: string): 'transit' | 'progression' | 'other' => (/^(p[A-Z]|sa|pd[A-Z])/.test(id) ? 'progression' : /^(prof|lord|E|SR)/.test(id) ? 'other' : 'transit');
 const TECH_NAME: Record<TechFamily, { tr: string; en: string }> = {
-  transit: { tr: 'transit', en: 'transits' }, progression: { tr: 'progresyon', en: 'progressions' }, solarArc: { tr: 'solar arc', en: 'solar arc' },
+  transit: { tr: 'transit', en: 'transits' }, progression: { tr: 'progresyon', en: 'progressions' }, solarArc: { tr: 'solar arc', en: 'solar arc' }, primary: { tr: 'primer direksiyon', en: 'primary directions' },
   profection: { tr: 'yaşın teması', en: 'annual profection' }, eclipse: { tr: 'tutulma', en: 'eclipses' }, solarReturn: { tr: 'Güneş dönüşü', en: 'solar return' },
 };
 /** Kaç farklı tekniğin aynı döneme işaret ettiği: ne kadar çok teknik buluşursa dönem o kadar güvenilir */
@@ -185,6 +185,11 @@ function SkyCard({ e, lang, rel }: { e: SkyEvent; lang: Lang; rel?: Rel }) {
     title = `${pName(e.p, lang)} → ${SIGNS[e.sign][lang]}`;
     sub = tx('Birkaç yıl sürecek yeni bir tarz', 'A new style for several years', lang);
     lines.push({ text: progSignText(e.p, SIGN_ADVERB[e.sign], SIGN_KEYWORDS[e.sign])[lang] });
+  } else if (e.kind === 'primary' && e.p && e.angle) {
+    title = `${tx('Primer direksiyon', 'Primary direction', lang)}: ${BODIES[e.p as keyof typeof BODIES].name[lang]} → ${ANGLE_NAME[e.angle][lang]}`;
+    sub = tx('Klasik astrolojinin en eski zamanlama tekniği', 'The oldest timing technique of classical astrology', lang);
+    lines.push({ text: pdText(e.p, e.angle)[lang] });
+    lines.push({ text: PD_NOTE[lang] });
   } else if (e.kind === 'pstation' && e.p) {
     title = `${pName(e.p, lang)} ${e.retro ? tx('geri harekete dönüyor', 'turns retrograde', lang) : tx('ileri harekete dönüyor', 'turns direct', lang)}`;
     sub = tx('Onlarca yılda bir yaşanan bir dönüm noktası', 'A turning point that comes once in decades', lang);
@@ -345,7 +350,7 @@ export default function FutureScreen({ embedded }: { embedded?: boolean } = {}) 
 
 /** Transit ya da Progresyon ekranında: seçili tarihte etkin olan dönemlere o tekniğin katkısı */
 export type Tech = 'transit' | 'progression';
-const techOf = (id: string): Tech | 'other' => (/^(p[A-Z]|sa)/.test(id) ? 'progression' : /^(prof|lord|E|SR)/.test(id) ? 'other' : 'transit');
+const techOf = (id: string): Tech | 'other' => (/^(p[A-Z]|sa|pd[A-Z])/.test(id) ? 'progression' : /^(prof|lord|E|SR)/.test(id) ? 'other' : 'transit');
 export function ActiveWindows({ ch, date, tech, lang, onOpen }: { ch: Chart; date: Date; tech: Tech; lang: Lang; onOpen: () => void }) {
   const { profile } = useStore();
   const [list, setList] = useState<Window[] | null>(null);

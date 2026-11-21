@@ -32,6 +32,9 @@ export const N_AREA: Record<string, L> = {
   mc: l('kariyerin ve hedeflerin', 'your career and goals'),
   dsc: l('ilişkilerin ve ortaklıkların', 'your relationships and partnerships'),
   ic: l('evin, ailen ve köklerin', 'your home, family and roots'),
+  uranus: l('özgürlük ve değişim ihtiyacın', 'your need for freedom and change'),
+  neptune: l('hayallerin ve sezgilerin', 'your dreams and intuition'),
+  pluto: l('gücün ve dönüşüm isteğin', 'your power and drive to transform'),
 };
 
 export const PASPECT: Record<'conjunction' | 'opposition' | 'square' | 'trine', { sub: L; line: L }> = {
@@ -64,4 +67,41 @@ export const progStationText = (p: string, retro: boolean): L => retro
 export const pMoonOpp = (n: string): L => l(
   `İlerletilmiş Ay doğum haritandaki bu noktanın tam karşısına geliyor. Konu: ${N_AREA[n].tr}. Duyguların bu alanda bir denge arıyor; bir şey tamamlanır ya da yön değiştirir.`,
   `The progressed Moon reaches the point opposite this one in your birth chart. Theme: ${N_AREA[n].en}. Your emotions seek balance here; something completes or changes direction.`,
+);
+
+// ---------------- Primer direksiyonlar ----------------
+export const ANGLE_NAME: Record<string, L> = {
+  asc: l('Yükselen', 'Ascendant'), mc: l('MC (tepe noktası)', 'MC (Midheaven)'), dsc: l('Alçalan', 'Descendant'), ic: l('IC (dip noktası)', 'IC (Imum Coeli)'),
+};
+const ANGLE_THEME: Record<string, L> = {
+  asc: l('kişiliğin, bedenin ve hayatına verdiğin yön', 'your personality, body and the direction of your life'),
+  mc: l('kariyerin, statün ve toplumdaki yerin', 'your career, status and public standing'),
+  dsc: l('ilişkilerin, evlilik ve ortaklıkların', 'your relationships, marriage and partnerships'),
+  ic: l('evin, ailen ve köklerin', 'your home, family and roots'),
+};
+const PD_EFFECT: Record<string, L> = {
+  sun: l('görünürlük, onur ve hayatında önemli bir adım', 'visibility, honour and an important step in life'),
+  moon: l('duygusal bir değişim; aile, ev ya da halkla ilgili bir gelişme', 'an emotional change; a development involving family, home or the public'),
+  mercury: l('önemli bir haber, sözleşme, eğitim ya da yolculuk', 'important news, a contract, study or a journey'),
+  venus: l('aşk, uyum, kutlama ya da mutlu bir olay', 'love, harmony, a celebration or a happy event'),
+  mars: l('hızlı bir başlangıç, mücadele ve cesaret; aceleye ve tartışmaya dikkat', 'a fast start, struggle and courage; beware of haste and arguments'),
+  jupiter: l('büyüme, şans, terfi ya da genişleme', 'growth, luck, promotion or expansion'),
+  saturn: l('sorumluluk, sınav ve ağır ama kalıcı bir adım', 'responsibility, a test and a heavy but lasting step'),
+  uranus: l('ani bir değişim, beklenmedik bir özgürleşme', 'a sudden change, an unexpected liberation'),
+  neptune: l('belirsizlik ya da ilham; bir hayalin peşine düşmek', 'uncertainty or inspiration; chasing a dream'),
+  pluto: l('derin bir dönüşüm, güç meseleleri ve bir dönemin kapanışı', 'deep transformation, power issues and the end of a chapter'),
+};
+export const pdText = (prom: string, angle: string): L => l(
+  `Doğduğun günün gökyüzü dönmeye devam ettikçe gezegenler sırayla haritanın köşelerine ulaşır. Bu yaşta ${ANGLE_THEME[angle].tr} alanında ${PD_EFFECT[prom].tr} öne çıkar.`,
+  `As the sky of your birth day keeps turning, planets reach the angles of your chart one by one. At this age, ${PD_EFFECT[prom].en} comes forward in ${ANGLE_THEME[angle].en}.`,
+);
+export const PD_NOTE = l('Primer direksiyonlar doğum saatine çok duyarlıdır: saat 4 dakika kayarsa tarih yaklaşık 1 yıl kayar. Tarihler bu yüzden ±1 yıl hassasiyetle okunmalı.', 'Primary directions are very sensitive to birth time: a 4-minute error shifts the date by about a year. Read the dates with ±1 year precision.');
+
+// ---------------- Drakonik harita ----------------
+export const DRACONIC_CORE: Record<string, L> = {
+  sun: l('Ruhunun özü', 'Your soul’s core'), moon: l('Ruhunun duygusal hafızası', 'Your soul’s emotional memory'), asc: l('Ruhunun dünyaya bakışı', 'How your soul meets the world'),
+};
+export const draconicContactText = (a: string, b: string): L => l(
+  `Drakonik noktan doğum haritanda ${N_AREA[b]?.tr ?? ''} ile birleşiyor. Ruhunun getirdiği tema (${P_AREA[a]?.tr ?? (a === 'asc' ? 'kimliğin' : 'hedeflerin')}) ile bu hayattaki ${N_AREA[b]?.tr ?? ''} iç içe; bu alan sana “tanıdık”, kaderle ilgili ve tamamlanması gereken bir şey gibi gelir.`,
+  `Your draconic point meets ${N_AREA[b]?.en ?? ''} in your birth chart. The theme your soul brings (${P_AREA[a]?.en ?? (a === 'asc' ? 'identity' : 'purpose')}) and ${N_AREA[b]?.en ?? ''} in this life are intertwined; this area feels “familiar”, fated, something to complete.`,
 );

@@ -13,7 +13,7 @@ const sind = (x: number) => Math.sin(x * D2R), cosd = (x: number) => Math.cos(x 
 type Opts = Required<ChartOptions>;
 const signedDiff = (a: number, b: number) => { let d = norm(a - b); if (d > 180) d -= 360; return d; };
 
-export type ChartKind = 'natal' | 'transit' | 'progressed' | 'solarArc' | 'solarReturn' | 'lunarReturn' | 'antiscia' | 'now';
+export type ChartKind = 'natal' | 'transit' | 'progressed' | 'solarArc' | 'solarReturn' | 'lunarReturn' | 'antiscia' | 'draconic' | 'now';
 
 // ---------------- Transit ----------------
 export function transitChart(natal: Chart, when: Date, o: Opts, lat = natal.input.lat, lon = natal.input.lon): Chart {
