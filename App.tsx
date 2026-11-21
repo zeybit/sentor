@@ -17,6 +17,7 @@ import HoraryScreen from './src/screens/HoraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import MatrixScreen from './src/screens/MatrixScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
+import Kiron from './src/ui/Kiron';
 import Rasathane, { Enter } from './src/ui/Rasathane';
 import Sigil, { ArrowMark } from './src/ui/Sigil';
 import HelpScreen from './src/screens/HelpScreen';
@@ -158,6 +159,7 @@ function Shell() {
 
   const Screen = { today: TodayScreen, portfolio: PortfolioScreen, love: LoveScreen, ask: HoraryScreen, chart: ChartScreen, matrix: MatrixScreen, explore: ExploreScreen, help: HelpScreen, settings: null }[tab];
   const maxW = wide && WIDE_SCREENS.includes(tab) ? 1180 : 760;
+  const navTo = (t: string) => { const [tb, k] = t.split(':'); setPendingKind(k ?? null); go(tb as Tab); setNavKey(n => n + 1); };
   const content = (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView ref={scroll} contentContainerStyle={[styles.page, { maxWidth: maxW, paddingHorizontal: wide ? 48 : tablet ? 32 : 16, paddingTop: wide ? 40 : 12 }]} keyboardShouldPersistTaps="handled">
@@ -198,6 +200,7 @@ function Shell() {
           <NavItem k="settings" icon="settings" />
         </View>
         <View style={{ flex: 1 }}>{content}</View>
+        <Kiron onNav={navTo} />
       </View>
     );
   }
@@ -229,6 +232,7 @@ function Shell() {
           );
         })}
       </View>
+      <Kiron onNav={navTo} />
     </View>
   );
 }
