@@ -1,18 +1,16 @@
-// Kiron: Sentor'un astroloğu. Ekranın köşesinde duran animasyonlu kısa yol; dokununca sohbet açılır.
-// Cevaplar önce uygulamanın kendi hesaplarından kurulur (her yerde çalışır). Claude içindeki sürümde, kullanıcı izin verirse,
-// aynı hesaplanmış veriler bir yapay zekâ yorumuna dönüştürülür (veride olmayan hiçbir şey eklenmez).
+// Kiron: Sentor'un sohbet botu. Ekranın köşesinde duran animasyonlu kısa yol; dokununca sohbet açılır.
+// Yapay zekâ değildir: uygulamanın zaten hesapladığı bilgileri sorulan soruya göre seçip kısa, sohbet diliyle anlatır.
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { useStore } from '../store';
-import { answer, detectIntent, advisorPrompt, Action } from '../engine/advisor';
+import { answer, detectIntent, Action } from '../engine/advisor';
 import { useLayout } from './kit';
 import { C, F } from '../theme';
 
 type Msg =
   | { id: number; role: 'user'; text: string }
-  | { id: number; role: 'bot'; paras: string[]; actions: Action[]; facts: string; question: string; collapsed?: boolean }
-  | { id: number; role: 'ai'; text: string; status: 'thinking' | 'writing' | 'done' | 'error' };
+  | { id: number; role: 'bot'; paras: string[]; actions: Action[]; suggest: string[] };
 
 const tx = (tr: string, en: string, lang: 'tr' | 'en') => (lang === 'tr' ? tr : en);
 
@@ -79,7 +77,7 @@ function Dots() {
 }
 
 export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
-  const { chart, profile, lang } = useStore();
+  const { chart, profile, lang, people } = useStore();
   const { wide } = useLayout();
   const { height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
@@ -89,15 +87,6 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
   const [busy, setBusy] = useState(false);
   const idRef = useRef(1);
   const scroll = useRef<any>(null);
-  const sampleRef = useRef<any>(undefined);
-  const aiOff = useRef(false);
-
-  // Claude içindeki sürümde yapay zekâ yorumu (yoksa yalnızca hesaplanmış cevaplar)
-  useEffect(() => {
-    const c = (globalThis as any).claude;
-    if (!c?.use) { sampleRef.current = null; return; }
-    c.use('sample').then((s: any) => { sampleRef.current = s; }).catch(() => { sampleRef.current = null; });
-  }, []);
   // Tanıtım balonu: açılıştan kısa süre sonra bir kez
   useEffect(() => {
     const a = setTimeout(() => setTeaser(true), 2500), b = setTimeout(() => setTeaser(false), 11000);
@@ -112,33 +101,21 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
     ? ['Bu yıl beni ne bekliyor?', 'Ne zaman evlenirim?', 'Aşk hayatım nasıl?', 'Kariyerim', 'Bugün nasıl bir gün?', 'Bu ay', 'Beni anlat']
     : ['What does this year hold?', 'When will I marry?', 'My love life', 'My career', 'How is today?', 'This month', 'Describe me'];
 
-  const update = (id: number, patch: Partial<Msg>) => setMsgs(m => m.map(x => (x.id === id ? ({ ...x, ...patch } as Msg) : x)));
+  const lastBot = [...msgs].reverse().find(m => m.role === 'bot') as Extract<Msg, { role: 'bot' }> | undefined;
+  const chips = lastBot?.suggest.length ? lastBot.suggest : QUICK;
   const send = (q: string) => {
     const text = q.trim();
     if (!text || busy) return;
     setInput(''); setBusy(true);
     const uid = idRef.current++;
     setMsgs(m => [...m, { id: uid, role: 'user', text }]);
+    // Kısa bir "yazıyor" anı: bot hissi ve hesaplar için zaman
     setTimeout(() => {
-      const a = answer(detectIntent(text), chart, profile, lang, text);
-      const ai = sampleRef.current && !aiOff.current && a.intent !== 'help';
-      const bid = idRef.current++;
-      setMsgs(m => [...m, { id: bid, role: 'bot', paras: a.paras, actions: a.actions, facts: a.facts, question: text, collapsed: !!ai }]);
-      if (!ai) { setBusy(false); return; }
-      const aid = idRef.current++;
-      setMsgs(m => [...m, { id: aid, role: 'ai', text: '', status: 'thinking' }]);
-      type Turn = { role: 'user' | 'assistant'; content: string };
-      const history: Turn[] = [];
-      let lastQ: string | null = null;
-      for (const x of msgs) { if (x.role === 'user') lastQ = x.text; else if (x.role === 'ai' && x.status === 'done' && lastQ) { history.push({ role: 'user', content: lastQ }, { role: 'assistant', content: x.text }); lastQ = null; } }
-      sampleRef.current(advisorPrompt(lang, a.facts, history, text), { onText: ({ text: t }: { text: string }) => update(aid, { text: t, status: 'writing' } as any) })
-        .then((r: { text: string }) => update(aid, { text: r.text, status: 'done' } as any))
-        .catch((e: any) => {
-          if (e?.code === 'not_granted') { aiOff.current = true; setMsgs(m => m.filter(x => x.id !== aid).map(x => (x.id === bid ? ({ ...x, collapsed: false } as Msg) : x))); }
-          else update(aid, { text: e?.text || tx('Yorumu şu an yazamadım; yukarıdaki hesaplar geçerli.', 'I couldn’t write the interpretation right now; the calculations above stand.', lang), status: e?.text ? 'done' : 'error' } as any);
-        })
-        .finally(() => setBusy(false));
-    }, 450);
+      try {
+        const a = answer(detectIntent(text), chart, profile, lang, text, people);
+        setMsgs(m => [...m, { id: idRef.current++, role: 'bot', paras: a.paras, actions: a.actions, suggest: a.suggest }]);
+      } finally { setBusy(false); }
+    }, 700);
   };
 
   const fab = (
@@ -177,20 +154,16 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
 
         <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 14, gap: 10 }} keyboardShouldPersistTaps="handled">
           <View style={[bubble, { backgroundColor: C.card, alignSelf: 'flex-start' }]}>
-            <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.ink }}>{tx(`Merhaba${first ? ' ' + first : ''}! Haritana profeksiyon, Güneş dönüşü, progresyon, solar arc, primer direksiyon, transit ve tutulmaları birlikte okuyarak bakıyorum. Ne sormak istersin?`, `Hi${first ? ' ' + first : ''}! I read your chart combining profections, solar returns, progressions, solar arcs, primary directions, transits and eclipses. What would you like to ask?`, lang)}</Text>
+            <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.ink }}>{tx(`Selam${first ? ' ' + first : ''}! Ben Kiron ✦ Haritanda ne varsa kısaca anlatırım. Aşağıdan bir soru seç ya da kendin yaz.`, `Hey${first ? ' ' + first : ''}! I’m Kiron ✦ I’ll sum up what’s in your chart. Pick a question below or type your own.`, lang)}</Text>
           </View>
           {msgs.map(m => m.role === 'user' ? (
             <View key={m.id} style={[bubble, { backgroundColor: C.rose, alignSelf: 'flex-end' }]}>
               <Text style={{ fontFamily: F.sansMed, fontSize: 15, lineHeight: 21, color: C.onAccent }}>{m.text}</Text>
             </View>
-          ) : m.role === 'bot' ? (
-            <View key={m.id} style={[bubble, { backgroundColor: C.card, alignSelf: 'flex-start', borderWidth: m.collapsed ? 1 : 0, borderColor: C.line }]}>
-              {m.collapsed ? (
-                <Pressable onPress={() => update(m.id, { collapsed: false } as any)} accessibilityRole="button">
-                  <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold }}>{tx('Haritandan hesapladıklarım (göster) ↓', 'What I computed from your chart (show) ↓', lang)}</Text>
-                </Pressable>
-              ) : m.paras.map((p, i) => (
-                <Text key={i} style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.ink, marginTop: i ? 8 : 0 }}>{p}</Text>
+          ) : (
+            <View key={m.id} style={[bubble, { backgroundColor: C.card, alignSelf: 'flex-start' }]}>
+              {m.paras.map((p, i) => (
+                <Text key={i} style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.ink, marginTop: i ? 6 : 0 }}>{p}</Text>
               ))}
               {m.actions.length ? (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
@@ -202,17 +175,12 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
                 </View>
               ) : null}
             </View>
-          ) : (
-            <View key={m.id} style={[bubble, { backgroundColor: C.card, alignSelf: 'flex-start', borderLeftWidth: 3, borderLeftColor: C.gold }]}>
-              <Text style={{ fontFamily: F.mono, fontSize: 10, letterSpacing: 1.5, color: C.gold, marginBottom: 4 }}>{tx('KIRON’UN YORUMU', 'KIRON’S READING', lang)}</Text>
-              {m.status === 'thinking' ? <Dots /> : <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 23, color: m.status === 'error' ? C.sub : C.ink }}>{m.text}</Text>}
-            </View>
           ))}
-          {busy && !msgs.some(m => m.role === 'ai' && m.status === 'thinking') ? <View style={[bubble, { backgroundColor: C.card, alignSelf: 'flex-start' }]}><Dots /></View> : null}
+          {busy ? <View style={[bubble, { backgroundColor: C.card, alignSelf: 'flex-start' }]}><Dots /></View> : null}
         </ScrollView>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 8 }} keyboardShouldPersistTaps="handled">
-          {QUICK.map(q => (
+          {chips.map(q => (
             <Pressable key={q} onPress={() => send(q)} disabled={busy} style={{ borderWidth: 1, borderColor: C.line, borderRadius: 18, paddingVertical: 6, paddingHorizontal: 12, opacity: busy ? 0.5 : 1 }}>
               <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.ink }}>{q}</Text>
             </Pressable>
@@ -226,7 +194,7 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
             <Text style={{ fontSize: 18, color: input.trim() && !busy ? C.bg : C.sub, fontWeight: '700' }}>↑</Text>
           </Pressable>
         </View>
-        <Text style={{ fontFamily: F.sans, fontSize: 11, color: C.sub, textAlign: 'center', paddingBottom: 8 }}>{tx('Astroloji eğilimleri anlatır, kesin kader değildir.', 'Astrology describes tendencies, not fixed fate.', lang)}</Text>
+        <Text style={{ fontFamily: F.sans, fontSize: 11, color: C.sub, textAlign: 'center', paddingBottom: 8 }}>{tx('Kiron, uygulamadaki hesapları özetler. Astroloji eğilimleri anlatır, kesin kader değildir.', 'Kiron summarises the app’s calculations. Astrology describes tendencies, not fate.', lang)}</Text>
       </View>
     </>
   );

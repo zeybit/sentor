@@ -159,7 +159,7 @@ function Shell() {
 
   const Screen = { today: TodayScreen, portfolio: PortfolioScreen, love: LoveScreen, ask: HoraryScreen, chart: ChartScreen, matrix: MatrixScreen, explore: ExploreScreen, help: HelpScreen, settings: null }[tab];
   const maxW = wide && WIDE_SCREENS.includes(tab) ? 1180 : 760;
-  const navTo = (t: string) => { const [tb, k] = t.split(':'); setPendingKind(k ?? null); go(tb as Tab); setNavKey(n => n + 1); };
+  const navTo = (t: string) => { const i = t.indexOf(':'); const tb = i < 0 ? t : t.slice(0, i), k = i < 0 ? null : t.slice(i + 1); setPendingKind(k); go(tb as Tab); setNavKey(n => n + 1); };
   const content = (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView ref={scroll} contentContainerStyle={[styles.page, { maxWidth: maxW, paddingHorizontal: wide ? 48 : tablet ? 32 : 16, paddingTop: wide ? 40 : 12 }]} keyboardShouldPersistTaps="handled">
