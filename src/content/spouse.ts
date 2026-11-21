@@ -59,7 +59,7 @@ const RULER_HOUSE: { life: L; meet: L }[] = [
     meet: l('Beklenmedik, neredeyse gizli bir şekilde tanışırsınız; ilişki başta sessiz ilerleyebilir.', 'You meet unexpectedly, almost secretly; the relationship may move quietly at first.') },
 ];
 
-function ageHint(ch: Chart, r7: BodyId, s7: number): L | null {
+export function ageHint(ch: Chart, r7: BodyId, s7: number): L | null {
   const P = ch.positions;
   const satIn7 = P.saturn.house === 7, satRules = r7 === 'saturn' || s7 === 9 || s7 === 10;
   const satVenus = [0, 90, 180].some(x => Math.abs(angleDiff(P.saturn.lon, P.venus.lon) - x) <= 6);

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { useStore } from '../store';
-import { answer, detectIntent, Action } from '../engine/advisor';
+import { answer, detectIntent, Action, Intent } from '../engine/advisor';
 import { useLayout } from './kit';
 import { C, F } from '../theme';
 
@@ -86,6 +86,8 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const idRef = useRef(1);
+  // Sohbet bağlamı: son konu ve kaçıncı sayfa ("daha fazla" için)
+  const ctxRef = useRef<{ intent?: Intent; page: number }>({ page: 0 });
   const scroll = useRef<any>(null);
   // Tanıtım balonu: açılıştan kısa süre sonra bir kez
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
   useEffect(() => { setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 60); }, [msgs, open]);
-  useEffect(() => { setMsgs([]); }, [profile?.id]);
+  useEffect(() => { setMsgs([]); ctxRef.current = { page: 0 }; }, [profile?.id]);
 
   if (!chart || !profile) return null;
   const first = profile.name?.split(' ')[0] || '';
@@ -112,7 +114,9 @@ export default function Kiron({ onNav }: { onNav: (to: string) => void }) {
     // Kısa bir "yazıyor" anı: bot hissi ve hesaplar için zaman
     setTimeout(() => {
       try {
-        const a = answer(detectIntent(text), chart, profile, lang, text, people);
+        const it = detectIntent(text, ctxRef.current.intent);
+        const a = answer(it, chart, profile, lang, text, people, ctxRef.current.intent, it === 'more' ? ctxRef.current.page : 0);
+        if (it !== 'why') ctxRef.current = { intent: a.intent === 'help' ? ctxRef.current.intent : a.intent, page: a.page };
         setMsgs(m => [...m, { id: idRef.current++, role: 'bot', paras: a.paras, actions: a.actions, suggest: a.suggest }]);
       } finally { setBusy(false); }
     }, 700);

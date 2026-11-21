@@ -12,7 +12,9 @@ import { destinyMatrix } from './matrix';
 import { yearReport } from '../content/lillyYear';
 import { computeDaily, synastry } from '../content/forecast';
 import { mirrorLines } from '../content/mirror';
-import { marriageWindows, spouseProfile } from '../content/spouse';
+import { marriageWindows, spouseProfile, spouseJob, ageHint } from '../content/spouse';
+import { LILLY_SIGN_FORM, LILLY_PLANET_FORM } from '../content/lilly';
+import { SIGN_RULERS } from './astro';
 import { celebTwins, cityPicks } from '../content/explore';
 import { ARCANA } from '../content/arcana';
 import { EVENTS } from '../content/lifeEvents';
@@ -23,22 +25,36 @@ import type { Profile } from '../store';
 
 type Lang = 'tr' | 'en';
 export type Intent = 'year' | 'month' | 'today' | 'love' | 'marriage' | 'spouse' | 'career' | 'money' | 'home' | 'travel' | 'change'
-  | 'self' | 'bigthree' | 'retro' | 'celeb' | 'city' | 'matrix' | 'compat' | 'bestday' | 'yesno' | 'thanks' | 'help';
+  | 'self' | 'bigthree' | 'retro' | 'celeb' | 'city' | 'matrix' | 'compat' | 'bestday' | 'yesno' | 'thanks' | 'help'
+  | 'spouseLook' | 'spouseJob' | 'spouseMeet' | 'spouseAge' | 'why' | 'more';
 export interface Action { label: string; to: string }
-export interface Answer { intent: Intent; paras: string[]; actions: Action[]; suggest: string[] }
+export interface Answer { intent: Intent; paras: string[]; actions: Action[]; suggest: string[]; page: number }
 
 const has = (q: string, ...w: string[]) => w.some(x => q.includes(x));
-export function detectIntent(raw: string): Intent {
-  const q = ' ' + raw.toLocaleLowerCase('tr').normalize('NFC') + ' ';
-  const yesno = /(^|\s)(mı|mi|mu|mü|mıyım|miyim|muyum|müyüm|mısın|misin|mıdır|midir)\s*\??\s*$/.test(q) || /\b(will i|should i|is it|am i)\b/.test(q);
+const LOVE_CTX: Intent[] = ['love', 'marriage', 'spouse', 'spouseLook', 'spouseJob', 'spouseMeet', 'spouseAge'];
+/** Sorudan konu çıkarımı. `last` bir önceki cevabın konusudur: "peki ne zaman?", "sarışın mı?" gibi devam sorularını onunla anlarız. */
+export function detectIntent(raw: string, last?: Intent): Intent {
+  const q = ' ' + raw.toLocaleLowerCase('tr').normalize('NFC').replace(/[?!.,]+/g, ' ') + ' ';
+  // Gerçek evet/hayır olay sorusu: fiil + soru eki ("girecek miyim", "dönecek mi", "olur mu", "evlenir miyim")
+  const yesno = /[a-zçğıöşü]+(acak|ecek|acağ|eceğ|ır|ir|ur|ür|ar|er|abil|ebil)[a-zçğıöşü]*\s+(mı|mi|mu|mü)[a-zçğıöşü]*\s*$/.test(q.trimEnd() + ' ') || /\b(will i|will they|will it|should i)\b/.test(q);
   const when = has(q, 'ne zaman', 'when');
+  const spouseCtx = has(q, 'eşim', 'eşimin', 'partnerim', 'sevgilim', 'müstakbel', 'evleneceğim kişi', 'kocam', 'karım', 'spouse', 'partner', 'husband', 'wife') || (last !== undefined && LOVE_CTX.includes(last));
+  // Eşin görünüşü, mesleği, tanışma yeri, yaşı (bağlamla ya da doğrudan)
+  if (has(q, 'sarışın', 'sarı saç', 'esmer', 'kumral', 'kızıl', 'saç', 'göz', 'boy', 'uzun mu', 'kısa mı', 'zayıf', 'kilolu', 'ince mi', 'dolgun', 'yakışıklı', 'güzel mi', 'nasıl görün', 'görünüş', 'tipi', 'ten ', 'blond', 'tall', 'eyes', 'hair', 'look like')) return 'spouseLook';
+  if (spouseCtx && has(q, 'ne iş', 'meslek', 'işi ne', 'çalışıyor', 'job', 'profession')) return 'spouseJob';
+  if (has(q, 'nerede tanış', 'nasıl tanış', 'nerde tanış', 'where will we meet', 'how will we meet')) return 'spouseMeet';
+  if (spouseCtx && has(q, 'yaş', 'benden büyük', 'benden küçük', 'older', 'younger', 'age')) return 'spouseAge';
+  // Devam soruları
+  if (last && has(q, ' neden ', ' niye ', 'nereden çıkar', 'nasıl yani', 'neye göre', ' why ', 'how come')) return 'why';
+  if (last && has(q, 'daha fazla', 'devam', 'başka', 'detay', 'ayrıntı', ' more ', 'tell me more')) return 'more';
+  if (last && LOVE_CTX.includes(last) && when && q.trim().split(/\s+/).length <= 4) return 'marriage';
   if (has(q, 'teşekkür', 'sağol', 'sağ ol', 'eyvallah', 'thank')) return 'thanks';
   if (has(q, 'ünlü', 'celeb', 'ikiz')) return 'celeb';
   if (has(q, 'şehir', 'nerede yaşa', 'hangi ülke', 'city', 'where should i live')) return 'city';
   if (has(q, 'matris', 'arkana', 'matrix', 'tarot')) return 'matrix';
   if (has(q, 'retro', 'geri gid')) return 'retro';
   if (has(q, 'uyum', 'uyuşur', 'anlaşır', 'compat', 'match')) return 'compat';
-  if (has(q, 'eşim', 'partnerim nasıl', 'nasıl biriyle', 'kiminle evlen', 'future spouse', 'who will i marry', 'my spouse')) return 'spouse';
+  if (has(q, 'eşim', 'partnerim', 'nasıl biriyle', 'kiminle evlen', 'future spouse', 'who will i marry', 'my spouse')) return 'spouse';
   if (has(q, 'evlen', 'evlilik', 'nikah', 'nişan', 'marry', 'marriage', 'wedding')) return yesno && !when ? 'yesno' : 'marriage';
   if (has(q, 'hangi gün', 'iyi gün', 'en iyi gün', 'best day')) return 'bestday';
   if (yesno && !when && !has(q, 'nasıl', 'how', 'ne bekli')) return 'yesno';
@@ -53,6 +69,8 @@ export function detectIntent(raw: string): Intent {
   if (has(q, 'değişim', 'dönüm', 'kriz', 'change', 'turning')) return 'change';
   if (has(q, 'ben kimim', 'kişilik', 'karakter', 'beni anlat', 'kendimi', 'nasıl biriyim', 'who am i', 'personality', 'describe me')) return 'self';
   if (has(q, 'yıl', 'sene', 'gelecek', 'ne bekli', 'year', 'future', '2027', '2028')) return 'year';
+  // Aşk/eş konuşmasının ortasında kısa bir "… mı?" sorusu: eşle ilgili sayılır ("zengin mi", "iyi biri mi")
+  if (last && LOVE_CTX.includes(last) && /\s(mı|mi|mu|mü)\s*$/.test(q.trimEnd() + ' ')) return 'spouse';
   return 'help';
 }
 
@@ -66,12 +84,12 @@ const first = (t: string) => {
     while ((cur.split('“').length - cur.split('”').length) > 0 && i + 1 < parts.length) cur += ' ' + parts[++i];
     joined.push(cur);
   }
-  return joined.find(x => !/astrolojide|in astrology|astrolog(y|ers)/i.test(x)) ?? joined[0] ?? '';
+  return joined.find(x => !/astrolojide|in astrology|astrolog(y|ers)|bakılır|okunur|is read from|look at the/i.test(x)) ?? joined[0] ?? '';
 };
 const lc = (s: string) => s.charAt(0).toLocaleLowerCase('tr') + s.slice(1);
 const uc = (s: string) => s.charAt(0).toLocaleUpperCase('tr') + s.slice(1);
 
-export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lang, question = '', people: Profile[] = []): Answer {
+export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lang, question = '', people: Profile[] = [], last?: Intent, page = 0): Answer {
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   const li = lang === 'tr' ? 0 : 1;
   const fmtM = (d: Date) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long', year: 'numeric' }).format(d);
@@ -106,8 +124,8 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
   };
   const winShort = (w: Window) => `✦ ${uc(when(w))}: ${TOPIC[w.topic][li]} (${power(w)}${w.gen ? L(', yaşıtlarınla ortak', ', shared with your age group') : ''})${gist(w) ? ' — ' + lc(gist(w)) : ''}`;
   const upcoming = (topics: Topic[] | null, months: number, n: number) => {
-    const until = now.getTime() + months * 30.44 * 864e5;
-    return all().filter(w => (!topics || topics.includes(w.topic)) && w.end > now && w.start.getTime() < until).sort((a, b) => a.start.getTime() - b.start.getTime()).slice(0, n);
+    const until = now.getTime() + months * (page ? 3 : 1) * 30.44 * 864e5;
+    return all().filter(w => (!topics || topics.includes(w.topic)) && w.end > now && w.start.getTime() < until).sort((a, b) => a.start.getTime() - b.start.getTime()).slice(page * n, page * n + n);
   };
   const pdSoon = (years: number, angles: string[]) => primaryDirections(chart).filter(d => d.date > now && d.date.getTime() < now.getTime() + years * 365.25 * 864e5 && angles.includes(d.angle))[0];
   const noTime = () => {
@@ -218,7 +236,7 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
     case 'self': {
       const ms = mirrorLines(chart);
       say('Haritan senin hakkında bana şunları fısıldıyor:', 'Your chart whispers this about you:');
-      ms.slice(0, 3).forEach(m => paras.push(`✦ ${first(m.text[lang])}`));
+      ms.slice(page * 3, page * 3 + 3).forEach(m => paras.push(`✦ ${first(m.text[lang])}`));
       say(`Kendini bul’da kaydırabileceğin ${ms.length} cümle var.`, `There are ${ms.length} lines to swipe in Find yourself.`);
       go('Kendini bul', 'Find yourself', 'explore:mirror');
       sug('Burcum ne?|Ünlü ikizim kim?|Aşkta nasılım?', 'What are my signs?|Who is my celebrity twin?|How am I in love?');
@@ -301,11 +319,117 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
       sug('Bu yıl|Aşk hayatım', 'This year|My love life');
       break;
     }
+    case 'spouseLook': {
+      if (!timed) { say('Eşinin görünüşü 7. evin burcundan okunur; bunun için doğum saatin lazım.', 'Your spouse’s looks come from the 7th house sign; I need your birth time.'); go('Saat düzeltme', 'Rectification', 'chart:rectify'); break; }
+      const s7 = Math.floor(chart.cusps[6] / 30), r7 = SIGN_RULERS[s7];
+      const strip = (x?: string) => (x ?? '').replace(/^[^:]{2,20}:\s*/, '');
+      const signT = strip(LILLY_SIGN_FORM[s7].tr), planT = strip(LILLY_PLANET_FORM[r7]?.tr);
+      const segs = (t: string) => t.split(/[,;]/).map(x => x.trim().replace(/\.$/, '')).filter(Boolean);
+      const all2 = [...segs(signT), ...segs(planT)];
+      const find = (re: RegExp) => all2.filter(x => re.test(x));
+      const qq = question.toLocaleLowerCase('tr');
+      const quote = (xs: string[]) => xs.slice(0, 2).map(x => `“${x}”`).join(L(' ve ', ' and '));
+      const wantsHair = /sarı|saç|kumral|kızıl|blond|hair/.test(qq), wantsDark = /esmer|koyu|siyah|kara/.test(qq), wantsHeight = /boy|uzun|kısa|tall|short/.test(qq);
+      const wantsEyes = /göz|eye/.test(qq), wantsBody = /zayıf|kilolu|ince|dolgun|fit|kilo/.test(qq), wantsSkin = /ten|esmer|beyaz/.test(qq);
+      let done = false;
+      if (wantsHair || (wantsDark && !wantsSkin)) {
+        const hair = find(/saç/); const light = hair.filter(x => /sarı|açık|kumral|kestane|sarımsı/.test(x)), dark = hair.filter(x => /koyu|siyah|kara/.test(x) && !/açık/.test(x));
+        const askLight = /sarı|blond|kumral/.test(qq) && !wantsDark;
+        if (!hair.length) say('Saç rengi için haritan net bir şey söylemiyor.', 'Your chart doesn’t say much about hair colour.');
+        else if (light.length && !dark.length) say(askLight ? `Büyük ihtimalle evet ✦ Tarif ${quote(light)} diyor; sarışın ya da açık kumral bir tip.` : `Pek sanmıyorum; tarif ${quote(light)} diyor, yani açık renk saçlı biri.`, askLight ? `Most likely yes ✦ The description says ${quote(light)}: blond or light brown.` : `Not really; it says ${quote(light)}, so light-haired.`);
+        else if (dark.length && !light.length) say(askLight ? `Pek değil; tarif ${quote(dark)} diyor. Sarışından çok koyu saçlı biri görünüyor.` : `Evet, büyük ihtimalle ✦ Tarif ${quote(dark)} diyor.`, askLight ? `Not really; it says ${quote(dark)}. Darker hair rather than blond.` : `Most likely yes ✦ It says ${quote(dark)}.`);
+        else say(`Karışık sinyal: burç ${quote(segs(signT).filter(x => /saç/.test(x)))}, partnerini temsil eden gezegen ${quote(segs(planT).filter(x => /saç/.test(x)))} diyor. Arada bir ton, mesela açık kahve ya da kumral olabilir.`, `Mixed signal: the sign says ${quote(segs(signT).filter(x => /saç/.test(x)))}, the planet says ${quote(segs(planT).filter(x => /saç/.test(x)))}. Something in between is likely.`);
+        done = true;
+      }
+      if (wantsHeight) {
+        const h = find(/boy|uzun|kısa|ufak/).filter(x => !/saç|yüz|boyun|kol|parmak|burun/.test(x) || /boy/.test(x)); const tall = h.filter(x => /uzun boy|uzun ve|dik|üst(ü|ün)nde|uzun,/.test(x) && !/değil/.test(x)), short = h.filter(x => /kısa|ufak|değil/.test(x));
+        if (tall.length && !short.length) say(`Boyu için: uzun ya da ortanın üstü ✦ ${quote(tall)}.`, `Height: tall or above average ✦ ${quote(tall)}.`);
+        else if (short.length && !tall.length) say(`Boyu için: çok uzun değil ✦ ${quote(short)}.`, `Height: not very tall ✦ ${quote(short)}.`);
+        else if (tall.length && short.length) say(`Orta boy civarı: burç ${quote(tall)}, gezegen ${quote(short)} diyor; ikisinin ortası.`, `Around average height: one says ${quote(tall)}, the other ${quote(short)}.`);
+        else if (h.length) say(`Boy konusunda tarif şöyle: ${quote(h)}.`, `On height the description says: ${quote(h)}.`);
+        else say('Boy hakkında net bir işaret yok.', 'No clear sign about height.');
+        done = true;
+      }
+      if (wantsEyes) { const e = find(/göz/); say(e.length ? `Gözleri: ${quote(e)}.` : 'Gözler hakkında net bir işaret yok.', e.length ? `Eyes: ${quote(e)}.` : 'No clear sign about the eyes.'); done = true; }
+      if (wantsBody) { const b = find(/ince|zayıf|dolgun|iri|güçlü|kompakt|yapı/); say(b.length ? `Yapısı: ${quote(b)}.` : 'Beden yapısı hakkında net bir işaret yok.', b.length ? `Build: ${quote(b)}.` : 'No clear sign about build.'); done = true; }
+      if (wantsSkin && !done) {
+        const t = find(/ten/); const dark = t.filter(x => /esmer|koyu|buğday|yanmış|zeytin|kızıl/.test(x)), light = t.filter(x => /açık|solgun|beyaz|berrak|pembe/.test(x));
+        const askDark = /esmer|koyu/.test(qq);
+        if (!t.length) say('Ten rengi hakkında net bir işaret yok.', 'No clear sign about skin tone.');
+        else if (askDark && dark.length && !light.length) say(`Evet, büyük ihtimalle ✦ Tarif ${quote(dark)} diyor.`, `Most likely yes ✦ It says ${quote(dark)}.`);
+        else if (askDark && light.length && !dark.length) say(`Pek sanmıyorum; tarif ${quote(light)} diyor, yani açık tenli biri.`, `Not really; it says ${quote(light)}, so fair-skinned.`);
+        else say(`Teni: ${quote(t)}.`, `Skin: ${quote(t)}.`);
+        done = true;
+      }
+      if (/güzel|yakışıklı|çekici|hoş|tatlı|handsome|beautiful|pretty/.test(qq) && !done) {
+        const b = find(/güzel|sevimli|hoş|yakışıklı|çekici|parlak|canlı/);
+        say(b.length ? `Haritan bu konuda cömert ✦ Tarif ${quote(b)} diyor.` : 'Tarif güzellikten çok karakteri öne çıkarıyor; çekicilik onun duruşunda.', b.length ? `Your chart is generous here ✦ It says ${quote(b)}.` : 'The description stresses character more than looks; the charm is in their presence.');
+        done = true;
+      }
+      if (!done) say(`Haritana göre eşinin tarifi: ${lc(signT).replace(/\.$/, '')}.`, `Your spouse’s description: ${lc(strip(LILLY_SIGN_FORM[s7].en)).replace(/\.$/, '')}.`);
+      say('Bunlar eğilim; gerçek kişi bazılarını taşır, hepsini değil.', 'These are tendencies; the real person carries some of them, not all.');
+      go('Gelecekteki eşin', 'Future spouse', 'love:spouse');
+      sug('Ne iş yapıyor?|Nerede tanışacağız?|Ne zaman evlenirim?', 'What does she/he do?|Where will we meet?|When will I marry?');
+      break;
+    }
+    case 'spouseJob': {
+      const j = spouseJob(chart);
+      say(j ? `Eşinin işi için ipucu: ${first(j.text[lang])}` : 'Eşinin mesleğini söylemem için doğum saatin lazım.', j ? `A hint about your spouse’s work: ${first(j.text[lang])}` : 'I need your birth time to talk about your spouse’s work.');
+      const sp = spouseProfile(chart, lang)?.find(x => x.id === 'life');
+      if (sp) paras.push(first(sp.text[lang]));
+      go('Gelecekteki eşin', 'Future spouse', 'love:spouse');
+      sug('Nerede tanışacağız?|Sarışın mı?|Ne zaman evlenirim?', 'Where will we meet?|Are they blond?|When will I marry?');
+      break;
+    }
+    case 'spouseMeet': {
+      const sp = spouseProfile(chart, lang)?.find(x => x.id === 'meet');
+      say(sp ? `Tanışma yeriniz için ipucu: ${first(sp.text[lang])}` : 'Tanışma yerini söylemem için doğum saatin lazım.', sp ? `A hint about where you’ll meet: ${first(sp.text[lang])}` : 'I need your birth time to say where you’ll meet.');
+      if (timed && chart.vertex !== null) say(`Bir de kader noktan (Vertex) ${SIGNS[Math.floor(chart.vertex / 30)].tr} burcunda; “kader gibi” karşılaşmalar bu burcun tarzında gelir.`, `Your Vertex (point of fate) is in ${SIGNS[Math.floor(chart.vertex / 30)].en}; fated meetings come in that sign’s style.`);
+      go('Gelecekteki eşin', 'Future spouse', 'love:spouse');
+      sug('Ne zaman evlenirim?|Ne iş yapıyor?', 'When will I marry?|What does she/he do?');
+      break;
+    }
+    case 'spouseAge': {
+      if (!timed) { say('Yaş farkı 7. evden okunur; doğum saatin lazım.', 'Age difference comes from the 7th house; I need your birth time.'); break; }
+      const s7 = Math.floor(chart.cusps[6] / 30), h = ageHint(chart, SIGN_RULERS[s7], s7);
+      say(h ? first(h[lang]) : 'Yaş farkı konusunda haritanda belirgin bir işaret yok; büyük ihtimalle yaşıtın gibi biri.', h ? first(h[lang]) : 'No marked sign about age difference; probably someone close to your age.');
+      go('Gelecekteki eşin', 'Future spouse', 'love:spouse');
+      sug('Sarışın mı?|Ne zaman evlenirim?', 'Are they blond?|When will I marry?');
+      break;
+    }
+    case 'why': {
+      const W: Partial<Record<Intent, [string, string]>> = {
+        year: ['Yılın teması yıllık profeksiyondan (her yaş bir eve denk gelir) ve Güneş dönüşünden geliyor. Tarihler ise hayat takviminden: transit, progresyon, solar arc, primer direksiyon ve tutulmaların aynı aylarda buluştuğu yerler.', 'The year’s theme comes from the annual profection and the solar return; the dates come from your life calendar, where transits, progressions, solar arcs, primary directions and eclipses meet.'],
+        marriage: ['Evlilik pencerelerini; Venüs, 7. ev ve yöneticisi, Juno, Vertex, Evlilik noktası ve klasik eş gezegenine gelen transit, progresyon, solar arc ve primer direksiyonlardan buluyorum. Ne kadar çok teknik aynı aya düşerse o kadar güçlü sayıyorum.', 'I find marriage windows from transits, progressions, solar arcs and primary directions to Venus, the 7th house and its ruler, Juno, the Vertex, the Lot of Marriage and the classical spouse planet. The more techniques land on the same months, the stronger.'],
+        love: ['Aşk tarafını Venüs’ün burcundan ve evinden, dönemleri ise hayat takvimindeki aşk işaretlerinden okuyorum.', 'I read love from Venus’s sign and house, and the periods from the love signs in your life calendar.'],
+        spouse: ['Eşini 7. evin burcundan, o evin yöneticisinden ve yöneticinin bulunduğu evden okuyorum; klasik astrolojinin yöntemi bu.', 'I read your spouse from the 7th house sign, its ruler and the house the ruler sits in; that’s the classical method.'],
+        spouseLook: ['Görünüş tarifi, 17. yüzyıl astroloğu William Lilly’nin burç ve gezegen tariflerinden geliyor: 7. evin burcu ve o evin yöneticisi.', 'The look comes from William Lilly’s 17th-century sign and planet descriptions: your 7th house sign and its ruler.'],
+        career: ['Kariyeri MC’nin (tepe noktası) burcundan, dönemleri hayat takvimindeki kariyer işaretlerinden ve MC’ye gelen primer direksiyonlardan okuyorum.', 'I read career from your MC sign, and periods from career signs and primary directions to the MC.'],
+        today: ['Bugünü, gökteki gezegenlerin doğum haritana yaptığı açılardan ve Ay’ın senin doğum Güneşine göre evresinden hesaplıyorum.', 'I calculate today from the sky’s aspects to your birth chart and the Moon’s phase relative to your birth Sun.'],
+        yesno: ['Evet/hayır sorularında soruyu sorduğun anın haritasını (horary) kuruyorum: seni ve konuyu temsil eden gezegenlerin buluşup buluşmadığına bakıyorum.', 'For yes/no questions I cast the chart of the moment you asked (horary) and check whether the planets for you and the matter meet.'],
+        self: ['Bu cümleler “Kendini bul” bölümünden; her biri haritandaki bir birleşime (açı, ev, burç) bağlı.', 'These lines come from “Find yourself”; each is tied to a combination in your chart.'],
+      };
+      const w = (last && W[last]) || W[last && LOVE_CTX.includes(last) ? 'spouse' : 'year']!;
+      paras.push(w[li]);
+      sug('Bu yıl|Aşk hayatım|Beni anlat', 'This year|My love life|Describe me');
+      break;
+    }
+    case 'more': {
+      if (last && last !== 'more' && last !== 'why') return answer(last, chart, profile, lang, question, people, undefined, page + 1);
+      say('Neyin devamını istersin? Aşağıdan bir konu seç.', 'More of what? Pick a topic below.');
+      break;
+    }
     case 'thanks': say('Rica ederim ✦ Başka ne merak ediyorsun?', 'You’re welcome ✦ What else are you curious about?'); break;
     default:
       say(`${name ? name + ', ' : ''}bunu tam anlayamadım. Bana şunları sorabilirsin: bu yıl, bu ay, bugün, aşk, ne zaman evleneceğin, eşinin nasıl biri olduğu, kariyer, para, burcun, ünlü ikizin, sana iyi gelen şehir, retrolar ya da “… olacak mı?” gibi evet/hayır soruları.`,
         `${name ? name + ', ' : ''}I didn’t quite get that. You can ask me about this year, this month, today, love, when you’ll marry, your spouse, career, money, your signs, celebrity twin, best city, retrogrades, or yes/no questions.`);
   }
   if (!suggest.length) sug('Bu yıl beni ne bekliyor?|Aşk hayatım|Bugün nasıl?', 'What does this year hold?|My love life|How is today?');
-  return { intent, paras, actions, suggest };
+  if (page > 0) {
+    const items = paras.filter(x => x.startsWith('✦'));
+    paras.length = 0;
+    if (items.length) { paras.push(L('Devamı:', 'More:')); paras.push(...items); }
+    else paras.push(L('Bu konuda gösterecek başka bir şey kalmadı; ayrıntıların tamamı aşağıdaki ekranda.', 'Nothing more to show here; the full details are on the screen below.'));
+  }
+  return { intent, paras, actions, suggest, page };
 }
