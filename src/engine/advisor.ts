@@ -1,7 +1,7 @@
 // Kiron: Sentor'un sohbet botu. Yapay zekâ değildir: uygulamanın zaten hesapladığı her şeyi (hayat takvimi, profeksiyon,
 // Güneş dönüşü, primer direksiyon, transitler, horary, "Kendini bul" cümleleri, ünlü ikizler, şehirler, matris, uyum…)
 // sorulan soruya göre seçer ve kısa, sohbet diliyle özetler. Her cevabın altında ayrıntısının bulunduğu ekrana bağlantı vardır.
-import type { Chart } from './astro';
+import type { BodyId, Chart } from './astro';
 import { computeChart } from './astro';
 import { lifeTimeline, Window, Topic } from './timeline';
 import { personCtx } from './person';
@@ -21,16 +21,59 @@ import { EVENTS } from '../content/lifeEvents';
 import { QUESTIONS, VERDICT_TEXT, Q_LINE } from '../content/horaryText';
 import { SIGNS, BODIES, HOUSES, SIGN_KEYWORDS } from '../content/base';
 import { bigCities } from '../content/cities';
+import { TERMS } from '../content/glossary';
+import { placementText } from '../content/placements';
+import { buildStyleReport, STYLE } from '../content/style';
+import { PLANET_HOUSE } from '../content/houseTexts';
 import type { Profile } from '../store';
 
 type Lang = 'tr' | 'en';
 export type Intent = 'year' | 'month' | 'today' | 'love' | 'marriage' | 'spouse' | 'career' | 'money' | 'home' | 'travel' | 'change'
   | 'self' | 'bigthree' | 'retro' | 'celeb' | 'city' | 'matrix' | 'compat' | 'bestday' | 'yesno' | 'thanks' | 'help'
-  | 'spouseLook' | 'spouseJob' | 'spouseMeet' | 'spouseAge' | 'why' | 'more';
+  | 'spouseLook' | 'spouseJob' | 'spouseMeet' | 'spouseAge' | 'why' | 'more'
+  | 'placement' | 'house' | 'sign' | 'term' | 'search' | 'style';
 export interface Action { label: string; to: string }
 export interface Answer { intent: Intent; paras: string[]; actions: Action[]; suggest: string[]; page: number }
 
 const has = (q: string, ...w: string[]) => w.some(x => q.includes(x));
+// ---------------- Dil yardımcıları: kaba Türkçe kök bulma ve yazım hatası toleransı ----------------
+const SUFFIX = ['larının', 'lerinin', 'ların', 'lerin', 'ları', 'leri', 'lar', 'ler', 'ımın', 'imin', 'umun', 'ümün', 'nın', 'nin', 'nun', 'nün', 'dan', 'den', 'tan', 'ten', 'ım', 'im', 'um', 'üm', 'ın', 'in', 'un', 'ün', 'da', 'de', 'ta', 'te', 'yı', 'yi', 'yu', 'yü', 'sı', 'si', 'su', 'sü', 'ı', 'i', 'u', 'ü', 'a', 'e', 'y'];
+const STOP = new Set(['mıyım', 'miyim', 'muyum', 'müyüm', 'mısın', 'misin', 'mıdır', 'midir', 'hep', 'hiç', 'neden', 'niye', 'ben', 'beni', 'bana', 'benim', 'sen', 'seni', 'sana', 'bir', 'bu', 'şu', 'o', 've', 'ile', 'mı', 'mi', 'mu', 'mü', 'ne', 'nasıl', 'neden', 'için', 'gibi', 'daha', 'çok', 'peki', 'acaba', 'ama', 'de', 'da', 'ki', 'var', 'yok', 'olur', 'olacak', 'olacağım', 'mısın', 'misin', 'kiron', 'the', 'is', 'my', 'me', 'i', 'a', 'and', 'what', 'how']);
+export const stem = (w: string) => { let x = w; for (let k = 0; k < 2; k++) { const sfx = SUFFIX.find(f => x.length - f.length >= 3 && x.endsWith(f)); if (!sfx) break; x = x.slice(0, -sfx.length); } return x; };
+export const tokens = (q: string) => q.toLocaleLowerCase('tr').normalize('NFC').replace(/[^a-zçğıöşü0-9\s]/g, ' ').split(/\s+/).filter(w => w && !STOP.has(w));
+const lev = (a: string, b: string) => { const m = a.length, n = b.length; const d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[m][n]; };
+/** Kelime bir anahtar kelimeye benziyor mu: kök eşleşmesi ya da tek harf yazım hatası */
+const like = (w: string, kw: string) => {
+  const a = stem(w), b = stem(kw);
+  if (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a))) return true;
+  if (a === b && a.length >= 2) return true;
+  return b.length >= 5 && a.length >= 4 && lev(a.slice(0, b.length + 1), b) <= 1;
+};
+const INTENT_KW: Partial<Record<Intent, string[]>> = {
+  year: ['yıl', 'sene', 'gelecek', 'önümüzdeki'], month: ['aylık'], today: ['bugün', 'günlük'],
+  love: ['aşk', 'sevgili', 'ilişki', 'flört', 'romantik', 'kalp', 'sevgi'], marriage: ['evlilik', 'evlenmek', 'nikah', 'düğün', 'nişan'],
+  spouse: ['partner', 'müstakbel'], career: ['kariyer', 'iş', 'meslek', 'terfi', 'çalışmak', 'patron', 'başvuru'],
+  money: ['para', 'maaş', 'zengin', 'kazanç', 'borç', 'yatırım', 'birikim'], home: ['ev', 'taşınmak', 'aile', 'anne', 'baba'],
+  travel: ['yolculuk', 'seyahat', 'tatil', 'yurtdışı', 'eğitim', 'okul', 'üniversite', 'sınav'], change: ['değişim', 'dönüm', 'kriz'],
+  self: ['kişilik', 'karakter', 'huy', 'kimim'], style: ['renk', 'stil', 'giyim', 'kıyafet', 'tarz', 'makyaj', 'parfüm', 'koku'], celeb: ['ünlü'], city: ['şehir', 'ülke', 'memleket'], matrix: ['matris', 'arkana'],
+  retro: ['retro'], compat: ['uyum', 'uyumlu'], bestday: ['uğurlu', 'şanslı'],
+};
+const scoreIntents = (q: string) => {
+  const ws = tokens(q);
+  return (Object.entries(INTENT_KW) as [Intent, string[]][]).map(([k, kws]) => ({ k, s: ws.reduce((a, w) => a + (kws.some(kw => like(w, kw)) ? 1 : 0), 0) })).filter(x => x.s > 0).sort((a, b) => b.s - a.s);
+};
+const PLANET_WORDS: [string[], BodyId | 'asc' | 'mc'][] = [
+  [['güneş', 'gunes'], 'sun'], [['ayım', 'ayın', 'ay burc'], 'moon'], [['merkür', 'merkur'], 'mercury'], [['venüs', 'venus'], 'venus'], [['mars'], 'mars'],
+  [['jüpiter', 'jupiter'], 'jupiter'], [['satürn', 'saturn'], 'saturn'], [['uranüs', 'uranus'], 'uranus'], [['neptün', 'neptun'], 'neptune'], [['plüton', 'pluton', 'pluto'], 'pluto'],
+  [['kiron', 'chiron'], 'chiron'], [['lilith'], 'lilith'], [['juno'], 'juno'], [['ceres'], 'ceres'], [['kuzey düğüm', 'ay düğüm', 'node'], 'node'], [['yükselen', 'ascendant'], 'asc'], [[' mc ', 'tepe noktası', 'midheaven'], 'mc'],
+];
+const SIGN_WORDS = ['koç', 'boğa', 'ikizler', 'yengeç', 'aslan', 'başak', 'terazi', 'akrep', 'yay', 'oğlak', 'kova', 'balık'];
+const ORD = ['birinci', 'ikinci', 'üçüncü', 'dördüncü', 'beşinci', 'altıncı', 'yedinci', 'sekizinci', 'dokuzuncu', 'onuncu', 'on birinci', 'on ikinci'];
+const planetIn = (q: string) => PLANET_WORDS.find(([ws]) => ws.some(w => q.includes(w)))?.[1];
+const houseIn = (q: string) => { const m = q.match(/(\d{1,2})\s*\.?\s*ev/); if (m && +m[1] >= 1 && +m[1] <= 12) return +m[1]; const o = [...ORD].reverse().findIndex(w => q.includes(w + ' ev')); return o >= 0 ? 12 - o : 0; };
+const signIn = (q: string) => SIGN_WORDS.findIndex(w => new RegExp(`(^|\\s)${w}`).test(q));
+const termIn = (q: string) => { const ws = tokens(q); let best = -1, bs = 0; TERMS.forEach((t, i) => { const tw = tokens(t.t[0] + ' ' + t.t[1]); const sc = tw.filter(x => ws.some(w => like(w, x))).length / Math.max(1, tw.length); if (sc > bs) { bs = sc; best = i; } }); return bs >= 0.5 ? best : -1; };
+
 const LOVE_CTX: Intent[] = ['love', 'marriage', 'spouse', 'spouseLook', 'spouseJob', 'spouseMeet', 'spouseAge'];
 /** Sorudan konu çıkarımı. `last` bir önceki cevabın konusudur: "peki ne zaman?", "sarışın mı?" gibi devam sorularını onunla anlarız. */
 export function detectIntent(raw: string, last?: Intent): Intent {
@@ -49,6 +92,9 @@ export function detectIntent(raw: string, last?: Intent): Intent {
   if (last && has(q, 'daha fazla', 'devam', 'başka', 'detay', 'ayrıntı', ' more ', 'tell me more')) return 'more';
   if (last && LOVE_CTX.includes(last) && when && q.trim().split(/\s+/).length <= 4) return 'marriage';
   if (has(q, 'teşekkür', 'sağol', 'sağ ol', 'eyvallah', 'thank')) return 'thanks';
+  if (has(q, 'nedir', 'ne demek', 'ne anlama', 'ne işe yarar', 'what is', 'what does', 'anlamı ne') && termIn(q) >= 0) return 'term';
+  if (planetIn(q) && !has(q, 'retro') && (has(q, 'nerede', 'hangi', 'burc', 'evde', 'evim', 'ne anlat', 'ne diyor', 'nasıl') || /(ım|im|um|üm|m)\b/.test(q))) return 'placement';
+  if (houseIn(q)) return 'house';
   if (has(q, 'ünlü', 'celeb', 'ikiz')) return 'celeb';
   if (has(q, 'şehir', 'nerede yaşa', 'hangi ülke', 'city', 'where should i live')) return 'city';
   if (has(q, 'matris', 'arkana', 'matrix', 'tarot')) return 'matrix';
@@ -59,6 +105,8 @@ export function detectIntent(raw: string, last?: Intent): Intent {
   if (has(q, 'hangi gün', 'iyi gün', 'en iyi gün', 'best day')) return 'bestday';
   if (yesno && !when && !has(q, 'nasıl', 'how', 'ne bekli')) return 'yesno';
   if (has(q, 'burcum', 'yükselen', 'ay burcu', 'büyük üçlü', 'my sign', 'rising', 'big three')) return 'bigthree';
+  if (has(q, 'renk', 'reng', 'stil', 'giyin', 'kıyafet', 'tarzım', 'makyaj', 'parfüm', 'colour', 'color', 'style', 'outfit')) return 'style';
+  if (has(q, 'anne', 'baba', 'kardeş', 'ailem', 'ailemle', 'mother', 'father', 'family') && !yesno) return 'home';
   if (has(q, 'bugün', 'today', 'günüm')) return 'today';
   if (has(q, 'bu ay', 'aylık', 'this month')) return 'month';
   if (has(q, 'aşk', 'sevgili', 'ilişki', 'flört', 'love', 'relationship', 'dating')) return 'love';
@@ -71,13 +119,20 @@ export function detectIntent(raw: string, last?: Intent): Intent {
   if (has(q, 'yıl', 'sene', 'gelecek', 'ne bekli', 'year', 'future', '2027', '2028')) return 'year';
   // Aşk/eş konuşmasının ortasında kısa bir "… mı?" sorusu: eşle ilgili sayılır ("zengin mi", "iyi biri mi")
   if (last && LOVE_CTX.includes(last) && /\s(mı|mi|mu|mü)\s*$/.test(q.trimEnd() + ' ')) return 'spouse';
-  return 'help';
+  // Yazım hatası toleranslı konu tahmini ("kariyr", "evlenicem", "aşkk")
+  const sc = scoreIntents(raw);
+  if (sc.length) return sc[0].k;
+  if (planetIn(q)) return 'placement';
+  if (signIn(q) >= 0) return 'sign';
+  if (termIn(q) >= 0) return 'term';
+  return 'search';
 }
 
 const TOPIC: Record<Topic, [string, string]> = { love: ['aşk', 'love'], career: ['kariyer', 'career'], home: ['ev ve aile', 'home & family'], travel: ['yolculuk ve eğitim', 'travel & study'], change: ['büyük değişim', 'big change'] };
 /** İlk anlamlı cümle: tırnak içinde bölünmez, "astrolojide şöyle okunur" gibi genel giriş cümlelerini atlar */
-const first = (t: string) => {
-  const parts = (t.match(/[^.!?]+[.!?]+["”’]?/g) ?? [t]).map(x => x.trim());
+const first = (t0: string) => {
+  const t = t0.replace(/(\d)\./g, '$1\u2024');
+  const parts = (t.match(/[^.!?]+[.!?]+["”’]?/g) ?? [t]).map(x => x.trim().replace(/\u2024/g, '.'));
   const joined: string[] = [];
   for (let i = 0; i < parts.length; i++) {
     let cur = parts[i];
@@ -225,6 +280,7 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
     }
     case 'home': case 'travel': case 'change': {
       const t: Topic = intent;
+      if (t === 'home') say(`Ailenle bağını Ay anlatır; seninki ${SIGNS[chart.positions.moon.sign].tr} burcunda: ${lc(first(placementText('moon', chart.positions.moon.sign).tr))}`, `The Moon describes your family bond; yours is in ${SIGNS[chart.positions.moon.sign].en}: ${lc(first(placementText('moon', chart.positions.moon.sign).en))}`);
       const ws = upcoming([t], 36, 3);
       if (ws.length) { say(`${uc(TOPIC[t][0])} için işaretlediğim tarihler:`, `Dates I’ve marked for ${TOPIC[t][1]}:`); ws.forEach(w => paras.push(winShort(w))); }
       else say('Yakın vadede bu konuda büyük bir hareket görünmüyor.', 'No big movement on this soon.');
@@ -309,7 +365,9 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
     case 'yesno': {
       const key = /evlen|evlilik|nikah|nişan|ilişki|sevgili|aşk|marr|love/i.test(question) ? 'love' : /yaz|dön|ara|mesaj|text|call|back/i.test(question) ? 'contact' : /iş|terfi|kariyer|job|promot/i.test(question) ? 'career' : /para|maaş|money/i.test(question) ? 'money' : /ev|taşın|home|move/i.test(question) ? 'home' : /yolculuk|seyahat|yurt|travel|abroad/i.test(question) ? 'travel' : /okul|sınav|kabul|study|exam/i.test(question) ? 'study' : 'wish';
       const qq = QUESTIONS.find(x => x.key === key) ?? QUESTIONS[QUESTIONS.length - 1];
-      const r = castHorary(now, chart.input.lat, chart.input.lon, qq.house);
+      const child = /çocu|bebek|hamile|child|baby|pregnan/i.test(question);
+      const r = castHorary(now, chart.input.lat, chart.input.lon, child ? 5 : qq.house);
+      if (child) say('Çocuk soruları haritanın 5. evinden okunur.', 'Questions about children are read from the 5th house.');
       const v = VERDICT_TEXT[r.verdict];
       say(`Bu anın haritasına baktım. Kısa cevap: ${lc(v.title.tr)}.`, `I looked at the chart of this moment. Short answer: ${v.title.en.toLowerCase()}.`);
       const ql = Q_LINE[key]?.[v.tone]?.[lang];
@@ -417,6 +475,86 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
     case 'more': {
       if (last && last !== 'more' && last !== 'why') return answer(last, chart, profile, lang, question, people, undefined, page + 1);
       say('Neyin devamını istersin? Aşağıdan bir konu seç.', 'More of what? Pick a topic below.');
+      break;
+    }
+    case 'placement': {
+      const qn = ' ' + question.toLocaleLowerCase('tr') + ' ';
+      const id = planetIn(qn) ?? 'sun';
+      if (id === 'asc' || id === 'mc') {
+        if (!timed) { say('Bunun için doğum saatin lazım.', 'I need your birth time for that.'); noTime(); break; }
+        const sg = Math.floor((id === 'asc' ? chart.asc! : chart.mc!) / 30);
+        say(id === 'asc' ? `Yükselenin ${SIGNS[sg].tr}: insanlar seni ilk gördüğünde ${lc(SIGN_KEYWORDS[sg].tr)} enerjisi alıyor.` : `MC’n (kariyer noktan) ${SIGNS[sg].tr}: işinde ${lc(SIGN_KEYWORDS[sg].tr)} öne çıkıyor.`, id === 'asc' ? `Your rising sign is ${SIGNS[sg].en}: people first sense ${SIGN_KEYWORDS[sg].en.toLowerCase()}.` : `Your MC is ${SIGNS[sg].en}: ${SIGN_KEYWORDS[sg].en.toLowerCase()} stand out in your work.`);
+        go('Doğum haritan', 'Birth chart', 'chart');
+        break;
+      }
+      const p = chart.positions[id];
+      if (!p) { say('Bu nokta haritanda hesaplanmıyor.', 'That point isn’t calculated in your chart.'); break; }
+      const nm = BODIES[id].name;
+      say(`${nm.tr} senin haritanda ${SIGNS[p.sign].tr} burcunda${timed && p.house ? `, ${p.house}. evinde` : ''}${p.retro ? ' ve doğumda retroydu' : ''}.`, `Your ${nm.en} is in ${SIGNS[p.sign].en}${timed && p.house ? `, in house ${p.house}` : ''}${p.retro ? ', retrograde at birth' : ''}.`);
+      paras.push(first(placementText(id, p.sign)[lang]));
+      const ph = timed && p.house ? PLANET_HOUSE[id]?.[p.house - 1] : null;
+      if (ph) paras.push(first(ph[lang]));
+      go('Karakterin, yerleşim yerleşim', 'Placement by placement', 'chart');
+      sug('Venüsüm nerede?|Marsım nerede?|7. evim', 'Where is my Venus?|Where is my Mars?|My 7th house');
+      break;
+    }
+    case 'house': {
+      const h = houseIn(question.toLocaleLowerCase('tr'));
+      if (!timed) { say(`${h}. ev ${HOUSES[h - 1].area.tr} demek; ama senin evlerini hesaplamam için doğum saatin lazım.`, `House ${h} is about ${HOUSES[h - 1].area.en}; but I need your birth time to compute your houses.`); noTime(); break; }
+      const sg = Math.floor(chart.cusps[h - 1] / 30);
+      const inside = (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as const).filter(p => chart.positions[p].house === h);
+      const ruler = SIGN_RULERS[sg];
+      say(`${h}. ev: ${HOUSES[h - 1].area.tr}. Senin haritanda ${SIGNS[sg].tr} burcuyla başlıyor.`, `House ${h}: ${HOUSES[h - 1].area.en}. In your chart it begins in ${SIGNS[sg].en}.`);
+      say(inside.length ? `İçinde ${inside.map(p => BODIES[p].name.tr).join(', ')} var; bu alan hayatında hareketli.` : `İçi boş; bu kötü değil, alanı yöneticisi ${BODIES[ruler].name.tr} (${chart.positions[ruler].house}. evde) yönetiyor.`, inside.length ? `${inside.map(p => BODIES[p].name.en).join(', ')} sit here; this area is busy in your life.` : `It’s empty; that’s fine — its ruler ${BODIES[ruler].name.en} (in house ${chart.positions[ruler].house}) runs it.`);
+      if (inside[0]) { const ph = PLANET_HOUSE[inside[0]]?.[h - 1]; if (ph) paras.push(first(ph[lang])); }
+      go('Doğum haritan', 'Birth chart', 'chart');
+      sug(`${h === 7 ? 10 : 7}. evim|Venüsüm nerede?|Beni anlat`, `My ${h === 7 ? 10 : 7}th house|Where is my Venus?|Describe me`);
+      break;
+    }
+    case 'sign': {
+      const sg = signIn(' ' + question.toLocaleLowerCase('tr'));
+      const mine = (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const).filter(p => chart.positions[p].sign === sg);
+      const ascHere = timed && Math.floor(chart.asc! / 30) === sg;
+      say(`${SIGNS[sg].tr}: ${lc(SIGN_KEYWORDS[sg].tr)}.`, `${SIGNS[sg].en}: ${SIGN_KEYWORDS[sg].en.toLowerCase()}.`);
+      say(mine.length || ascHere ? `Senin haritanda bu burçta ${[...mine.map(p => BODIES[p].name.tr), ...(ascHere ? ['yükselenin'] : [])].join(', ')} var; yani bu enerji sende de çalışıyor.` : `Senin haritanda bu burçta kişisel gezegen yok; ama biriyle uyumuna bakarken işine yarar.`, mine.length || ascHere ? `In your chart ${[...mine.map(p => BODIES[p].name.en), ...(ascHere ? ['your rising'] : [])].join(', ')} ${mine.length + (ascHere ? 1 : 0) > 1 ? 'are' : 'is'} in this sign, so this energy works in you too.` : `You have no personal planets in this sign; useful when checking compatibility.`);
+      sug('Burcum ne?|Beni anlat|Uyumumuz nasıl?', 'What are my signs?|Describe me|Our compatibility');
+      break;
+    }
+    case 'term': {
+      const i = termIn(question);
+      const t = TERMS[Math.max(0, i)];
+      say(`${t.t[0]}: ${t.d[0]}`, `${t.t[1]}: ${t.d[1]}`);
+      const NAV: Record<string, string> = { 'Transit': 'chart:transit', 'Progresyon': 'chart:progressed', 'Solar Arc': 'chart:solarArc', 'Güneş dönüşü': 'chart:solarReturn', 'Ay dönüşü': 'chart:lunarReturn', 'Sinastri': 'love:compat', 'Kompozit harita': 'love:compat', 'Davison haritası': 'love:compat', 'Kader matrisi': 'matrix', 'Karmik kuyruk': 'matrix', 'Horary (soru haritası)': 'ask', 'Primer direksiyon': 'chart:primary', 'Drakonik harita': 'chart:draconic', 'Antiscia': 'chart:antiscia' };
+      if (NAV[t.t[0]]) go('Uygulamada aç', 'Open in the app', NAV[t.t[0]]);
+      go('Terimler', 'Glossary', 'help');
+      sug('Bu yıl|Beni anlat', 'This year|Describe me');
+      break;
+    }
+    case 'search': {
+      // Haritadan çıkan cümleler içinde sorudaki kelimelere en yakın olanları bul
+      const ws = tokens(question).filter(w => w.length >= 3);
+      const scored = mirrorLines(chart).map(m => ({ m, s: tokens(m.text.tr).filter(t => t.length >= 4 && ws.some(w => w.length >= 4 && like(w, t))).length })).filter(x => x.s > 0).sort((a, b) => b.s - a.s || b.m.w - a.m.w);
+      const hits = scored.filter(x => x.s === scored[0]?.s).slice(0, 2);
+      const bestSentence = (t: string) => { const ss = t.replace(/(\d)\./g, '$1\u2024').match(/[^.!?]+[.!?]+/g)?.map(x => x.trim().replace(/\u2024/g, '.')) ?? [t]; return ss.map(x => ({ x, n: tokens(x).filter(k => ws.some(w => w.length >= 4 && like(w, k))).length })).sort((a, b) => b.n - a.n)[0].x; };
+      if (hits.length) {
+        say('Tam bu soruya hazır bir cevabım yok ama haritanda buna en yakın bulduğum şey:', 'I don’t have a ready answer for exactly that, but here’s the closest thing in your chart:');
+        hits.forEach(h => paras.push(`✦ ${lang === 'tr' ? bestSentence(h.m.text.tr) : first(h.m.text.en)} (${h.m.why[lang]})`));
+        go('Kendini bul', 'Find yourself', 'explore:mirror');
+      } else {
+        say(`${name ? name + ', ' : ''}buna hazır bir cevabım yok; ben yalnızca haritandan hesaplananları anlatabiliyorum. Şunlardan biri işine yarar mı?`, `${name ? name + ', ' : ''}I don’t have a ready answer for that; I can only talk about what your chart calculates. Would one of these help?`);
+        say('✦ Zaman: bu yıl, bu ay, bugün, en iyi günler\n✦ Aşk: ne zaman evlenirim, eşim nasıl biri, uyumumuz\n✦ Sen: beni anlat, burcum, Venüsüm nerede, 7. evim\n✦ Diğer: kariyer, para, şehir, ünlü ikizim, “transit nedir?”', '✦ Time: this year, this month, today, best days\n✦ Love: when will I marry, my spouse, compatibility\n✦ You: describe me, my signs, where is my Venus, my 7th house\n✦ Other: career, money, city, celebrity twin, “what is a transit?”');
+      }
+      sug('Bu yıl beni ne bekliyor?|Beni anlat|Ne zaman evlenirim?', 'What does this year hold?|Describe me|When will I marry?');
+      break;
+    }
+    case 'style': {
+      const st = buildStyleReport(chart);
+      const sp = STYLE[st.venus];
+      say(`Tarzını Venüs anlatır; seninki ${SIGNS[st.venus].tr}: “${sp.aesthetic.tr}”.`, `Venus describes your style; yours is ${SIGNS[st.venus].en}: “${sp.aesthetic.en}”.`);
+      say(`Sana yakışan renkler: ${st.palette.slice(0, 4).map(c => c.name.tr.toLocaleLowerCase('tr')).join(', ')}.`, `Colours that suit you: ${st.palette.slice(0, 4).map(c => c.name.en.toLowerCase()).join(', ')}.`);
+      paras.push(first(sp.clothes[lang]));
+      go('Portföy', 'Portfolio', 'portfolio');
+      sug('Beni anlat|Ünlü ikizim kim?', 'Describe me|Who is my celebrity twin?');
       break;
     }
     case 'thanks': say('Rica ederim ✦ Başka ne merak ediyorsun?', 'You’re welcome ✦ What else are you curious about?'); break;
