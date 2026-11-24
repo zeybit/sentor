@@ -21,7 +21,7 @@ import Kiron from './src/ui/Kiron';
 import Rasathane, { Enter } from './src/ui/Rasathane';
 import Sigil, { ArrowMark } from './src/ui/Sigil';
 import HelpScreen from './src/screens/HelpScreen';
-import { NavCtx, setPendingKind } from './src/nav';
+import { NavCtx, setPendingKind, registerScrollTop } from './src/nav';
 import { readInviteFromUrl, sameBirth } from './src/invite';
 
 type Main = 'today' | 'chart' | 'portfolio' | 'love' | 'matrix' | 'explore' | 'ask';
@@ -106,6 +106,7 @@ function Shell() {
   const { wide, tablet } = useLayout();
   const [tab, setTab] = useState<Tab>('today');
   const scroll = useRef<ScrollViewInstance>(null);
+  registerScrollTop(() => scroll.current?.scrollTo({ y: 0, animated: false }));
   const go = (t: Tab) => { setTab(t); setNotice(''); scroll.current?.scrollTo({ y: 0, animated: false }); };
   const label = (t: Tab) => LABEL[t][lang];
 

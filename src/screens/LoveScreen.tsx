@@ -15,10 +15,11 @@ import { personCtx } from '../engine/person';
 import { lifeTimeline } from '../engine/timeline';
 import { derivedSpouse, junoRules, VENUS_ADMIRED, attractionText } from '../content/loveExtras';
 import { WindowCard } from './FutureScreen';
-import { useNav, takePendingKind } from '../nav';
+import { useNav, takePendingKind, scrollTop } from '../nav';
 import GroupCompat from '../ui/GroupCompat';
 import { BestDays } from '../ui/ExtrasUI';
 import RelStory from '../ui/RelStory';
+import { LoveBack, LoveHub, LoveItem, LovePart, LoveRail } from '../ui/LoveNav';
 import { inviteLink, shareLink } from '../invite';
 import { F } from '../theme';
 import { ActivityIndicator, Pressable } from 'react-native';
@@ -42,15 +43,17 @@ type Rel = 'synastry' | 'composite' | 'davison';
 export default function LoveScreen() {
   const { chart, s, lang, opts, people, profile, addPerson, chartOf, showAsteroids } = useStore();
   const t = T2S[lang];
-  const { inner } = useLayout();
-  const width = inner(1180) + 32;
+  const { inner, wide } = useLayout();
+  const width = inner(1180) + 32 - (wide ? 282 : 0);
   const others = people.filter(p => p.id !== profile?.id);
   const [pend] = useState(() => takePendingKind());
   const [pid, setPid] = useState<string | null>(pend?.startsWith('compat:') ? pend.slice(7) : others[0]?.id ?? null);
   const [adding, setAdding] = useState(others.length === 0);
   const [rel, setRel] = useState<Rel>('synastry');
   const [view, setView] = useState<'readings' | 'tables'>('readings');
-  const [part, setPart] = useState<'spouse' | 'compat' | 'group' | 'story'>(pend?.startsWith('compat') ? 'compat' : pend === 'group' ? 'group' : pend === 'story' ? 'story' : 'spouse');
+  const [part, setPart] = useState<LovePart | null>(pend?.startsWith('compat') ? 'compat' : pend === 'group' ? 'group' : pend === 'story' ? 'story' : pend === 'spouse' ? 'spouse' : null);
+  // Telefonda bölüm seçilmemişse kartlar görünür; webde ilk bölüm açık gelir
+  const cur: LovePart | null = part ?? (wide ? 'spouse' : null);
   const [inviteMsg, setInviteMsg] = useState('');
   // Kişi ya da sekme değişince eski "paylaşıldı" mesajı kalmasın; başarı mesajı birkaç saniye sonra kaybolur
   useEffect(() => { setInviteMsg(''); }, [pid, part]);
@@ -82,12 +85,18 @@ export default function LoveScreen() {
 
   const relChart = rel === 'composite' ? data?.comp : rel === 'davison' ? data?.dav : null;
 
-  return (
-    <View>
-      <H1>{lang === 'tr' ? 'Aşk ve uyum' : 'Love and compatibility'}</H1>
-      <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{lang === 'tr' ? 'Haritana göre hayatına girecek partner, evlilik zamanı ve seçtiğin biriyle uyumun.' : 'The partner your chart describes, marriage timing, and your compatibility with someone you choose.'}</Sub>
-      <Segmented items={[{ key: 'spouse', label: lang === 'tr' ? 'Gelecekteki eşin' : 'Your future partner' }, { key: 'compat', label: lang === 'tr' ? 'Biriyle uyum' : 'Compatibility' }, { key: 'group', label: lang === 'tr' ? 'Grup uyumu' : 'Group' }, { key: 'story', label: lang === 'tr' ? 'İlişki hikâyesi' : 'Relationship story' }]} value={part} onChange={v => setPart(v as any)} />
-      {part === 'story' ? <RelStory /> : part === 'spouse' ? <><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : part === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setPart('compat'); }} /> : <>
+  const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
+  const items: LoveItem[] = [
+    { key: 'spouse', title: L('Gelecekteki eşin', 'Your future partner'), desc: L('Nasıl biri, nereden çıkar, ne zaman?', 'Who, where you meet, when?'), teaser: desc != null ? L(`Alçalanın ${SIGNS[desc].tr}${in7.length ? ' · 7. evde ' + in7.length + ' gezegen' : ''}`, `Descendant in ${SIGNS[desc].en}`) : undefined },
+    { key: 'compat', title: L('Biriyle uyum', 'Compatibility'), desc: L('Sinastri, kompozit ve ortak dönemler', 'Synastry, composite and shared periods'), teaser: partner && data ? L(`${partner.name || 'O'} ile %${data.sy.total} uyum`, `${data.sy.total}% with ${partner.name || 'them'}`) : others.length ? L('Bir kişi seç', 'Pick someone') : L('Henüz kimse eklenmedi', 'No one added yet') },
+    { key: 'group', title: L('Grup uyumu', 'Group'), desc: L('Arkadaş grubunda kim kiminle uyumlu?', 'Who clicks with whom in a group?'), teaser: others.length >= 2 ? L(`${others.length + 1} kişi`, `${others.length + 1} people`) : L('En az 3 kişiyle çalışır', 'Needs at least 3 people') },
+    { key: 'story', title: L('İlişki hikâyesi', 'Relationship story'), desc: L('Tanışma, ilk buluşma, ayrılık ve barışma anlarının haritaları', 'Charts of meeting, first date, breakup and reunion'), teaser: L('Dürüst okuma: acı gerçekler dahil', 'Honest reading, hard truths included') },
+  ];
+  const title = <><H1>{L('Aşk ve uyum', 'Love and compatibility')}</H1><Sub style={{ marginBottom: 16, maxWidth: 620 }}>{L('Haritana göre hayatına girecek partner, evlilik zamanı ve seçtiğin biriyle uyumun.', 'The partner your chart describes, marriage timing, and your compatibility with someone you choose.')}</Sub></>;
+
+  const body = cur === null ? null : (
+    <>
+      {cur === 'story' ? <RelStory /> : cur === 'spouse' ? <><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : cur === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setPart('compat'); }} /> : <>
 
       <Section title={s.compat} sub={s.compatSub}>
         {others.length ? (
@@ -152,6 +161,23 @@ export default function LoveScreen() {
         </>
       ) : null}
       </>}
+    </>
+  );
+
+  if (wide) return (
+    <View>
+      {title}
+      <View style={{ flexDirection: 'row', gap: 32, alignItems: 'flex-start', marginTop: 4 }}>
+        <LoveRail items={items} value={cur!} onChange={k => { setPart(k); scrollTop(); }} />
+        <View style={{ flex: 1, minWidth: 0 }}>{body}</View>
+      </View>
+    </View>
+  );
+  if (cur === null) return <View>{title}<LoveHub items={items} onOpen={k => { setPart(k); scrollTop(); }} /></View>;
+  return (
+    <View>
+      <LoveBack back={L('Aşk ve uyum', 'Love and compatibility')} onBack={() => { setPart(null); scrollTop(); }} />
+      {body}
     </View>
   );
 }

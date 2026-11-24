@@ -93,7 +93,7 @@ export default function RelStory() {
       {reading ? (
         <View style={[st.panel, { marginBottom: 30 }]}>
           <Text style={[st.rowLabel, { marginBottom: 6 }]}>{reading.title}</Text>
-          <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 32, color: C.ink }}>{reading.opening}</Text>
+          {reading.opening ? <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 32, color: C.ink }}>{reading.opening}</Text> : null}
           {reading.secs.slice(0, 4).map(sec)}
           {reading.secs.length > 4 ? <More count={reading.secs.length - 4}>{reading.secs.slice(4).map((s, k) => sec(s, k + 4))}</More> : null}
           {reading.truths.length ? (

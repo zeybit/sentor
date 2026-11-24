@@ -384,7 +384,7 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
     else if (syn.rs >= syn.ps + 4) opening = 'Bu iki harita arasında sürtüşme, çekimden ağır basıyor. Bağ var ama bedeli yüksek.';
     else opening = 'Çekim de sürtüşme de güçlü: bu tür bağlar kolay bitmez ama sürekli acıtır, bir ayrılıp bir barışılan ilişkiler olur.';
   } else {
-    opening = `${me.name}, aşk haritan kendi kalıplarını açıkça gösteriyor; karşı tarafın haritası olmadan ilişkinin tamamını değil, senin payını okuyabilirim.`;
+    opening = '';
     for (const pt of pats[0].list) if (pt.truth && truths.length < 4) truths.push(pt.truth);
   }
   for (const e of events) {
