@@ -343,7 +343,7 @@ export function answer(intent: Intent, chart: Chart, profile: Profile, lang: Lan
       const others = people.filter(p => p.id !== profile.id);
       const q = question.toLocaleLowerCase('tr');
       const other = others.find(p => p.name && q.includes(p.name.toLocaleLowerCase('tr').split(' ')[0])) ?? others[0];
-      if (!other) { say('Uyuma bakmam için önce birini eklemen lazım. Aşk → Biriyle uyum’dan ekleyebilirsin.', 'Add someone first so I can check compatibility: Love → Compatibility.'); go('Biriyle uyum', 'Compatibility', 'love:compat'); break; }
+      if (!other) { say('Uyuma bakmam için önce birini eklemen lazım. Aşk → Uyum analizi’nden ekleyebilirsin.', 'Add someone first so I can check compatibility: Love → Compatibility.'); go('Uyum analizi', 'Compatibility', 'love:compat'); break; }
       let oc: Chart | null = null; try { oc = computeChart(other.birth); } catch { oc = null; }
       if (!oc) break;
       const sy = synastry(chart, oc);

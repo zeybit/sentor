@@ -47,7 +47,7 @@ export default function GroupCompat({ onOpenPair }: { onOpenPair: (id: string) =
 
   return (
     <View>
-      <Section title={tx('Grup uyumu', 'Group harmony', lang)} sub={tx('Arkadaş grubun, ailen ya da iş ekibin: kim kiminle ne kadar uyumlu, tek tabloda. Kişileri Ayarlar’dan ya da “Biriyle uyum” bölümünden ekleyebilirsin.', 'Your friends, family or team: who harmonises with whom, in one grid. Add people in Settings or under “Compatibility”.', lang)}>
+      <Section title={tx('Grup uyumu', 'Group harmony', lang)} sub={tx('Arkadaş grubun, ailen ya da iş ekibin: kim kiminle ne kadar uyumlu, tek tabloda. Kişileri Ayarlar’dan ya da Uyum analizi → İki kişi bölümünden ekleyebilirsin.', 'Your friends, family or team: who harmonises with whom, in one grid. Add people in Settings or under “Compatibility”.', lang)}>
         <Text style={st.label}>{tx('Gruptaki kişiler', 'People in the group', lang)}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {people.map(p => {
@@ -60,7 +60,7 @@ export default function GroupCompat({ onOpenPair }: { onOpenPair: (id: string) =
             );
           })}
         </View>
-        {n < 3 ? <P>{tx('Grup uyumu için en az üç kişi seç. İki kişi için “Biriyle uyum” bölümü daha ayrıntılı.', 'Pick at least three people. For two, “Compatibility” is more detailed.', lang)}</P> : (
+        {n < 3 ? <P>{tx('Grup uyumu için en az üç kişi seç. İki kişi için “İki kişi” sekmesi daha ayrıntılı.', 'Pick at least three people. For two, the “Two people” tab is more detailed.', lang)}</P> : (
           <>
             <View style={{ alignSelf: 'flex-start' }}>
               <View style={{ flexDirection: 'row', marginLeft: 92 }}>

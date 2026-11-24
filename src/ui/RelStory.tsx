@@ -66,7 +66,7 @@ export default function RelStory() {
       <Section title="İlişki hikâyesi" sub="Bir ilişkinin önemli anları (tanışma, ilk adım, ilk buluşma, başlangıç, ayrılık, barışma) kendi haritalarını taşır. Bu anları ve iki doğum haritasını birlikte okuyup ilişkinin hikâyesini anlatıyorum: kim ne hissetti, neden yakınlaştınız, neden koptunuz, bundan sonra ne olabilir. Zor göstergeleri yumuşatmıyorum.">
         <Text style={[st.rowLabel, { marginBottom: 6 }]}>Kiminle?</Text>
         <Chips items={[...others.map(p => ({ key: p.id, label: p.name || p.place })), { key: 'none', label: 'Kişi eklemeden' }]} value={pid} onChange={setPid} />
-        {!others.length ? <Sub style={{ marginTop: 6 }}>Karşı tarafın doğum bilgisini “Biriyle uyum” sekmesinden eklersen sinastri ve kompozit zamanlamayı da okurum.</Sub> : null}
+        {!others.length ? <Sub style={{ marginTop: 6 }}>Karşı tarafın doğum bilgisini Uyum analizi bölümünden eklersen sinastri ve kompozit zamanlamayı da okurum.</Sub> : null}
 
         <Text style={[st.rowLabel, { marginTop: 16, marginBottom: 6 }]}>Olay ekle</Text>
         <Chips items={TYPES.map(t => ({ key: t, label: EV_LABEL[t] }))} value={type} onChange={setType} />

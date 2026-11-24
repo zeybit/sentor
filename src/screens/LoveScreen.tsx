@@ -51,9 +51,10 @@ export default function LoveScreen() {
   const [adding, setAdding] = useState(others.length === 0);
   const [rel, setRel] = useState<Rel>('synastry');
   const [view, setView] = useState<'readings' | 'tables'>('readings');
-  const [part, setPart] = useState<LovePart | null>(pend?.startsWith('compat') ? 'compat' : pend === 'group' ? 'group' : pend === 'story' ? 'story' : pend === 'spouse' ? 'spouse' : null);
+  const [part, setPart] = useState<LovePart | null>(pend?.startsWith('compat') || pend === 'group' ? 'compat' : pend === 'story' ? 'story' : pend === 'spouse' ? 'spouse' : null);
   // Telefonda bölüm seçilmemişse kartlar görünür; webde ilk bölüm açık gelir
   const cur: LovePart | null = part ?? (wide ? 'spouse' : null);
+  const [cmode, setCmode] = useState<'pair' | 'group'>(pend === 'group' ? 'group' : 'pair');
   const [inviteMsg, setInviteMsg] = useState('');
   // Kişi ya da sekme değişince eski "paylaşıldı" mesajı kalmasın; başarı mesajı birkaç saniye sonra kaybolur
   useEffect(() => { setInviteMsg(''); }, [pid, part]);
@@ -88,15 +89,16 @@ export default function LoveScreen() {
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   const items: LoveItem[] = [
     { key: 'spouse', title: L('Gelecekteki eşin', 'Your future partner'), desc: L('Nasıl biri, nereden çıkar, ne zaman?', 'Who, where you meet, when?'), teaser: desc != null ? L(`Alçalanın ${SIGNS[desc].tr}${in7.length ? ' · 7. evde ' + in7.length + ' gezegen' : ''}`, `Descendant in ${SIGNS[desc].en}`) : undefined },
-    { key: 'compat', title: L('Biriyle uyum', 'Compatibility'), desc: L('Sinastri, kompozit ve ortak dönemler', 'Synastry, composite and shared periods'), teaser: partner && data ? L(`${partner.name || 'O'} ile %${data.sy.total} uyum`, `${data.sy.total}% with ${partner.name || 'them'}`) : others.length ? L('Bir kişi seç', 'Pick someone') : L('Henüz kimse eklenmedi', 'No one added yet') },
-    { key: 'group', title: L('Grup uyumu', 'Group'), desc: L('Arkadaş grubunda kim kiminle uyumlu?', 'Who clicks with whom in a group?'), teaser: others.length >= 2 ? L(`${others.length + 1} kişi`, `${others.length + 1} people`) : L('En az 3 kişiyle çalışır', 'Needs at least 3 people') },
+    { key: 'compat', title: L('Uyum analizi', 'Compatibility'), desc: L('Bir kişiyle ya da bir grupla uyumun', 'With one person or a whole group'), teaser: partner && data ? L(`${partner.name || 'O'} ile %${data.sy.total} uyum`, `${data.sy.total}% with ${partner.name || 'them'}`) : others.length ? L('Bir kişi seç', 'Pick someone') : L('Henüz kimse eklenmedi', 'No one added yet') },
     { key: 'story', title: L('İlişki hikâyesi', 'Relationship story'), desc: L('Tanışma, ilk buluşma, ayrılık ve barışma anlarının haritaları', 'Charts of meeting, first date, breakup and reunion'), teaser: L('Dürüst okuma: acı gerçekler dahil', 'Honest reading, hard truths included') },
   ];
   const title = <><H1>{L('Aşk ve uyum', 'Love and compatibility')}</H1><Sub style={{ marginBottom: 16, maxWidth: 620 }}>{L('Haritana göre hayatına girecek partner, evlilik zamanı ve seçtiğin biriyle uyumun.', 'The partner your chart describes, marriage timing, and your compatibility with someone you choose.')}</Sub></>;
 
   const body = cur === null ? null : (
     <>
-      {cur === 'story' ? <RelStory /> : cur === 'spouse' ? <><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : cur === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setPart('compat'); }} /> : <>
+      {cur === 'story' ? <RelStory /> : cur === 'spouse' ? <><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : <>
+      <Segmented items={[{ key: 'pair', label: L('İki kişi', 'Two people') }, { key: 'group', label: L('Grup', 'Group') }]} value={cmode} onChange={v => setCmode(v as 'pair' | 'group')} />
+      {cmode === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setCmode('pair'); scrollTop(); }} /> : <>
 
       <Section title={s.compat} sub={s.compatSub}>
         {others.length ? (
@@ -124,11 +126,6 @@ export default function LoveScreen() {
 
       {data && partner ? (
         <>
-          <View style={[st.panel, { marginBottom: 18 }]}>
-            <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 4 }}>{lang === 'tr' ? `${partner.name || 'O'} neyden etkilenir?` : `What attracts ${partner.name || 'them'}?`}</Text>
-            <P>{attractionText(pc!, partner.name, lang)}</P>
-          </View>
-          <Chips items={(['synastry', 'composite', 'davison'] as Rel[]).map(k => ({ key: k, label: t.relKinds[k] }))} value={rel} onChange={v => setRel(v as Rel)} />
           <View style={{ alignItems: 'center', marginBottom: 10 }}>
             {rel === 'synastry' ? <Wheel chart={chart} outer={pc} cross={data.wheelCross} size={Math.min(width - 32, 460)} asteroids={showAsteroids} /> : <Wheel chart={relChart!} size={Math.min(width - 32, 460)} asteroids={showAsteroids} />}
             {rel === 'synastry' ? <Text style={[st.sub, { marginTop: 6 }]}><Text style={{ color: C.second }}>● {partner.name}</Text>   {profile.name}</Text> : null}
@@ -160,6 +157,7 @@ export default function LoveScreen() {
           ) : null}
         </>
       ) : null}
+      </>}
       </>}
     </>
   );
