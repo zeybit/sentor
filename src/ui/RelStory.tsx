@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStore, Profile } from '../store';
+import { searchPlaces, Place } from './BirthForm';
 import { EV_LABEL, EvType, RelEvent, eventChart, fullStory, parseEventDate } from '../engine/relstory';
 import { Btn, Chips, Field, More, Section, Sub, st } from './kit';
 import { C, F } from '../theme';
@@ -22,16 +23,29 @@ export default function RelStory() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [err, setErr] = useState('');
+  const [q, setQ] = useState('');
+  const [evPlace, setEvPlace] = useState<Place | null>(null);
+  const [results, setResults] = useState<Place[]>([]);
+  const [busy, setBusy] = useState(false);
+  const home: Place | null = profile ? { label: profile.place, lat: profile.birth.lat, lon: profile.birth.lon, tz: profile.birth.tz } : null;
+  const short = (l: string) => l.split(',')[0].trim();
+  useEffect(() => {
+    if (evPlace && q === evPlace.label) return;
+    if (q.trim().length < 2) { setResults([]); return; }
+    const id = setTimeout(async () => { setBusy(true); setResults(await searchPlaces(q.trim(), 'tr')); setBusy(false); }, 400);
+    return () => clearTimeout(id);
+  }, [q]);
   useEffect(() => { AsyncStorage.getItem(key).then(v => { try { setEvents(v ? JSON.parse(v) : []); } catch { setEvents([]); } }).catch(() => setEvents([])); }, [key]);
   const save = (list: RelEvent[]) => { setEvents(list); AsyncStorage.setItem(key, JSON.stringify(list)).catch(() => {}); };
 
   const add = () => {
-    const ev: RelEvent = { id: String(Date.now()), type, date: date.trim(), time: time.trim() || undefined };
+    const ev: RelEvent = { id: String(Date.now()), type, date: date.trim(), time: time.trim() || undefined, place: evPlace ?? undefined };
     const p = parseEventDate(ev);
     const dp = dateProblem(ev.date, 'tr', true), tp = ev.time ? timeProblem(ev.time, 'tr', true) : '';
     if (dp || !p) { setErr(dp || 'Tarihi GG.AA.YYYY biçiminde yaz (ör. 14.02.2025).'); return; }
     if (tp) { setErr(tp + ' Bilmiyorsan boş bırak.'); return; }
     if (new Date(p.y, p.m - 1, p.d) > new Date()) { setErr('Bu tarih henüz gelmedi; yaşanmış bir olayın tarihini gir.'); return; }
+    if (!evPlace) { setErr('Olayın yaşandığı şehri seç. Haritanın evleri ve köşeleri yere göre değişir.'); return; }
     setErr(''); setDate(''); setTime('');
     save([...events, ev].sort((a, b) => { const x = parseEventDate(a)!, y = parseEventDate(b)!; return new Date(x.y, x.m - 1, x.d).getTime() - new Date(y.y, y.m - 1, y.d).getTime(); }));
   };
@@ -42,7 +56,7 @@ export default function RelStory() {
     const pc = partner ? chartOf(partner) : null;
     const me = { name: profile.name || 'Sen', gender: profile.gender, chart };
     const them = partner && pc ? { name: partner.name || 'O', gender: partner.gender, chart: pc } : null;
-    const evs = events.map(ev => ({ ev, c: eventChart(ev, place)! })).filter(x => x.c);
+    const evs = events.map(ev => ({ ev, c: eventChart(ev, ev.place ?? place)! })).filter(x => x.c);
     try { return fullStory(me, them, evs); } catch { return null; }
   }, [chart, profile, partner, events, opts]);
 
@@ -74,15 +88,28 @@ export default function RelStory() {
           <View style={{ flexGrow: 1, minWidth: 160 }}><Field label="Tarih" placeholder="GG.AA.YYYY" value={date} onChangeText={v => { setErr(''); setDate(maskDate(v, date)); }} maxLength={10} error={dateProblem(date)} keyboardType="numbers-and-punctuation" /></View>
           <View style={{ flexGrow: 1, minWidth: 120 }}><Field label="Saat (biliyorsan)" placeholder="SS:DD" value={time} onChangeText={v => { setErr(''); setTime(maskTime(v, time)); }} maxLength={5} error={timeProblem(time)} keyboardType="numbers-and-punctuation" /></View>
         </View>
+        <Field label="Olay yeri" placeholder="Şehir ara (ör. İzmir)" value={q} onChangeText={v => { setErr(''); setQ(v); setEvPlace(null); }} />
+        {!evPlace && home ? (
+          <Pressable onPress={() => { setErr(''); setEvPlace(home); setQ(home.label); setResults([]); }} accessibilityRole="button" style={({ pressed }) => [{ alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12, marginTop: -6, marginBottom: 8 }, pressed && { opacity: 0.6 }]}>
+            <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.ink }}>Doğum yerim ({short(home.label)})</Text>
+          </Pressable>
+        ) : null}
+        {busy ? <Sub>Aranıyor…</Sub> : null}
+        {!busy && !evPlace && q.trim().length >= 2 && !results.length ? <Sub>Sonuç yok; farklı yazmayı dene.</Sub> : null}
+        {!evPlace && results.map((r, i) => (
+          <Pressable key={i} onPress={() => { setErr(''); setEvPlace(r); setQ(r.label); setResults([]); }} style={({ pressed }) => [{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line }, pressed && { opacity: 0.6 }]}>
+            <Text style={st.p}>{r.label}</Text>
+          </Pressable>
+        ))}
         {err && err !== dateProblem(date) && !(timeProblem(time) && err.startsWith(timeProblem(time))) ? <Text style={{ color: C.second, fontFamily: F.sans, fontSize: 14, marginTop: 4 }}>{err}</Text> : null}
         <View style={{ marginTop: 8 }}><Btn small title="Olayı ekle" onPress={add} disabled={!date.trim()} /></View>
-        <Sub style={{ marginTop: 6 }}>Olay yeri olarak doğum yerini ({profile.place}) varsayıyorum. Saat girmezsen öğlen 12:00 alır, evleri yorumlamam.</Sub>
+        <Sub style={{ marginTop: 6 }}>Saat girmezsen öğlen 12:00 alır, evleri yorumlamam.</Sub>
 
         {events.length ? (
           <View style={{ marginTop: 12, gap: 6 }}>
             {events.map(e => (
               <View key={e.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: C.line, borderRadius: 6, paddingVertical: 6, paddingHorizontal: 10 }}>
-                <Text style={{ fontFamily: F.sansMed, fontSize: 14, color: C.ink }}>{EV_LABEL[e.type]} · {e.date}{e.time ? ' ' + e.time : ''}</Text>
+                <Text style={{ fontFamily: F.sansMed, fontSize: 14, color: C.ink }}>{EV_LABEL[e.type]} · {e.date}{e.time ? ' ' + e.time : ''}{e.place ? ' · ' + short(e.place.label) : ''}</Text>
                 <Pressable onPress={() => save(events.filter(x => x.id !== e.id))} accessibilityRole="button" accessibilityLabel="Olayı sil" hitSlop={8}><Text style={{ color: C.sub, fontSize: 18 }}>×</Text></Pressable>
               </View>
             ))}

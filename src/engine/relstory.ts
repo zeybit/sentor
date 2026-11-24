@@ -7,7 +7,7 @@ import { compositeChart } from './techniques';
 import { SIGNS } from '../content/base';
 
 export type EvType = 'meet' | 'firstMove' | 'firstDate' | 'start' | 'breakup' | 'reunion';
-export interface RelEvent { id: string; type: EvType; date: string; time?: string }
+export interface RelEvent { id: string; type: EvType; date: string; time?: string; place?: { label: string; lat: number; lon: number; tz: string } }
 export interface Item { tech: string; text: string; voice?: string }
 export interface Sec { emoji: string; title: string; items: Item[] }
 export interface Reading { title: string; opening: string; secs: Sec[]; truths: string[]; summary: string; next: string; note?: string }
