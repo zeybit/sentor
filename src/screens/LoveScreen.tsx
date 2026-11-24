@@ -10,6 +10,7 @@ import { synastry, SYN_LABEL } from '../content/forecast';
 import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import { HARMONY } from '../content/techniqueTexts';
+import { deepSpouse } from '../content/spouseDeep';
 import { spouseProfile, marriageWindows, spouseArchetype, spouseJob, fateSections } from '../content/spouse';
 import { personCtx } from '../engine/person';
 import { lifeTimeline } from '../engine/timeline';
@@ -264,6 +265,19 @@ function SpouseBlock() {
           <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
         </View>
       )) : <P>{s.needsTime}</P>}
+      <View style={{ marginTop: 8, marginBottom: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: C.line }}>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 11, letterSpacing: 1.6, color: C.gold }}>{L('DERİN OKUMA', 'DEEP READING')}</Text>
+        <Text style={{ fontFamily: F.serif, fontSize: 26, lineHeight: 32, color: C.ink, marginTop: 2 }}>{L('Klasik ve Vedik kaynaklardan eşin', 'Your spouse in classical and Vedic sources')}</Text>
+        <Sub style={{ marginTop: 4, marginBottom: 14, maxWidth: 640 }}>{L('Popüler uygulamaların kullanmadığı eski teknikler: Batlamyus’un Tetrabiblos’u, Jaimini’nin Darakaraka ve Upapada’sı, Navamsa (D9) evlilik haritası, Ptolemy terimleri ve William Lilly’nin yön kuralı. Teknikler aynı şeyi söylediğinde o özellik çok daha güçlüdür.', 'Old techniques popular apps don’t use: Ptolemy’s Tetrabiblos, Jaimini’s Darakaraka and Upapada, the Navamsa (D9) marriage chart, Ptolemaic terms and William Lilly’s rule of direction. Where techniques agree, that trait is much stronger.')}</Sub>
+        {deepSpouse(chart, gender).map(x => (
+          <View key={x.id} style={{ marginBottom: 20 }}>
+            <Text style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 27, color: C.ink }}>{x.title[lang]}</Text>
+            <P style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</P>
+            <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
+          </View>
+        ))}
+        {!gender ? <Sub style={{ maxWidth: 640 }}>{L('Batlamyus’un kuralı cinsiyete göre Ay’a ya da Güneş’e bakar; Ayarlar’dan cinsiyet eklersen o bölüm de açılır.', 'Ptolemy’s rule uses the Moon or Sun depending on gender; add gender in Settings to see it.')}</Sub> : null}
+      </View>
       {junoRules(chart).length ? (
         <View style={{ marginBottom: 20 }}>
           <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Juno’nun ipuçları', 'Clues from Juno')}</Text>
