@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
-import { Pressable, Text, TextInput, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
+import { Modal, Pressable, Text, TextInput, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { C, F, onThemeChange } from '../theme';
 import { useStore } from '../store';
 
@@ -216,3 +216,47 @@ const makeSt = () => ({
 /** Stil nesnesi: tema değişince yerinde yenilenir */
 export const st: ReturnType<typeof makeSt> = makeSt();
 onThemeChange(() => Object.assign(st, makeSt()));
+
+/**
+ * Açıklaması gizli başlık. Geniş ekranda fareyle (hover) üstüne gelince küçük bir kutu açılır;
+ * dar ekranda ve dokunmatikte başlığa dokununca ortada bir pencere açılır.
+ */
+export function InfoTitle({ title, info, style }: { title: string; info: string; style?: any }) {
+  const { wide } = useLayout();
+  const canHover = Platform.OS === 'web' && typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const hoverMode = wide && canHover;
+  const [tip, setTip] = useState(false);
+  const [modal, setModal] = useState(false);
+  return (
+    <View style={{ position: 'relative', zIndex: tip ? 20 : 1, alignSelf: 'flex-start', maxWidth: '100%' }}>
+      <Pressable
+        onPress={() => (hoverMode ? setTip(t => !t) : setModal(true))}
+        {...({ onHoverIn: () => hoverMode && setTip(true), onHoverOut: () => hoverMode && setTip(false) } as any)}
+        accessibilityRole="button" accessibilityHint={info} accessibilityLabel={title}
+        style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, ...(Platform.OS === 'web' ? { cursor: 'help' } : {}) } as any}>
+        <Text accessibilityRole="header" style={style}>{title}</Text>
+        <View style={{ marginTop: 6, width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 13, lineHeight: 15, color: C.sub }}>i</Text>
+        </View>
+      </Pressable>
+      {hoverMode && tip ? (
+        <View pointerEvents="none" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, width: 440, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 10, padding: 14, ...(Platform.OS === 'web' ? { boxShadow: '0 10px 30px rgba(0,0,0,0.25)' } : {}) } as any}>
+          <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 16, lineHeight: 24, color: C.ink }}>{info}</Text>
+        </View>
+      ) : null}
+      {!hoverMode ? (
+        <Modal visible={modal} transparent animationType="fade" onRequestClose={() => setModal(false)}>
+          <Pressable onPress={() => setModal(false)} accessibilityLabel="Kapat" style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <Pressable onPress={() => {}} style={{ width: '100%', maxWidth: 440, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 22 }}>
+              <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 30, color: C.ink, marginBottom: 8 }}>{title}</Text>
+              <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 17, lineHeight: 26, color: C.ink }}>{info}</Text>
+              <Pressable onPress={() => setModal(false)} accessibilityRole="button" style={({ pressed }) => [{ alignSelf: 'flex-end', marginTop: 16, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: C.line }, pressed && { opacity: 0.6 }]}>
+                <Text style={{ fontFamily: F.sansMed, fontSize: 14, color: C.rose }}>Tamam</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      ) : null}
+    </View>
+  );
+}

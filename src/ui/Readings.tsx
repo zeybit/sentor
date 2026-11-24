@@ -14,7 +14,7 @@ import { lillyScore, mannersFor, CLASSICAL, Classical } from '../content/lillyDi
 import * as N from '../content/lillyNatal';
 import { LILLY_NOTE } from './LillyBlocks';
 import { natalStory } from '../content/story';
-import { Expand, MoreLink, P, Section, Sub, st } from './kit';
+import { Expand, InfoTitle, MoreLink, P, Section, Sub, st } from './kit';
 import { BirthSecrets } from './ExtrasUI';
 import type { Chapter as StoryChapter } from '../content/story';
 import { characterReading, CHAR_INTRO, CharItem } from '../content/character';
@@ -134,10 +134,9 @@ function Chapter({ c, i, lang }: { c: StoryChapter; i: number; lang: Lang }) {
   const pStyle = { fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginBottom: 16, maxWidth: 660 };
   const long = c.paras.length > 1 || (c.paras[0]?.[lang].length ?? 0) > 420;
   return (
-    <View style={{ marginBottom: 40 }}>
+    <View style={{ marginBottom: 40, zIndex: 100 - i }}>
       <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{lang === 'tr' ? `Bölüm ${i + 1}` : `Chapter ${i + 1}`}</Text>
-      <Text accessibilityRole="header" style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink, marginBottom: 10 }}>{c.title[lang]}</Text>
-      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 14, maxWidth: 640 }}>{c.intro[lang]}</Text>
+      <View style={{ marginBottom: 12, zIndex: 5 }}><InfoTitle title={c.title[lang]} info={c.intro[lang]} style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink }} /></View>
       {(open ? c.paras : c.paras.slice(0, 1)).map((p, j) => (
         <Text key={j} style={[pStyle, !open && long ? { marginBottom: 4 } : null]} numberOfLines={open || !long ? undefined : 6}>{p[lang]}</Text>
       ))}
