@@ -56,6 +56,7 @@ export default function LoveScreen() {
   const cur: LovePart | null = part ?? (wide ? 'spouse' : null);
   const [cmode, setCmode] = useState<'pair' | 'group'>(pend === 'group' ? 'group' : 'pair');
   const [inviteMsg, setInviteMsg] = useState('');
+  const [inviteOpen, setInviteOpen] = useState(false);
   // Kişi ya da sekme değişince eski "paylaşıldı" mesajı kalmasın; başarı mesajı birkaç saniye sonra kaybolur
   useEffect(() => { setInviteMsg(''); }, [pid, part]);
   useEffect(() => {
@@ -110,9 +111,12 @@ export default function LoveScreen() {
         {adding ? (
           <BirthForm nameLabel={s.partnerName} submitLabel={s.calcCompat} onSubmit={v => { const np = addPerson(v); setPid(np.id); setAdding(false); }} />
         ) : <Btn kind="ghost" title={t.addPerson} onPress={() => setAdding(true)} />}
-        <View style={[st.panel, { marginTop: 14, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
-          <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink }}>{lang === 'tr' ? 'Doğum bilgisini bilmiyor musun? Davet gönder' : 'Don’t know their birth details? Send an invite'}</Text>
-          <P style={{ marginTop: 4 }}>{lang === 'tr' ? 'Bağlantıyı açan kişi kendi doğum bilgisini girer ve ikinizin uyumunu görür. O da sana kendi bağlantısını gönderince sonucu sen de görürsün.' : 'Whoever opens the link enters their birth details and sees your compatibility. When they send you their own link back, you see it too.'}</P>
+        <View style={{ marginTop: 10 }}>
+          <Btn kind="outline" small title={(inviteOpen ? '▴ ' : '▾ ') + (lang === 'tr' ? 'Doğum bilgisini bilmiyor musun? Davet gönder' : 'Don’t know their birth details? Send an invite')} onPress={() => setInviteOpen(o => !o)} />
+        </View>
+        {inviteOpen ? (
+        <View style={[st.panel, { marginTop: 10, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
+          <P>{lang === 'tr' ? 'Bağlantıyı açan kişi kendi doğum bilgisini girer ve ikinizin uyumunu görür. O da sana kendi bağlantısını gönderince sonucu sen de görürsün.' : 'Whoever opens the link enters their birth details and sees your compatibility. When they send you their own link back, you see it too.'}</P>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8, alignItems: 'center' }}>
             <Btn title={lang === 'tr' ? 'Uyum davetini paylaş' : 'Share compatibility invite'} onPress={async () => {
               const r = await shareLink(inviteLink(profile), lang === 'tr' ? `${profile.name || 'Ben'} seninle yıldız uyumumuza bakmak istiyor:` : `${profile.name || 'I'} want to check our star compatibility:`);
@@ -122,6 +126,7 @@ export default function LoveScreen() {
           </View>
           <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? 'Bağlantı doğum tarihini, saatini ve yerini içerir; yalnızca güvendiğin kişilerle paylaş. Bilgiler hiçbir sunucuya gönderilmez, sadece bağlantının içindedir.' : 'The link contains your birth date, time and place; share it only with people you trust. Nothing is sent to a server; it lives only in the link.'}</Sub>
         </View>
+        ) : null}
       </Section>
 
       {data && partner ? (
