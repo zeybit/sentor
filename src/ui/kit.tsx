@@ -39,12 +39,20 @@ export function MoreLink({ open, onPress, count }: { open: boolean; onPress: () 
  */
 export function P({ children, style, full, lines = 4 }: { children: React.ReactNode; style?: any; full?: boolean; lines?: number }) {
   const [open, setOpen] = useState(false);
+  const [fits, setFits] = useState(false); // webde metin zaten sığıyorsa bağlantı gösterilmez
+  const ref = React.useRef<any>(null);
   const txt = full ? null : plain(children);
   if (!txt || txt.length < LONG) return <Text style={[st.p, style]}>{children}</Text>;
+  const measure = () => {
+    if (Platform.OS !== 'web' || open) return;
+    const el = ref.current as HTMLElement | null;
+    if (el && typeof el.scrollHeight === 'number') setFits(el.scrollHeight <= el.clientHeight + 2);
+  };
   return (
     <View>
-      <Text style={[st.p, style]} numberOfLines={open ? undefined : lines}>{children}</Text>
-      <MoreLink open={open} onPress={() => setOpen(!open)} />
+      {/* key: React Native Web, satır sınırı kalkınca eski line-clamp stilini bırakıyor; açılıp kapanınca yeniden çizilir */}
+      <Text ref={ref} onLayout={measure} key={open ? 'open' : 'closed'} style={[st.p, style]} numberOfLines={open ? undefined : lines}>{children}</Text>
+      {fits && !open ? null : <MoreLink open={open} onPress={() => setOpen(!open)} />}
     </View>
   );
 }

@@ -138,7 +138,7 @@ function Chapter({ c, i, lang }: { c: StoryChapter; i: number; lang: Lang }) {
       <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.gold, marginBottom: 4 }}>{lang === 'tr' ? `Bölüm ${i + 1}` : `Chapter ${i + 1}`}</Text>
       <View style={{ marginBottom: 12, zIndex: 5 }}><InfoTitle title={c.title[lang]} info={c.intro[lang]} style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink }} /></View>
       {(open ? c.paras : c.paras.slice(0, 1)).map((p, j) => (
-        <Text key={j} style={[pStyle, !open && long ? { marginBottom: 4 } : null]} numberOfLines={open || !long ? undefined : 6}>{p[lang]}</Text>
+        <Text key={`${j}-${open ? 1 : 0}`} style={[pStyle, !open && long ? { marginBottom: 4 } : null]} numberOfLines={open || !long ? undefined : 6}>{p[lang]}</Text>
       ))}
       {long ? <MoreLink open={open} onPress={() => setOpen(!open)} /> : null}
     </View>
