@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { C } from '../theme';
+import { maskDateTime } from '../util';
 import { st } from './kit';
 import type { T2 } from '../i18n2';
 
@@ -51,7 +52,7 @@ export default function DateBar({ date, onChange, t, lang, tzOffsetMin = 0, play
             <Text style={{ fontSize: 17, color: C.ink, fontVariant: ['tabular-nums'], fontWeight: '600' }}>{label}</Text>
           </Pressable>
         ) : (
-          <TextInput autoFocus value={edit} onChangeText={setEdit} onSubmitEditing={() => commit(edit)} onBlur={() => commit(edit)} placeholder={t.dateHint} placeholderTextColor={C.sub}
+          <TextInput autoFocus value={edit} onChangeText={v => setEdit(maskDateTime(v, edit ?? ''))} maxLength={16} keyboardType="numbers-and-punctuation" onSubmitEditing={() => commit(edit)} onBlur={() => commit(edit)} placeholder={t.dateHint} placeholderTextColor={C.sub}
             style={[st.input, { flex: 1, paddingVertical: 6, textAlign: 'center' }]} />
         )}
         <Btn title="›" onPress={() => onChange(addStep(date, step, 1))} />

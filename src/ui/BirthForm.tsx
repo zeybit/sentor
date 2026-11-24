@@ -5,6 +5,7 @@ import type { BirthInput } from '../engine/astro';
 import { useStore } from '../store';
 import { Btn, Chips, Field, P, Sub, st } from './kit';
 import { C } from '../theme';
+import { maskDate, maskTime } from '../util';
 
 export interface BirthFormValue { name: string; place: string; birth: BirthInput; gender?: 'f' | 'm'; rel?: 'single' | 'partner' | 'married' }
 export interface Place { label: string; lat: number; lon: number; tz: string }
@@ -90,8 +91,8 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
       <Text style={[st.label, { marginBottom: 6 }]}>{lang === 'tr' ? 'İlişki durumu' : 'Relationship status'}</Text>
       <Chips items={[{ key: 'single', label: lang === 'tr' ? 'Bekâr' : 'Single' }, { key: 'partner', label: lang === 'tr' ? 'İlişkisi var' : 'In a relationship' }, { key: 'married', label: lang === 'tr' ? 'Evli' : 'Married' }, { key: 'x', label: lang === 'tr' ? 'Belirtmek istemiyorum' : 'Prefer not to say' }]} value={rel} onChange={v => setRel(v as any)} />
       <Sub style={{ marginTop: 4, marginBottom: 14 }}>{lang === 'tr' ? 'Hayat takvimindeki aşk, evlilik ve ev dönemleri buna göre yorumlanır.' : 'Love, marriage and home periods in your life calendar are read according to this.'}</Sub>
-      <Field label={s.birthDate} value={date} onChangeText={setDate} placeholder="14.03.2003" keyboardType="numbers-and-punctuation" />
-      {!unknown && <Field label={s.birthTime} value={time} onChangeText={setTime} placeholder="09:30" keyboardType="numbers-and-punctuation" />}
+      <Field label={s.birthDate} value={date} onChangeText={v => setDate(maskDate(v, date))} maxLength={10} placeholder="14.03.2003" keyboardType="numbers-and-punctuation" />
+      {!unknown && <Field label={s.birthTime} value={time} onChangeText={v => setTime(maskTime(v, time))} maxLength={5} placeholder="09:30" keyboardType="numbers-and-punctuation" />}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <Switch value={unknown} onValueChange={setUnknown} trackColor={{ true: C.rose, false: C.line }} />
         <P>{s.timeUnknown}</P>

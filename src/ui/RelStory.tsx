@@ -7,6 +7,7 @@ import { useStore, Profile } from '../store';
 import { EV_LABEL, EvType, RelEvent, eventChart, fullStory, parseEventDate } from '../engine/relstory';
 import { Btn, Chips, Field, More, Section, Sub, st } from './kit';
 import { C, F } from '../theme';
+import { maskDate, maskTime } from '../util';
 
 const TYPES: EvType[] = ['meet', 'firstMove', 'firstDate', 'start', 'breakup', 'reunion'];
 
@@ -68,8 +69,8 @@ export default function RelStory() {
         <Text style={[st.rowLabel, { marginTop: 16, marginBottom: 6 }]}>Olay ekle</Text>
         <Chips items={TYPES.map(t => ({ key: t, label: EV_LABEL[t] }))} value={type} onChange={setType} />
         <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
-          <View style={{ flexGrow: 1, minWidth: 160 }}><Field label="Tarih" placeholder="GG.AA.YYYY" value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" /></View>
-          <View style={{ flexGrow: 1, minWidth: 120 }}><Field label="Saat (biliyorsan)" placeholder="SS:DD" value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flexGrow: 1, minWidth: 160 }}><Field label="Tarih" placeholder="GG.AA.YYYY" value={date} onChangeText={v => setDate(maskDate(v, date))} maxLength={10} keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flexGrow: 1, minWidth: 120 }}><Field label="Saat (biliyorsan)" placeholder="SS:DD" value={time} onChangeText={v => setTime(maskTime(v, time))} maxLength={5} keyboardType="numbers-and-punctuation" /></View>
         </View>
         {err ? <Text style={{ color: C.second, fontFamily: F.sans, fontSize: 14, marginTop: 4 }}>{err}</Text> : null}
         <View style={{ marginTop: 8 }}><Btn small title="Olayı ekle" onPress={add} disabled={!date.trim()} /></View>

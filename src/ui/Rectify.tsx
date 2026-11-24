@@ -6,6 +6,7 @@ import { rectify, EventType, LifeEvent, Candidate, parseDate } from '../engine/r
 import { SIGNS } from '../content/base';
 import { Btn, Chips, P, Section, Sub, st } from './kit';
 import { C, F, serif } from '../theme';
+import { maskDate } from '../util';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -55,7 +56,7 @@ export default function Rectify() {
           <View key={i} style={[st.panel, { marginBottom: 10 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.gold }}>{i + 1}.</Text>
-              <TextInput value={e.date} onChangeText={v => upd(i, { date: v })} placeholder={tx('GG.AA.YYYY', 'DD.MM.YYYY', lang)} placeholderTextColor={C.sub} keyboardType="numbers-and-punctuation"
+              <TextInput value={e.date} onChangeText={v => upd(i, { date: maskDate(v, e.date) })} maxLength={10} placeholder={tx('GG.AA.YYYY', 'DD.MM.YYYY', lang)} placeholderTextColor={C.sub} keyboardType="numbers-and-punctuation"
                 accessibilityLabel={tx(`${i + 1}. olayın tarihi`, `Date of event ${i + 1}`, lang)}
                 style={{ flex: 1, borderWidth: 1, borderColor: e.date && !parseDate(e.date) ? C.fire : C.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, color: C.ink, backgroundColor: C.bg }} />
               {events.length > 3 ? <Pressable accessibilityRole="button" accessibilityLabel={tx('Olayı sil', 'Remove event', lang)} onPress={() => setEvents(es => es.filter((_, k) => k !== i))}><Text style={{ color: C.fire, fontSize: 18, paddingHorizontal: 6 }}>×</Text></Pressable> : null}
