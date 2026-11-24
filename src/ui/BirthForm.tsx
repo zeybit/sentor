@@ -5,7 +5,7 @@ import type { BirthInput } from '../engine/astro';
 import { useStore } from '../store';
 import { Btn, Chips, Field, P, Sub, st } from './kit';
 import { C } from '../theme';
-import { maskDate, maskTime } from '../util';
+import { maskDate, maskTime, dateProblem, timeProblem } from '../util';
 
 export interface BirthFormValue { name: string; place: string; birth: BirthInput; gender?: 'f' | 'm'; rel?: 'single' | 'partner' | 'married' }
 export interface Place { label: string; lat: number; lon: number; tz: string }
@@ -61,10 +61,10 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
 
   const submit = () => {
     const dm = date.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-    if (!dm) return setErr(s.errDate);
+    if (!dm) return setErr(dateProblem(date, (lang === 'en' ? 'en' : 'tr'), true) || s.errDate);
     const [day, month, year] = [+dm[1], +dm[2], +dm[3]];
     const test = new Date(Date.UTC(year, month - 1, day));
-    if (test.getUTCMonth() !== month - 1 || year < 1800 || year > 2100) return setErr(s.errDate);
+    if (test.getUTCMonth() !== month - 1 || year < 1800 || year > 2100) return setErr(dateProblem(date, (lang === 'en' ? 'en' : 'tr'), true) || s.errDate);
     let hour = 12, minute = 0;
     if (!unknown) {
       const tm = time.trim().match(/^(\d{1,2})[:.](\d{2})$/);
@@ -91,8 +91,8 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
       <Text style={[st.label, { marginBottom: 6 }]}>{lang === 'tr' ? 'İlişki durumu' : 'Relationship status'}</Text>
       <Chips items={[{ key: 'single', label: lang === 'tr' ? 'Bekâr' : 'Single' }, { key: 'partner', label: lang === 'tr' ? 'İlişkisi var' : 'In a relationship' }, { key: 'married', label: lang === 'tr' ? 'Evli' : 'Married' }, { key: 'x', label: lang === 'tr' ? 'Belirtmek istemiyorum' : 'Prefer not to say' }]} value={rel} onChange={v => setRel(v as any)} />
       <Sub style={{ marginTop: 4, marginBottom: 14 }}>{lang === 'tr' ? 'Hayat takvimindeki aşk, evlilik ve ev dönemleri buna göre yorumlanır.' : 'Love, marriage and home periods in your life calendar are read according to this.'}</Sub>
-      <Field label={s.birthDate} value={date} onChangeText={v => setDate(maskDate(v, date))} maxLength={10} placeholder="14.03.2003" keyboardType="numbers-and-punctuation" />
-      {!unknown && <Field label={s.birthTime} value={time} onChangeText={v => setTime(maskTime(v, time))} maxLength={5} placeholder="09:30" keyboardType="numbers-and-punctuation" />}
+      <Field label={s.birthDate} value={date} onChangeText={v => setDate(maskDate(v, date))} maxLength={10} error={dateProblem(date, (lang === 'en' ? 'en' : 'tr'))} placeholder="14.03.2003" keyboardType="numbers-and-punctuation" />
+      {!unknown && <Field label={s.birthTime} value={time} onChangeText={v => setTime(maskTime(v, time))} maxLength={5} error={timeProblem(time, (lang === 'en' ? 'en' : 'tr'))} placeholder="09:30" keyboardType="numbers-and-punctuation" />}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <Switch value={unknown} onValueChange={setUnknown} trackColor={{ true: C.rose, false: C.line }} />
         <P>{s.timeUnknown}</P>
@@ -120,7 +120,7 @@ export default function BirthForm({ initial, onSubmit, submitLabel, nameLabel }:
         </View>
       )}
       <Btn kind="ghost" title={s.manual} onPress={() => setManual(!manual)} />
-      {err ? <Text style={{ color: C.rose, marginBottom: 6 }}>{err}</Text> : null}
+      {err && err !== dateProblem(date, (lang === 'en' ? 'en' : 'tr')) && err !== timeProblem(time, (lang === 'en' ? 'en' : 'tr')) ? <Text style={{ color: C.rose, marginBottom: 6 }}>{err}</Text> : null}
       <Btn title={submitLabel} onPress={submit} />
     </View>
   );

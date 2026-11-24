@@ -6,7 +6,7 @@ import { rectify, EventType, LifeEvent, Candidate, parseDate } from '../engine/r
 import { SIGNS } from '../content/base';
 import { Btn, Chips, P, Section, Sub, st } from './kit';
 import { C, F, serif } from '../theme';
-import { maskDate } from '../util';
+import { maskDate, dateProblem } from '../util';
 
 type Lang = 'tr' | 'en';
 const tx = (tr: string, en: string, lang: Lang) => (lang === 'tr' ? tr : en);
@@ -61,6 +61,7 @@ export default function Rectify() {
                 style={{ flex: 1, borderWidth: 1, borderColor: e.date && !parseDate(e.date) ? C.fire : C.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, color: C.ink, backgroundColor: C.bg }} />
               {events.length > 3 ? <Pressable accessibilityRole="button" accessibilityLabel={tx('Olayı sil', 'Remove event', lang)} onPress={() => setEvents(es => es.filter((_, k) => k !== i))}><Text style={{ color: C.fire, fontSize: 18, paddingHorizontal: 6 }}>×</Text></Pressable> : null}
             </View>
+            {dateProblem(e.date, lang) ? <Text accessibilityRole="alert" style={{ color: C.fire, fontSize: 13, marginBottom: 6, fontFamily: F.sansMed }}>{dateProblem(e.date, lang)}</Text> : null}
             <Chips items={TYPES.map(t => ({ key: t.key, label: t[lang] }))} value={e.type} onChange={v => upd(i, { type: v as EventType })} />
           </View>
         ))}

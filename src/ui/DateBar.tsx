@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { C } from '../theme';
-import { maskDateTime } from '../util';
+import { maskDateTime, dateProblem } from '../util';
 import { st } from './kit';
 import type { T2 } from '../i18n2';
 
@@ -35,7 +35,7 @@ export default function DateBar({ date, onChange, t, lang, tzOffsetMin = 0, play
   const label = `${pad(local.getUTCDate())}.${pad(local.getUTCMonth() + 1)}.${local.getUTCFullYear()} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
   const commit = (v: string) => {
     const m = v.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\s+(\d{1,2})[:.](\d{2}))?$/);
-    if (m) onChange(new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], m[4] ? +m[4] : 12, m[5] ? +m[5] : 0) - tzOffsetMin * 60000));
+    if (m && !dateProblem(v)) onChange(new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], m[4] ? +m[4] : 12, m[5] ? +m[5] : 0) - tzOffsetMin * 60000));
     setEdit(null);
   };
   const Btn = ({ title, onPress, on }: { title: string; onPress: () => void; on?: boolean }) => (

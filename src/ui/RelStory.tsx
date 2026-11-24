@@ -7,7 +7,7 @@ import { useStore, Profile } from '../store';
 import { EV_LABEL, EvType, RelEvent, eventChart, fullStory, parseEventDate } from '../engine/relstory';
 import { Btn, Chips, Field, More, Section, Sub, st } from './kit';
 import { C, F } from '../theme';
-import { maskDate, maskTime } from '../util';
+import { maskDate, maskTime, dateProblem, timeProblem } from '../util';
 
 const TYPES: EvType[] = ['meet', 'firstMove', 'firstDate', 'start', 'breakup', 'reunion'];
 
@@ -28,8 +28,10 @@ export default function RelStory() {
   const add = () => {
     const ev: RelEvent = { id: String(Date.now()), type, date: date.trim(), time: time.trim() || undefined };
     const p = parseEventDate(ev);
-    if (!p || p.m < 1 || p.m > 12 || p.d < 1 || p.d > 31) { setErr('Tarihi GG.AA.YYYY biçiminde yaz (ör. 14.02.2025).'); return; }
-    if (ev.time && !/^\d{1,2}[:.]\d{2}$/.test(ev.time)) { setErr('Saati SS:DD biçiminde yaz ya da boş bırak.'); return; }
+    const dp = dateProblem(ev.date, 'tr', true), tp = ev.time ? timeProblem(ev.time, 'tr', true) : '';
+    if (dp || !p) { setErr(dp || 'Tarihi GG.AA.YYYY biçiminde yaz (ör. 14.02.2025).'); return; }
+    if (tp) { setErr(tp + ' Bilmiyorsan boş bırak.'); return; }
+    if (new Date(p.y, p.m - 1, p.d) > new Date()) { setErr('Bu tarih henüz gelmedi; yaşanmış bir olayın tarihini gir.'); return; }
     setErr(''); setDate(''); setTime('');
     save([...events, ev].sort((a, b) => { const x = parseEventDate(a)!, y = parseEventDate(b)!; return new Date(x.y, x.m - 1, x.d).getTime() - new Date(y.y, y.m - 1, y.d).getTime(); }));
   };
@@ -69,10 +71,10 @@ export default function RelStory() {
         <Text style={[st.rowLabel, { marginTop: 16, marginBottom: 6 }]}>Olay ekle</Text>
         <Chips items={TYPES.map(t => ({ key: t, label: EV_LABEL[t] }))} value={type} onChange={setType} />
         <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
-          <View style={{ flexGrow: 1, minWidth: 160 }}><Field label="Tarih" placeholder="GG.AA.YYYY" value={date} onChangeText={v => setDate(maskDate(v, date))} maxLength={10} keyboardType="numbers-and-punctuation" /></View>
-          <View style={{ flexGrow: 1, minWidth: 120 }}><Field label="Saat (biliyorsan)" placeholder="SS:DD" value={time} onChangeText={v => setTime(maskTime(v, time))} maxLength={5} keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flexGrow: 1, minWidth: 160 }}><Field label="Tarih" placeholder="GG.AA.YYYY" value={date} onChangeText={v => { setErr(''); setDate(maskDate(v, date)); }} maxLength={10} error={dateProblem(date)} keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flexGrow: 1, minWidth: 120 }}><Field label="Saat (biliyorsan)" placeholder="SS:DD" value={time} onChangeText={v => { setErr(''); setTime(maskTime(v, time)); }} maxLength={5} error={timeProblem(time)} keyboardType="numbers-and-punctuation" /></View>
         </View>
-        {err ? <Text style={{ color: C.second, fontFamily: F.sans, fontSize: 14, marginTop: 4 }}>{err}</Text> : null}
+        {err && err !== dateProblem(date) && !(timeProblem(time) && err.startsWith(timeProblem(time))) ? <Text style={{ color: C.second, fontFamily: F.sans, fontSize: 14, marginTop: 4 }}>{err}</Text> : null}
         <View style={{ marginTop: 8 }}><Btn small title="Olayı ekle" onPress={add} disabled={!date.trim()} /></View>
         <Sub style={{ marginTop: 6 }}>Olay yeri olarak doğum yerini ({profile.place}) varsayıyorum. Saat girmezsen öğlen 12:00 alır, evleri yorumlamam.</Sub>
 
