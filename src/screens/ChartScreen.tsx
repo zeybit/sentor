@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { Stelliums, ElementBalance } from '../ui/NatalBalance';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useStore } from '../store';
 import { chartAt } from '../engine/astro';
@@ -91,6 +92,7 @@ export default function ChartScreen() {
                   ? <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds.natal}</Text>   {lang === 'tr' ? 'İç halka: drakonik harita' : 'Inner ring: draconic chart'}</Text>
                   : <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds[kind as ChartKind]}</Text>   {t.innerLegend}</Text>) : null}
               </View>
+              {kind === 'natal' ? <><Stelliums chart={chart} lang={lang} /><ElementBalance chart={chart} lang={lang} /></> : null}
             </View>
           );
           const right = (
@@ -117,7 +119,7 @@ export default function ChartScreen() {
           );
           return twoCol ? (
             <View style={{ flexDirection: 'row', gap: 48, alignItems: 'flex-start' }}>
-              <View style={{ width: 460, position: 'sticky' as any, top: 0 }}>{left}</View>
+              <View style={{ width: 460, ...(kind === 'natal' ? {} : { position: 'sticky' as any, top: 0 }) }}>{left}</View>
               <View style={{ flex: 1, maxWidth: 660 }}>{right}</View>
             </View>
           ) : <>{left}{right}</>;
