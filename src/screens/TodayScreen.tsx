@@ -18,12 +18,13 @@ import { PersonalMoon, BestDays } from '../ui/ExtrasUI';
 import { T2S } from '../i18n2';
 import { C, serif } from '../theme';
 import { DayCard, PlanetGuide, Rings, TodayHeader, ZodiacGuide } from '../ui/Cosmic';
+import TodayMobile from '../ui/TodayMobile';
 import { positionsAt } from '../engine/astro';
 
 export default function TodayScreen() {
   const { chart, s, lang, profile, location } = useStore();
   const t2 = T2S[lang];
-  const { inner, wide } = useLayout();
+  const { inner, wide, tablet } = useLayout();
   const nav = useNav();
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
@@ -46,33 +47,22 @@ export default function TodayScreen() {
   const pct = (v: number) => Math.round((v / 5) * 100);
   const fmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  return (
-    <View>
-      <TodayHeader name={profile?.name ?? ''} chart={chart} lang={lang} onCalendar={toCal} />
-      {profile ? (() => { const bi = birthdayInfo(profile.birth); const since = -bi.daysTo; if (bi.daysTo > 30 || since > 14) return null;
+  const ringItems = [
+      { label: tr ? 'Aşk' : 'Love', value: pct(sc.love), color: '#E8789A' },
+      { label: tr ? 'Enerji' : 'Energy', value: pct(sc.energy), color: '#6FD3C1' },
+      { label: tr ? 'Ruh hali' : 'Mood', value: pct(sc.mood), color: '#F0B35E' },
+      { label: tr ? 'Kariyer' : 'Career', value: pct(sc.career), color: '#8F8BFA' },
+    ];
+  const birthday = <>
+    {profile ? (() => { const bi = birthdayInfo(profile.birth); const since = -bi.daysTo; if (bi.daysTo > 30 || since > 14) return null;
         return (
           <Pressable accessibilityRole="button" onPress={() => nav('explore:year')} style={{ marginTop: 10, marginBottom: 6, padding: 16, borderRadius: 6, backgroundColor: '#0C1517', borderWidth: 1, borderColor: 'rgba(219,182,104,0.45)' }} {...({ dataSet: { pulse: '1' } } as any)}>
             <Text style={{ color: '#F2B84B', fontFamily: serif, fontSize: 22 }}>{bi.daysTo > 0 ? (lang === 'tr' ? `${bi.daysTo} gün sonra ${bi.age} yaşındasın ✦` : `${bi.age} in ${bi.daysTo} days ✦`) : (lang === 'tr' ? `Yeni yaşın kutlu olsun ✦ ${bi.age}` : `Happy birthday ✦ ${bi.age}`)}</Text>
             <Text style={{ color: '#D5E1EA', fontSize: 15, marginTop: 4 }}>{lang === 'tr' ? 'Yeni yaşının hikâyesi hazır: aşk, şans, sınav ve en hareketli ayların. Okumak için dokun →' : 'The story of your new year is ready: love, luck, lessons and your busiest months. Tap to read →'}</Text>
           </Pressable>
         ); })() : null}
-      {(() => {
-        const rings = <Rings lang={lang} items={[
-          { label: tr ? 'Aşk' : 'Love', value: pct(sc.love), color: '#E8789A' },
-          { label: tr ? 'Enerji' : 'Energy', value: pct(sc.energy), color: '#6FD3C1' },
-          { label: tr ? 'Ruh hali' : 'Mood', value: pct(sc.mood), color: '#F0B35E' },
-          { label: tr ? 'Kariyer' : 'Career', value: pct(sc.career), color: '#8F8BFA' },
-        ]} />;
-        const day = <DayCard lang={lang} energies={energies} onCalendar={toCal} />;
-        const guide = <PlanetGuide hits={daily.hits} lang={lang} />;
-        const zod = <ZodiacGuide start={chart.positions.sun.sign} lang={lang} />;
-        return wide ? (
-          <View style={{ flexDirection: 'row', gap: 28, alignItems: 'flex-start' }}>
-            <View style={{ flex: 1.25, minWidth: 0 }}>{day}{guide}{rings}</View>
-            <View style={{ flex: 1, minWidth: 0, maxWidth: 460 }}>{zod}</View>
-          </View>
-        ) : <>{day}{guide}{rings}{zod}</>;
-      })()}
+  </>;
+  const rest = <>
       <ShareToggle label={lang === 'tr' ? 'Aylık enerji kartın' : 'Your monthly energy card'} build={buildMonth} filename={`aylik-enerji-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
 
       <View style={{ marginTop: 8, marginBottom: 32 }}>
@@ -119,6 +109,26 @@ export default function TodayScreen() {
         <P>{daily.retrogrades.length ? daily.retrogrades.map(r => `${BODIES[r].glyph} ${BODIES[r].name[lang]}`).join('   ') : s.none}</P>
       </Section>
 
+  </>;
+  if (!wide && !tablet) return <TodayMobile chart={chart} name={profile?.name ?? ''} lang={lang} energies={energies} rings={ringItems} hits={daily.hits} details={<>{birthday}{rest}</>} />;
+
+  return (
+    <View>
+      <TodayHeader name={profile?.name ?? ''} chart={chart} lang={lang} onCalendar={toCal} />
+      {(() => {
+        const rings = <Rings lang={lang} items={ringItems} />;
+        const day = <DayCard lang={lang} energies={energies} onCalendar={toCal} />;
+        const guide = <PlanetGuide hits={daily.hits} lang={lang} />;
+        const zod = <ZodiacGuide start={chart.positions.sun.sign} lang={lang} />;
+        return wide ? (
+          <View style={{ flexDirection: 'row', gap: 28, alignItems: 'flex-start' }}>
+            <View style={{ flex: 1.25, minWidth: 0 }}>{day}{guide}{rings}</View>
+            <View style={{ flex: 1, minWidth: 0, maxWidth: 460 }}>{zod}</View>
+          </View>
+        ) : <>{day}{guide}{rings}{zod}</>;
+      })()}
+      {birthday}
+      {rest}
     </View>
   );
 }

@@ -40,7 +40,7 @@ function Pill({ children, onPress, active }: { children: React.ReactNode; onPres
 
 // ---------------- Bugün: başlık, hafta şeridi, enerji ızgarası ----------------
 const DAYS_TR = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'], DAYS_EN = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const SIGN_DATES: { tr: string; en: string }[] = [
+export const SIGN_DATES: { tr: string; en: string }[] = [
   ['21 Mar – 19 Nis', 'Mar 21 – Apr 19'], ['20 Nis – 20 May', 'Apr 20 – May 20'], ['21 May – 20 Haz', 'May 21 – Jun 20'], ['21 Haz – 22 Tem', 'Jun 21 – Jul 22'],
   ['23 Tem – 22 Ağu', 'Jul 23 – Aug 22'], ['23 Ağu – 22 Eyl', 'Aug 23 – Sep 22'], ['23 Eyl – 22 Eki', 'Sep 23 – Oct 22'], ['23 Eki – 21 Kas', 'Oct 23 – Nov 21'],
   ['22 Kas – 21 Ara', 'Nov 22 – Dec 21'], ['22 Ara – 19 Oca', 'Dec 22 – Jan 19'], ['20 Oca – 18 Şub', 'Jan 20 – Feb 18'], ['19 Şub – 20 Mar', 'Feb 19 – Mar 20'],
@@ -192,8 +192,8 @@ export function Rings({ items, lang }: { items: { label: string; value: number; 
 }
 
 // ---------------- Burç rehberi ----------------
-type When = 'today' | 'tomorrow' | 'week';
-function signReading(sel: number, when: When, lang: Lang) {
+export type When = 'today' | 'tomorrow' | 'week';
+export function signReading(sel: number, when: When, lang: Lang) {
   const d = new Date(); if (when === 'tomorrow') d.setDate(d.getDate() + 1); if (when === 'week') d.setDate(d.getDate() + 3);
   const P = positionsAt(d, ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn']);
   const hs = (b: string) => ((signOf(P[b].lon) - sel + 12) % 12) + 1;
@@ -224,12 +224,8 @@ function signReading(sel: number, when: When, lang: Lang) {
 
 export function ZodiacGuide({ start, lang }: { start: number; lang: Lang }) {
   const [sel, setSel] = useState(start);
-  const [when, setWhen] = useState<When>('today');
-  const r = useMemo(() => signReading(sel, when, lang), [sel, when, lang]);
   const con = CONSTELLATIONS[sel];
-  const ruler = SIGN_RULERS[sel], el = SIGN_ELEMENT[sel];
   const step = (k: number) => setSel((sel + k + 12) % 12);
-  const dfmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short' });
   return (
     <Glass style={{ marginBottom: 30, paddingTop: 22 }}>
       <View style={{ alignItems: 'center' }}>
@@ -257,6 +253,19 @@ export function ZodiacGuide({ start, lang }: { start: number; lang: Lang }) {
           </React.Fragment>)}
         </Svg>
       </View>
+      <SignReadingPanel sel={sel} lang={lang} />
+    </Glass>
+  );
+}
+
+/** Burç okuması: Bugün / Yarın / Bu hafta sekmeleri, metin ve çubuklar */
+export function SignReadingPanel({ sel, lang }: { sel: number; lang: Lang }) {
+  const [when, setWhen] = useState<When>('today');
+  const r = useMemo(() => signReading(sel, when, lang), [sel, when, lang]);
+  const ruler = SIGN_RULERS[sel], el = SIGN_ELEMENT[sel];
+  const dfmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short' });
+  return (
+    <View>
       <View style={{ flexDirection: 'row', gap: 22, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)', marginBottom: 14 }}>
         {(['today', 'tomorrow', 'week'] as When[]).map(w => {
           const on = w === when;
@@ -285,7 +294,7 @@ export function ZodiacGuide({ start, lang }: { start: number; lang: Lang }) {
         ))}
       </View>
       <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.sub, marginTop: 14 }}>{tx(lang, 'Burç yorumu güneş burcuna göre genel bir okumadır; kişisel yorumun yukarıda.', 'Sign readings are general, by Sun sign; your personal reading is above.')}</Text>
-    </Glass>
+    </View>
   );
 }
 
