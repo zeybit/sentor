@@ -73,6 +73,9 @@ function cross(c1: Chart, p1: Pt[], c2: Chart, p2: Pt[], types?: Asp[], orb = 6)
   return out.sort((p, q) => p.orb - q.orb);
 }
 const findA = (list: A[], a: Pt, b: Pt, types?: Asp[]) => list.find(x => ((x.a === a && x.b === b) || (x.a === b && x.b === a)) && (!types || types.includes(x.type)));
+const posTxt = (c: Chart, p: Pt): string => { if (['asc', 'dsc', 'mc', 'ic'].includes(p as string)) { const L = lonOf(c, p); return L === null ? '' : deg(L); } return c.positions[p as BodyId] ? where(c, p as BodyId) : ''; };
+/** açı + iki tarafın konumu: Venüs (Akrep 12°, 5. ev) kare Neptün (Oğlak 10°) (3°) */
+const aTxtP = (x: A, c1: Chart, c2: Chart = c1, l1 = '', l2 = '') => `${l1}${NM[x.a]} (${posTxt(c1, x.a)}) ${ASP_TR[x.type]} ${l2}${NM[x.b]} (${posTxt(c2, x.b)}) · ${orbTxt(x.orb)}`;
 const aTxt = (x: A, c1 = '', c2 = '') => `${c1}${NM[x.a]} ${ASP_TR[x.type]} ${c2}${NM[x.b]} (${orbTxt(x.orb)})`;
 
 function moonPhaseOf(c: Chart) {
@@ -123,38 +126,38 @@ export function lovePatterns(p: Person): Pattern[] {
   const asp = aspectsIn(c, [...PLANETS, 'chiron', 'node', 'asc']);
   const out: Pattern[] = [];
   const hit = (a: Pt, b: Pt, types: Asp[], mk: (x: A) => Pattern) => { const x = findA(asp, a, b, types); if (x) out.push(mk(x)); };
-  hit('venus', 'saturn', HARD, x => ({ w: 3, tech: aTxt(x), text: 'Sevgiyi göstermekte zorlanır; yakınlık arttıkça soğuklaşır ve mesafe koyar. Reddedilme korkusu sevgiyi hesaba çevirir.', voice: 'Fazla açılırsam kaybederim.', truth: `${N} sevgiyi göstermekte cimridir. Bu soğukluk karşısındakinden değil, kendi korkusundan gelir ve kendiliğinden geçmez.` }));
-  hit('venus', 'uranus', HARD, x => ({ w: 3, tech: aTxt(x), text: 'Bağlanma ile özgürlük arasında gider gelir. İlişki ciddileştiği anda soğur ya da ani bir kopuş yaratır.', voice: 'Boğuluyorum, nefes almam lazım.', truth: `${N} bağlandıkça kaçar. Bu bir dönem meselesi değil, doğuştan gelen kalıbı.` }));
-  hit('moon', 'uranus', HARD, x => ({ w: 3, tech: aTxt(x), text: 'Duygusal baskı hissettiğinde kaçar; bir gün çok yakın, ertesi gün ulaşılmaz.', voice: 'Bana bu kadar yüklenme.', truth: `${N} baskı altında kalınca kaçar. Bu karşısındakinin suçu değil, onun kalıbı; tekrar eder.` }));
-  hit('venus', 'neptune', [...HARD, 'quincunx'], x => ({ w: 3, tech: aTxt(x), text: 'Sevdiğini idealize eder; gerçek kişiyi değil, kafasındaki kişiyi sever. Hayal kırıklığı bu açının kaderidir.', voice: 'Aslında öyle biri değil, değişecek.', truth: `${N} karşısındakini olduğu kişi olarak değil, olmasını istediği kişi olarak sever.` }));
-  hit('venus', 'pluto', HARD, x => ({ w: 3, tech: aTxt(x), text: 'Ya hep ya hiç. Sevdiğinde sahiplenir, kıskanır, kontrol etmek ister; ayrılıkları da yakıp yıkarak yaşar.', voice: 'Ya tamamen benimsin ya hiç.', truth: `${N} sevdiğinde kontrol eder. Kıskançlık bu ilişkide yan etki değil, merkezde.` }));
-  hit('moon', 'pluto', HARD, x => ({ w: 3, tech: aTxt(x), text: 'Duyguları yoğun ve takıntılı; terk edilme korkusu güç mücadelesine dönüşür.', voice: 'Beni bırakmadan ben bırakmalıyım.', truth: `${N} terk edilmekten korktuğu için önce kendisi güç kurar; bu da ilişkiyi zehirler.` }));
-  hit('mars', 'pluto', HARD, x => ({ w: 2, tech: aTxt(x), text: 'Öfkesi derin ve patlayıcı; tartışmalar kolayca güç savaşına döner, kimse geri adım atmaz.', truth: `${N} kavgada kazanmak ister; uzlaşma onun için yenilgi gibidir.` }));
-  hit('mars', 'saturn', HARD, x => ({ w: 2, tech: aTxt(x), text: 'İsteğini bastırır, sonra sertleşir; inisiyatif almakta tıkanır, adım atması geç gelir.', voice: 'Yanlış adım atmaktansa hiç atmayayım.' }));
-  hit('moon', 'saturn', HARD, x => ({ w: 2, tech: aTxt(x), text: 'Duygusal ihtiyaçlarını gizler, “iyiyim” der. Güvence bekler ama istemeyi bilmez; içindeki yalnızlığı kimseye göstermez.', voice: 'Kimseye yük olmamalıyım.', truth: `${N} ihtiyacını söylemez, sonra anlaşılmadığı için küser.` }));
-  hit('sun', 'neptune', HARD, x => ({ w: 2, tech: aTxt(x), text: 'Ne istediğini net söylemez; kaçamak, belirsiz, kolayca kaybolan biri.', truth: `${N} netlik vermez; belirsizliği bir korunma yöntemi olarak kullanır.` }));
-  hit('venus', 'mars', ['conjunction', 'square', 'opposition'], x => ({ w: 1, tech: aTxt(x), text: x.type === 'conjunction' ? 'Tutku ve sevgi iç içe; çekici ve atılgan.' : 'Sevgi ile arzu arasında çatışma; çekim yüksek, istikrar düşük.' }));
-  hit('venus', 'jupiter', [...SOFT, 'conjunction'], x => ({ w: 1, good: true, tech: aTxt(x), text: 'Sevgiyi cömertçe verir; ilişkide iyimser ve affedicidir.' }));
-  hit('moon', 'venus', [...SOFT, 'conjunction'], x => ({ w: 1, good: true, tech: aTxt(x), text: 'Duygu ile sevgi uyumlu; yanında olmak kolaydır, şefkatlidir.' }));
+  hit('venus', 'saturn', HARD, x => ({ w: 3, tech: aTxtP(x, c), text: 'Sevgiyi göstermekte zorlanır; yakınlık arttıkça soğuklaşır ve mesafe koyar. Reddedilme korkusu sevgiyi hesaba çevirir.', voice: 'Fazla açılırsam kaybederim.', truth: `${N} sevgiyi göstermekte cimridir. Bu soğukluk karşısındakinden değil, kendi korkusundan gelir ve kendiliğinden geçmez.` }));
+  hit('venus', 'uranus', HARD, x => ({ w: 3, tech: aTxtP(x, c), text: 'Bağlanma ile özgürlük arasında gider gelir. İlişki ciddileştiği anda soğur ya da ani bir kopuş yaratır.', voice: 'Boğuluyorum, nefes almam lazım.', truth: `${N} bağlandıkça kaçar. Bu bir dönem meselesi değil, doğuştan gelen kalıbı.` }));
+  hit('moon', 'uranus', HARD, x => ({ w: 3, tech: aTxtP(x, c), text: 'Duygusal baskı hissettiğinde kaçar; bir gün çok yakın, ertesi gün ulaşılmaz.', voice: 'Bana bu kadar yüklenme.', truth: `${N} baskı altında kalınca kaçar. Bu karşısındakinin suçu değil, onun kalıbı; tekrar eder.` }));
+  hit('venus', 'neptune', [...HARD, 'quincunx'], x => ({ w: 3, tech: aTxtP(x, c), text: 'Sevdiğini idealize eder; gerçek kişiyi değil, kafasındaki kişiyi sever. Hayal kırıklığı bu açının kaderidir.', voice: 'Aslında öyle biri değil, değişecek.', truth: `${N} karşısındakini olduğu kişi olarak değil, olmasını istediği kişi olarak sever.` }));
+  hit('venus', 'pluto', HARD, x => ({ w: 3, tech: aTxtP(x, c), text: 'Ya hep ya hiç. Sevdiğinde sahiplenir, kıskanır, kontrol etmek ister; ayrılıkları da yakıp yıkarak yaşar.', voice: 'Ya tamamen benimsin ya hiç.', truth: `${N} sevdiğinde kontrol eder. Kıskançlık bu ilişkide yan etki değil, merkezde.` }));
+  hit('moon', 'pluto', HARD, x => ({ w: 3, tech: aTxtP(x, c), text: 'Duyguları yoğun ve takıntılı; terk edilme korkusu güç mücadelesine dönüşür.', voice: 'Beni bırakmadan ben bırakmalıyım.', truth: `${N} terk edilmekten korktuğu için önce kendisi güç kurar; bu da ilişkiyi zehirler.` }));
+  hit('mars', 'pluto', HARD, x => ({ w: 2, tech: aTxtP(x, c), text: 'Öfkesi derin ve patlayıcı; tartışmalar kolayca güç savaşına döner, kimse geri adım atmaz.', truth: `${N} kavgada kazanmak ister; uzlaşma onun için yenilgi gibidir.` }));
+  hit('mars', 'saturn', HARD, x => ({ w: 2, tech: aTxtP(x, c), text: 'İsteğini bastırır, sonra sertleşir; inisiyatif almakta tıkanır, adım atması geç gelir.', voice: 'Yanlış adım atmaktansa hiç atmayayım.' }));
+  hit('moon', 'saturn', HARD, x => ({ w: 2, tech: aTxtP(x, c), text: 'Duygusal ihtiyaçlarını gizler, “iyiyim” der. Güvence bekler ama istemeyi bilmez; içindeki yalnızlığı kimseye göstermez.', voice: 'Kimseye yük olmamalıyım.', truth: `${N} ihtiyacını söylemez, sonra anlaşılmadığı için küser.` }));
+  hit('sun', 'neptune', HARD, x => ({ w: 2, tech: aTxtP(x, c), text: 'Ne istediğini net söylemez; kaçamak, belirsiz, kolayca kaybolan biri.', truth: `${N} netlik vermez; belirsizliği bir korunma yöntemi olarak kullanır.` }));
+  hit('venus', 'mars', ['conjunction', 'square', 'opposition'], x => ({ w: 1, tech: aTxtP(x, c), text: x.type === 'conjunction' ? 'Tutku ve sevgi iç içe; çekici ve atılgan.' : 'Sevgi ile arzu arasında çatışma; çekim yüksek, istikrar düşük.' }));
+  hit('venus', 'jupiter', [...SOFT, 'conjunction'], x => ({ w: 1, good: true, tech: aTxtP(x, c), text: 'Sevgiyi cömertçe verir; ilişkide iyimser ve affedicidir.' }));
+  hit('moon', 'venus', [...SOFT, 'conjunction'], x => ({ w: 1, good: true, tech: aTxtP(x, c), text: 'Duygu ile sevgi uyumlu; yanında olmak kolaydır, şefkatlidir.' }));
   for (const k of ['venus', 'moon'] as BodyId[]) {
     const ch = findA(asp, k, 'chiron', ['conjunction', 'square', 'opposition']);
-    if (ch) out.push({ w: 2, tech: aTxt(ch), text: 'Aşkta eski bir yara taşır; reddedilmeye aşırı duyarlıdır, küçük bir soğukluğu terk edilme gibi yaşar.', voice: 'Yine sevilmeyeceğim.' });
+    if (ch) out.push({ w: 2, tech: aTxtP(ch, c), text: 'Aşkta eski bir yara taşır; reddedilmeye aşırı duyarlıdır, küçük bir soğukluğu terk edilme gibi yaşar.', voice: 'Yine sevilmeyeceğim.' });
   }
   const V = c.positions.venus, M = c.positions.moon, Ma = c.positions.mars;
   if (V.retro) out.push({ w: 2, tech: `Doğumda retro Venüs (${where(c, 'venus')})`, text: 'Eski hikâyeleri kapatmakta zorlanır; geçmişe döner, eskiyle kıyaslar.', truth: `${N} geçmişi tam kapatmaz; eskiler hep bir köşede durur.` });
   if (angleDiff(V.lon, c.positions.sun.lon) < 8) out.push({ w: 1, tech: `Yanık Venüs (Güneş’e ${angleDiff(V.lon, c.positions.sun.lon).toFixed(1)}°)`, text: 'Aşkta kendi isteğini görünür kılamaz ya da sevgiyi egosuyla karıştırır.' });
   const sv = V.sign, sm = M.sign, sma = Ma.sign;
-  if (sv === 5) out.push({ w: 1, tech: `Venüs Başak’ta (düşüşte)`, text: 'Sevgiyi eleştiriyle karıştırır; kusur bulur, mükemmeli bekler.' });
-  if (sv === 7) out.push({ w: 1, tech: `Venüs Akrep’te (zararda)`, text: 'Sahiplenici ve şüpheci sever; güvenmek zaman alır.' });
-  if (sv === 0) out.push({ w: 1, tech: `Venüs Koç’ta (zararda)`, text: 'Çabuk alevlenir, çabuk söner; kovalamayı yakalamaktan çok sever.' });
+  if (sv === 5) out.push({ w: 1, tech: `Venüs Başak’ta, düşüşte (${where(c, 'venus')})`, text: 'Sevgiyi eleştiriyle karıştırır; kusur bulur, mükemmeli bekler.' });
+  if (sv === 7) out.push({ w: 1, tech: `Venüs Akrep’te, zararda (${where(c, 'venus')})`, text: 'Sahiplenici ve şüpheci sever; güvenmek zaman alır.' });
+  if (sv === 0) out.push({ w: 1, tech: `Venüs Koç’ta, zararda (${where(c, 'venus')})`, text: 'Çabuk alevlenir, çabuk söner; kovalamayı yakalamaktan çok sever.' });
   if ([2, 8, 10].includes(sv) || [8, 10].includes(sm)) out.push({ w: 1, tech: `${[2, 8, 10].includes(sv) ? `Venüs ${SIGNS[sv].tr}` : `Ay ${SIGNS[sm].tr}`}’da`, text: 'Özgürlük ihtiyacı yüksek; yakınlık bir noktadan sonra dar gelir.' });
-  if (sm === 7) out.push({ w: 1, tech: 'Ay Akrep’te (düşüşte)', text: 'Duyguları derin ama kapalı; kıskançlığı ve kinini içinde büyütür.' });
-  if (sm === 9) out.push({ w: 1, tech: 'Ay Oğlak’ta (zararda)', text: 'Duygusal olarak kontrollü, soğuk görünür; sevgiyi sorumluluk alarak gösterir.' });
-  if (sma === 3) out.push({ w: 1, tech: 'Mars Yengeç’te (düşüşte)', text: 'Öfkesini doğrudan söylemez; pasif agresif davranır, küser.' });
-  if (sma === 6) out.push({ w: 1, tech: 'Mars Terazi’de (zararda)', text: 'Kavgadan kaçar, kararsız kalır; sorunu konuşmak yerine erteler.' });
+  if (sm === 7) out.push({ w: 1, tech: `Ay Akrep’te, düşüşte (${where(c, 'moon')})`, text: 'Duyguları derin ama kapalı; kıskançlığı ve kinini içinde büyütür.' });
+  if (sm === 9) out.push({ w: 1, tech: `Ay Oğlak’ta, zararda (${where(c, 'moon')})`, text: 'Duygusal olarak kontrollü, soğuk görünür; sevgiyi sorumluluk alarak gösterir.' });
+  if (sma === 3) out.push({ w: 1, tech: `Mars Yengeç’te, düşüşte (${where(c, 'mars')})`, text: 'Öfkesini doğrudan söylemez; pasif agresif davranır, küser.' });
+  if (sma === 6) out.push({ w: 1, tech: `Mars Terazi’de, zararda (${where(c, 'mars')})`, text: 'Kavgadan kaçar, kararsız kalır; sorunu konuşmak yerine erteler.' });
   if (timedOf(c)) {
     if (c.positions.saturn.house === 7) out.push({ w: 2, tech: `Satürn 7. evde (${where(c, 'saturn')})`, text: 'İlişkiyi bir yük ve sınav gibi yaşar; geç bağlanır, bağlandığında ağır bağlanır.', truth: `${N} için ilişki hafif bir şey değildir; ya ciddi ya hiç.` });
-    if (c.positions.node.house === 7) out.push({ w: 1, tech: 'Kuzey Ay Düğümü 7. evde', text: 'İlişki bu kişinin hayat dersidir: “ben” yerine “biz” demeyi öğrenmesi gerekir.' });
+    if (c.positions.node.house === 7) out.push({ w: 1, tech: `Kuzey Ay Düğümü 7. evde (${where(c, 'node')})`, text: 'İlişki bu kişinin hayat dersidir: “ben” yerine “biz” demeyi öğrenmesi gerekir.' });
   }
   return out.sort((a, b) => b.w - a.w);
 }
@@ -170,7 +173,7 @@ export function synastryHonest(A: Person, B: Person) {
     for (const h of x) { if (!types.includes(h.type)) continue; if (h.a === a && h.b === b) fn(h, true); else if (h.a === b && h.b === a) fn({ a: h.b, b: h.a, type: h.type, orb: h.orb }, false); }
   };
   const nameOf = (isA: boolean) => (isA ? A.name : B.name), other = (isA: boolean) => (isA ? B.name : A.name);
-  const T = (h: A, isA: boolean) => `${gen(nameOf(isA))} ${poss(NM[h.a])} ${ASP_TR[h.type]} ${gen(other(isA))} ${poss(NM[h.b])} (${orbTxt(h.orb)})`;
+  const T = (h: A, isA: boolean) => `${gen(nameOf(isA))} ${poss(NM[h.a])} (${posTxt(isA ? A.chart : B.chart, h.a)}) ${ASP_TR[h.type]} ${gen(other(isA))} ${poss(NM[h.b])} (${posTxt(isA ? B.chart : A.chart, h.b)}) · ${orbTxt(h.orb)}`;
   each('moon', 'sun', ['conjunction', 'opposition', 'trine', 'sextile'], (h, i) => { ps += 3; pull.push({ tech: T(h, i), text: h.type === 'opposition' ? 'Klasik “evlilik açısı”. Biri diğerinin eksik yarısı gibi hissetmiş; çekim güçlü.' : 'Duygu ile kimlik birbirini tanıyor; birbirlerinin yanında “evde” hissetmişler.' }); });
   each('venus', 'mars', ['conjunction', 'opposition', 'square', 'trine', 'sextile'], (h, i) => { ps += 3; pull.push({ tech: T(h, i), text: h.type === 'square' || h.type === 'opposition' ? 'Fiziksel çekim yüksek ama sürtünmeli; tutku ile kavga aynı kaynaktan.' : 'Güçlü romantik ve fiziksel çekim; birbirlerini arzu etmişler.' }); });
   each('venus', 'jupiter', ['conjunction', 'trine', 'sextile', 'opposition'], (h, i) => { ps += 2; pull.push({ tech: T(h, i), text: 'Biri diğerini cömertçe sevmiş; birlikteyken hayat daha büyük görünmüş.' }); });
@@ -276,8 +279,8 @@ export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person |
   const heavyHard = heavy.filter(x => HARD.includes(x.type) || x.type === 'quincunx');
   const outer = heavyHard[0] ? (['pluto', 'saturn', 'uranus', 'neptune'].find(o => o === heavyHard[0].a || o === heavyHard[0].b) as string) : (findA(asp, 'venus', 'mars', HARD) ? 'mars' : '');
   const theme: Item[] = [];
-  if (asp[0]) theme.push({ tech: `En sıkı açı: ${aTxt(asp[0])}`, text: asp[0].orb <= 2 ? 'Haritanın omurgası bu: olayın asıl dili burada.' : 'Haritanın en güçlü bağlantısı bu.' });
-  for (const h of heavy.filter(h => h !== asp[0]).slice(0, 3)) { const ok = (['pluto', 'saturn', 'uranus', 'neptune'].find(o => o === h.a || o === h.b))!; theme.push({ tech: aTxt(h), text: HARD.includes(h.type) || h.type === 'quincunx' ? TH[ok].text : OUTER_SOFT[ok] }); }
+  if (asp[0]) theme.push({ tech: `En sıkı açı: ${aTxtP(asp[0], ec)}`, text: asp[0].orb <= 2 ? 'Haritanın omurgası bu: olayın asıl dili burada.' : 'Haritanın en güçlü bağlantısı bu.' });
+  for (const h of heavy.filter(h => h !== asp[0]).slice(0, 3)) { const ok = (['pluto', 'saturn', 'uranus', 'neptune'].find(o => o === h.a || o === h.b))!; theme.push({ tech: aTxtP(h, ec), text: HARD.includes(h.type) || h.type === 'quincunx' ? TH[ok].text : OUTER_SOFT[ok] }); }
   // T-kare
   for (const o of asp.filter(x => x.type === 'opposition')) {
     const apex = (PLANETS as Pt[]).find(p => p !== o.a && p !== o.b && findA(asp, p, o.a, ['square']) && findA(asp, p, o.b, ['square']));
@@ -285,26 +288,29 @@ export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person |
   }
   if (timed) for (const p of PLANETS) for (const ax of ['asc', 'dsc', 'mc', 'ic'] as Pt[]) { const L = lonOf(ec, ax)!; if (angleDiff(P[p].lon, L) <= 5) theme.push({ tech: `${NM[p]} ${NM[ax]} üzerinde (${angleDiff(P[p].lon, L).toFixed(1)}°)`, text: `Eksene oturan gezegen olayın görünür yüzü: ${p === 'saturn' ? 'ağırlık ve mesafe' : p === 'pluto' ? 'güç ve kesinlik' : p === 'uranus' ? 'ani kopuş' : p === 'neptune' ? 'sis ve kaçış' : p === 'venus' ? 'sevgi ve çekim' : p === 'mars' ? 'öfke ve hareket' : p === 'moon' ? 'duygular, ev ve aidiyet' : p === 'sun' ? 'kimlik ve gurur' : p === 'mercury' ? 'konuşmalar ve mesajlar' : p === 'jupiter' ? 'umut ve büyüme' : 'olayın ana konusu'}.` }); }
   secs.push({ emoji: '🔥', title: 'Haritanın ana teması', items: theme });
+  const touch = natalTouches(ec, me, EV_LABEL[ev.type]);
+  secs.push({ emoji: '🎯', title: `${gen(me.name)} haritasında bu an`, items: touch.length ? touch : [{ tech: '3° içinde sıkı temas yok', text: `Bu olay ${gen(me.name)} doğum haritasındaki kişisel noktalara sıkı değmiyor; onu içten sarsan bir an değil, dışarıdan yaşadığı bir an.` }] });
 
   // Kadın ve erkek nasıl hissetmiş (olay haritasında kadın: Ay + Venüs, erkek: Güneş + Mars)
   const feel = (id: BodyId) => {
     const xs = asp.filter(x => (x.a === id || x.b === id) && x.orb <= 5).slice(0, 2);
-    return xs.map(x => ({ tech: `${NM[id]} ${where(ec, id)}: ${aTxt(x)}`, text: describe(id, x, mercRx) }));
+    return xs.map(x => ({ tech: aTxtP(x, ec), text: describe(id, x, mercRx) }));
   };
   const seenA = new Set<string>();
-  const uniq = (xs: Item[]) => xs.filter(i => { const k = i.tech.split(': ').slice(1).join(': '); if (seenA.has(k)) return false; seenA.add(k); return true; });
+  const uniq = (xs: Item[]) => xs.filter(i => { const k = i.tech; if (seenA.has(k)) return false; seenA.add(k); return true; });
   const withVoice = (xs: Item[], v: string) => xs.map((i, k) => (k === 0 ? { ...i, voice: i.voice ?? v } : i));
   const wItems: Item[] = uniq([...feel('moon'), ...feel('venus')]);
   if (!wItems.length) wItems.push({ tech: `Ay ${where(ec, 'moon')}, Venüs ${where(ec, 'venus')}`, text: `${woman ? woman.name : 'Kadın taraf'} için sıkı bir açı yok; duygusal tepki sessiz ve içe dönük.` });
-  if (woman) { const tr = transitsTo(ec, woman.chart, woman.name); if (tr) wItems.push(tr); }
+  if (woman && woman !== me) { const tr = transitsTo(ec, woman.chart, woman.name); if (tr) wItems.push(tr); }
   if (assumed && assumed === woman) wItems.push({ tech: 'Not', text: `${gen(assumed.name)} cinsiyeti girilmediği için onu Ay ve Venüs üzerinden okudum. Ayarlar’dan cinsiyet eklersen yorum netleşir.` });
   secs.push({ emoji: '👩', title: `${woman ? woman.name : 'Kadın taraf'} nasıl hissetmiş?`, items: withVoice(wItems, voiceFor('f', ev.type, outer)) });
   seenA.clear();
   const mItems: Item[] = uniq([...feel('sun'), ...feel('mars')]);
   if (!mItems.length) mItems.push({ tech: `Güneş ${where(ec, 'sun')}, Mars ${where(ec, 'mars')}`, text: `${man ? man.name : 'Erkek taraf'} için sıkı bir açı yok; olayı dışarıdan sakin yaşamış görünür.` });
-  if (man) { const tr = transitsTo(ec, man.chart, man.name); if (tr) mItems.push(tr); }
+  if (man && man !== me) { const tr = transitsTo(ec, man.chart, man.name); if (tr) mItems.push(tr); }
   if (assumed && assumed === man) mItems.push({ tech: 'Not', text: `${gen(assumed.name)} cinsiyeti girilmediği için onu Güneş ve Mars üzerinden okudum. Ayarlar’dan cinsiyet eklersen yorum netleşir.` });
   secs.push({ emoji: '👨', title: `${man ? man.name : 'Erkek taraf'} nasıl hissetmiş?`, items: withVoice(mItems, voiceFor('m', ev.type, outer)) });
+  if (man === me) { const n = secs.length; [secs[n - 2], secs[n - 1]] = [secs[n - 1], secs[n - 2]]; }
 
   // O anda gökyüzü: retrolar, duraklar, Ay fazı, 1. ve 7. ev yöneticileri
   const now: Item[] = [];
@@ -334,15 +340,15 @@ export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person |
     ch.push({ tech: `Venüs ${where(ec, 'venus')}${comb < 8 ? ` (yanık, Güneş’e ${comb.toFixed(1)}°)` : ''}`, text: comb < 8 ? 'Yanık Venüs: aşk egonun gölgesinde; ilişki “ben” ile başlamış.' : V.retro ? 'Retro Venüs ile başlayan aşk: geçmişten bir şey taşıyor, ya da kendisi geçmişe dönecek.' : 'Venüs kendi hâlinde; aşk dili bu burcun tarzında.' });
     if (timed) for (const h of [5, 7]) { const r = SIGN_RULERS[Math.floor(ec.cusps[h - 1] / 30)]; ch.push({ tech: `${h}. ev ${SIGNS[Math.floor(ec.cusps[h - 1] / 30)].tr}, yöneticisi ${NM[r]} ${where(ec, r)}`, text: h === 5 ? 'Flört ve keyif tarafı bu yöneticinin durumuna göre akar.' : 'Bağlılık ve ortaklık tarafı bu yöneticinin durumuna göre şekillenir.' }); }
     secs.push({ emoji: '🌱', title: ev.type === 'reunion' ? 'Barışma anının haritası' : 'Başlangıç anının haritası', items: ch });
-    for (const o of ['saturn', 'pluto', 'uranus', 'neptune', 'mars'] as BodyId[]) { const x = findA(asp, 'venus', o, HARD); if (x) seeds.push({ tech: aTxt(x), text: o === 'saturn' ? 'Venüs’e Satürn: sevgi baştan yük ve mesafeyle sınanıyor.' : o === 'pluto' ? 'Venüs’e Plüton: baştan güç ve kıskançlık tohumu.' : o === 'uranus' ? 'Venüs’e Uranüs: istikrarsızlık tohumu; ani kopuşlar.' : o === 'neptune' ? 'Venüs’e Neptün: idealize etme ve hayal kırıklığı tohumu.' : 'Venüs’e Mars: tutku ile kavga aynı anda başlamış.' }); }
-    const mm = findA(asp, 'moon', 'saturn', HARD); if (mm) seeds.push({ tech: aTxt(mm), text: 'Ay’a Satürn: duygusal soğukluk ve güvensizlik baştan var.' });
+    for (const o of ['saturn', 'pluto', 'uranus', 'neptune', 'mars'] as BodyId[]) { const x = findA(asp, 'venus', o, HARD); if (x) seeds.push({ tech: aTxtP(x, ec), text: o === 'saturn' ? 'Venüs’e Satürn: sevgi baştan yük ve mesafeyle sınanıyor.' : o === 'pluto' ? 'Venüs’e Plüton: baştan güç ve kıskançlık tohumu.' : o === 'uranus' ? 'Venüs’e Uranüs: istikrarsızlık tohumu; ani kopuşlar.' : o === 'neptune' ? 'Venüs’e Neptün: idealize etme ve hayal kırıklığı tohumu.' : 'Venüs’e Mars: tutku ile kavga aynı anda başlamış.' }); }
+    const mm = findA(asp, 'moon', 'saturn', HARD); if (mm) seeds.push({ tech: aTxtP(mm, ec), text: 'Ay’a Satürn: duygusal soğukluk ve güvensizlik baştan var.' });
     if (timed && [0, 6].some(i => angleDiff(P.saturn.lon, ec.cusps[i]) <= 5)) seeds.push({ tech: 'Satürn Yükselen/Alçalan ekseninde', text: 'İlişkinin temelinde ağırlık ve “bu zor olacak” duygusu var.' });
     if (ph.key === 'balsamic') seeds.push({ tech: ev.type === 'reunion' ? 'Balsamik Ay’da yeniden başlangıç' : 'Balsamik Ay’da başlangıç', text: 'Bu fazda başlayan bağlar genelde eski bir hikâyeyi kapatmak için gelir: kısa ama yoğun.' });
   } else {
     const start = all.filter(x => START_TYPES.includes(x.ev.type) && x.c.utc < ec.utc).sort((a, b) => b.c.utc.getTime() - a.c.utc.getTime())[0];
     if (start) {
       const hits = axisDedup(cross(ec, ['saturn', 'pluto', 'uranus', 'neptune', 'mars', 'venus', 'sun', 'moon'], start.c, ['sun', 'moon', 'venus', 'mars', ...(timedOf(start.c) ? ['asc', 'dsc'] as Pt[] : [])], HARD, 3)).slice(0, 4);
-      hits.forEach(h => seeds.push({ tech: `Ayrılık ${poss(NM[h.a])} ${ASP_TR[h.type]} ${EV_LABEL[start.ev.type].toLocaleLowerCase('tr')} ${poss(NM[h.b])} (${orbTxt(h.orb)})`, text: `${EV_LABEL[start.ev.type]} anında duran nokta ayrılıkta tetiklenmiş: sorun baştan beri oradaydı.` }));
+      hits.forEach(h => seeds.push({ tech: `Ayrılık ${poss(NM[h.a])} (${posTxt(ec, h.a)}) ${ASP_TR[h.type]} ${EV_LABEL[start.ev.type].toLocaleLowerCase('tr')} ${poss(NM[h.b])} (${posTxt(start.c, h.b)}) · ${orbTxt(h.orb)}`, text: `${EV_LABEL[start.ev.type]} anında duran nokta ayrılıkta tetiklenmiş: sorun baştan beri oradaydı.` }));
       if (!hits.length) seeds.push({ tech: `${EV_LABEL[start.ev.type]} haritasıyla karşılaştırma`, text: 'Ayrılık, başlangıç haritasının ana noktalarına sıkı değmiyor; bu ayrılık baştan yazılı bir kader değil, sonradan biriken bir yorgunluk.' });
     }
   }
@@ -353,7 +359,7 @@ export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person |
   const evPts: Pt[] = ['sun', 'moon', 'venus', ...(timed ? ['asc'] as Pt[] : [])];
   for (const ps of [me, partner].filter(Boolean) as Person[]) {
     const tg: Pt[] = ['sun', 'moon', 'venus', 'mars', ...(timedOf(ps.chart) ? ['asc', 'dsc', 'mc'] as Pt[] : [])];
-    for (const h of axisDedup(cross(ec, evPts, ps.chart, tg, ['conjunction'], 1.5))) fate.push({ tech: `Olay ${poss(NM[h.a])} = ${gen(ps.name)} doğum ${poss(NM[h.b])} (${orbTxt(h.orb)})`, text: 'Aynı derece iki haritada buluşuyor: kader işareti. Bu olay o kişinin özüne dokunmuş.' });
+    for (const h of axisDedup(cross(ec, evPts, ps.chart, tg, ['conjunction'], 1.5))) fate.push({ tech: `Olay ${poss(NM[h.a])} (${posTxt(ec, h.a)}) = ${gen(ps.name)} doğum ${poss(NM[h.b])} (${posTxt(ps.chart, h.b)}) · ${orbTxt(h.orb)}`, text: 'Aynı derece iki haritada buluşuyor: kader işareti. Bu olay o kişinin özüne dokunmuş.' });
   }
   if (fate.length) secs.push({ emoji: '🧿', title: 'Kader işaretleri', items: fate.slice(0, 4) });
 
@@ -418,7 +424,41 @@ function transitsTo(ec: Chart, natal: Chart, name?: string): Item | null {
   const h = cross(ec, ['saturn', 'pluto', 'uranus', 'neptune', 'mars', 'venus', 'jupiter'], natal, ['sun', 'moon', 'venus', 'mars', ...(timedOf(natal) ? ['asc', 'dsc'] as Pt[] : [])], ['conjunction', 'opposition', 'square', 'trine'], 3)[0];
   if (!h) return null;
   const heavy = ['saturn', 'pluto', 'uranus', 'neptune'].includes(h.a as string);
-  return { tech: `O gün transit ${NM[h.a]}, ${name ? gen(name) + ' ' : ''}doğum ${dat3(NM[h.b])} ${ASP_TR[h.type]} (${orbTxt(h.orb)})`, text: heavy ? 'Bu transit zamanlamayı açıklar; davranışın kökü yine de doğum haritasındadır. Transit geçer, kalıp kalır.' : 'O gün bu kişinin içinde bir kıpırtı vardı; olay onu doğrudan etkilemiş.' };
+  return { tech: `O gün transit ${NM[h.a]} (${posTxt(ec, h.a)}), ${name ? gen(name) + ' ' : ''}doğum ${dat3(NM[h.b])} (${posTxt(natal, h.b)}) ${ASP_TR[h.type]} · ${orbTxt(h.orb)}`, text: heavy ? 'Bu transit zamanlamayı açıklar; davranışın kökü yine de doğum haritasındadır. Transit geçer, kalıp kalır.' : 'O gün bu kişinin içinde bir kıpırtı vardı; olay onu doğrudan etkilemiş.' };
+}
+const SPOT3: Record<string, string> = { sun: 'kimliği ve gururu', moon: 'güvende hissetme ihtiyacı', venus: 'sevme biçimi', mars: 'istekleri ve öfkesi', asc: 'dışarıya gösterdiği yüz', dsc: 'ilişkide aradığı şey', mc: 'hayattaki yönü', ic: 'evi ve kökü', mercury: 'konuşma ve düşünme biçimi' };
+/** olay haritasının seçili kişinin doğum haritasına dokunduğu bütün noktalar (konumlarıyla) */
+function natalTouches(ec: Chart, ps: Person, evLabel: string): Item[] {
+  const tg: Pt[] = ['sun', 'moon', 'mercury', 'venus', 'mars', ...(timedOf(ps.chart) ? ['asc', 'dsc', 'mc', 'ic'] as Pt[] : [])];
+  const hs = axisDedup(cross(ec, ['sun', 'moon', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'], ps.chart, tg, ['conjunction', 'opposition', 'square', 'trine', 'sextile'], 3)).slice(0, 6);
+  let saidFast = false, saidSlow = false;
+  return hs.map((h, k) => {
+    const ob = OBJ[h.a as string] ?? ['gerilimle', 'akışla', '', ''];
+    const hard = HARD.includes(h.type) && !(h.type === 'conjunction' && ['venus', 'jupiter', 'sun', 'moon'].includes(h.a as string));
+    const fast = ['sun', 'moon', 'venus', 'mars'].includes(h.a as string);
+    const exact = k === 0 && h.orb <= 1 ? ' Açı çok sıkı (1°’nin altında); bu olayın bu kişi için en kişisel noktası.' : '';
+    return { tech: `${evLabel} ${NM[h.a]} (${posTxt(ec, h.a)}) ${ASP_TR[h.type]} ${gen(ps.name)} doğum ${poss(NM[h.b])} (${posTxt(ps.chart, h.b)}) · ${orbTxt(h.orb)}`,
+      text: `${gen(ps.name)} ${SPOT3[h.b as string] ?? 'özü'} ${hard ? ob[0] : ob[1]} ${hard ? 'sınandı' : 'desteklendi'}.${fast ? (saidFast ? '' : (saidFast = true, ' Hızlı bir gezegen: o günün ruh hâlini gösterir.')) : (saidSlow ? '' : (saidSlow = true, ' Ağır bir gezegen: etkisi o günle sınırlı kalmaz, haftalarca sürer.'))}${exact}` };
+  });
+}
+const VENUS_S = ['Hızlı alevlenir, kovalamayı sever; aşkta doğrudan ve sabırsız.', 'Yavaş ama sağlam bağlanır; dokunuş, sadakat ve güven ister.', 'Merak ve sohbetle sever; zihinsel uyum olmadan sıkılır.', 'Şefkatle, korumacı sever; güvende hissetmeden açılmaz.', 'Görülmek ve takdir edilmek ister; sevgisini cömertçe, gösterişle verir.', 'Sevgisini hizmetle, ayrıntıyla gösterir; eleştiriye kayabilir.', 'Uyum ve zarafet arar; ilişkide denge ve eşitlik ister.', 'Derin, tutkulu ve sahiplenici sever; ya hep ya hiç.', 'Özgür ve maceracı sever; bağlansa da alan ister.', 'Ciddi ve temkinli sever; sevgisini sorumluluk alarak gösterir.', 'Arkadaşlıkla başlayan, özgür bir sevgi ister; sıradanlıktan kaçar.', 'Romantik ve fedakâr sever; idealize etmeye yatkındır.'];
+const MARS_S = ['Doğrudan ve hızlı hareket eder; öfkesi parlar, çabuk geçer.', 'Yavaş ama durdurulamaz; zorlanınca inatlaşır.', 'Sözle savaşır; istediğini konuşarak alır.', 'Öfkesini içine atar, dolaylı gösterir; küsmeye yatkın.', 'Gururla hareket eder; takdir görünce coşar, kırılınca sertleşir.', 'Planlı ve titiz; öfkesini eleştiri olarak dışa vurur.', 'Çatışmadan kaçar, kararsız kalır; uzlaşma arar.', 'Yoğun ve stratejik; kırgınlığını unutmaz.', 'Atılgan ve özgür; kısıtlanınca patlar.', 'Disiplinli ve hedefe odaklı; duygusunu kontrol eder.', 'Bağımsız ve isyankâr; kurala karşı çıkar.', 'Dolaylı hareket eder; öfkesini ifade etmekte zorlanır, geri çekilir.'];
+const MOON_S = ['Duyguları hızlı ve ani; anında tepki verir.', 'Duygusal güvenlik ve istikrar ister; değişimden hoşlanmaz.', 'Duygularını konuşarak işler; değişken ve meraklı.', 'Derin duygusal; korunmaya ihtiyaç duyar, yuva ve aile önemli.', 'İlgi ve sıcaklık ister; görülmediğinde kırılır.', 'Duygularını düzen ve işe yaramakla yönetir; kaygıya yatkın.', 'Uyum ve huzur ister; çatışmada dengesi bozulur.', 'Duyguları yoğun ve gizli; güveni kırılınca kolay affetmez.', 'Özgürlük ve iyimserlik ister; ağır duygulardan kaçar.', 'Duygularını kontrol eder, mesafeli görünür; güvenliği kendisi kurar.', 'Duygusal mesafe ve bağımsızlık ister; fazla yakınlık dar gelebilir.', 'Hassas ve sezgisel; başkasının duygusunu kolayca üstlenir.'];
+const DSC_S = ['Kendinden emin, atılgan, ilk adımı atan biri.', 'Sakin, güvenilir, ayakları yere basan biri.', 'Konuşkan, meraklı, zihnen canlı biri.', 'Şefkatli, korumacı, yuva kuran biri.', 'Parlak, cömert, kendine güvenen biri.', 'Düzenli, yardımsever, ayrıntıcı biri.', 'Zarif, uyumlu, dengeli biri.', 'Derin, yoğun, gizemli biri.', 'Özgür ruhlu, maceracı, iyimser biri.', 'Olgun, ciddi, sorumluluk alan biri.', 'Sıra dışı, bağımsız, arkadaş gibi biri.', 'Hassas, hayalperest, şefkatli biri.'];
+/** kişinin aşkla ilgili temel konumları */
+export function lovePlacements(p: Person): Item[] {
+  const c = p.chart, P = c.positions, out: Item[] = [];
+  out.push({ tech: `Venüs ${where(c, 'venus')}`, text: `Nasıl sever: ${VENUS_S[P.venus.sign]}` });
+  out.push({ tech: `Mars ${where(c, 'mars')}`, text: `Nasıl ister ve öfkelenir: ${MARS_S[P.mars.sign]}` });
+  out.push({ tech: `Ay ${where(c, 'moon')}`, text: `Duygusal ihtiyacı: ${MOON_S[P.moon.sign]}` });
+  out.push({ tech: `Güneş ${where(c, 'sun')}`, text: `İlişkide kimliğini ${SIGNS[P.sun.sign].tr} tarzında ortaya koyar.` });
+  if (timedOf(c)) {
+    const d = Math.floor(norm(c.asc! + 180) / 30), r7 = SIGN_RULERS[Math.floor(c.cusps[6] / 30)], r5 = SIGN_RULERS[Math.floor(c.cusps[4] / 30)];
+    out.push({ tech: `Alçalan (7. ev girişi) ${deg(norm(c.asc! + 180))}`, text: `İlişkide çekildiği kişi: ${DSC_S[d]}` });
+    out.push({ tech: `7. ev yöneticisi ${NM[r7]} ${where(c, r7)}`, text: `Ciddi ilişkilerin hikâyesi bu gezegenin durduğu yerden geçer: ${P[r7].house ? `${P[r7].house}. evin konusu` : 'onun konusu'} ilişkiye karışır.` });
+    out.push({ tech: `5. ev yöneticisi ${NM[r5]} ${where(c, r5)}`, text: 'Flört, keyif ve aşka düşme biçimi bu gezegenin durumuna göre akar.' });
+  } else out.push({ tech: 'Doğum saati yok', text: 'Doğum saati bilinmediği için ev ve eksen konumlarını eklemedim.' });
+  return out;
 }
 function voiceFor(g: 'f' | 'm', t: EvType, outer: string): string {
   if (t === 'breakup') return g === 'f' ? (outer === 'saturn' ? 'Ben hep taşıdım, artık taşıyamıyorum.' : outer === 'uranus' ? 'Bir anda her şey bitti, nasıl?' : 'Yeterince sevilmedim.') : (outer === 'saturn' ? 'Hem buna hem ilişkiye yetemiyorum.' : outer === 'pluto' ? 'Kontrol bende değilse burada olmam.' : 'Nefes alamıyorum.');
@@ -429,8 +469,9 @@ function voiceFor(g: 'f' | 'm', t: EvType, outer: string): string {
 export function fullStory(me: Person, partner: Person | null, events: { ev: RelEvent; c: Chart }[]): Reading {
   const secs: Sec[] = [], truths: string[] = [];
   const pats: { p: Person; list: Pattern[] }[] = [me, partner].filter(Boolean).map(p => ({ p: p!, list: lovePatterns(p!) }));
+  secs.push({ emoji: '📍', title: `${gen(me.name)} aşk konumları`, items: lovePlacements(me) });
   for (const { p, list } of pats) {
-    secs.push({ emoji: '🧭', title: `${p.name}: aşkta nasıl biri?`, items: list.slice(0, 5).map(x => ({ tech: x.tech, text: x.text, voice: x.voice })) });
+    secs.push({ emoji: '🧭', title: `${p.name}: aşkta nasıl biri?`, items: list.slice(0, p === me ? 8 : 5).map(x => ({ tech: x.tech, text: x.text, voice: x.voice })) });
   }
   let opening = '';
   let syn: ReturnType<typeof synastryHonest> | null = null;
@@ -491,7 +532,9 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
   }  // Bundan sonrası
   if (partner) {
     const tm = compositeTiming(me.chart, partner.chart);
-    const items: Item[] = tm.list.slice(0, 6).map(t => ({ tech: `${halfMonth(t.start)} · ${t.label}`, text: t.tech + (t.label === 'sınav' ? ': ilişki zorlanır, kararlar netleşir.' : t.label === 'destekleyici' ? ': temas ve yakınlaşma için açık bir pencere.' : ': eski duygular yüzeye çıkar, bir mesaj ya da karşılaşma olabilir.') }));
+    const grouped = new Map<string, { t: (typeof tm.list)[number]; techs: string[] }>();
+    for (const t of tm.list.slice(0, 8)) { const k = `${halfMonth(t.start)} · ${t.label}`; const g = grouped.get(k); if (g) g.techs.push(t.tech); else grouped.set(k, { t, techs: [t.tech] }); }
+    const items: Item[] = [...grouped.entries()].slice(0, 5).map(([k, { t, techs }]) => ({ tech: k, text: techs.join(', ') + (t.label === 'sınav' ? ': ilişki zorlanır, kararlar netleşir.' : t.label === 'destekleyici' ? ': temas ve yakınlaşma için açık bir pencere.' : ': eski duygular yüzeye çıkar, bir mesaj ya da karşılaşma olabilir.') }));
     if (tm.venusRx) items.push({ tech: `Venüs retrosu: ${halfMonth(tm.venusRx.start)} – ${halfMonth(tm.venusRx.end)}`, text: 'Eski aşkların geri döndüğü klasik dönem. Bir temas olabilir; bu bir değişim değil, nostaljidir.' });
     const broke = events.some(e => e.ev.type === 'breakup') && !events.some(e => e.ev.type === 'reunion' && events.find(b => b.ev.type === 'breakup')!.c.utc < e.c.utc);
     const change = tm.list.some(t => t.tech.includes('Jüpiter'));
@@ -514,7 +557,7 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
   const next = !partner ? 'Karşı tarafın doğum bilgisini eklersen sinastri ve kompozit zamanlamayı da okuyayım.' : nextTip ?? 'Barışma ya da yeni bir dönüm noktası olursa onu da ekle; haritaları birbirine bağlayayım.';
   // bağlarda aynı açı/aynı cümle tekrar etmesin (aynı gündeki olaylar aynı gökyüzünü paylaşır)
   const seenL = new Set<string>();
-  const linksU = links.filter(l => { const k1 = l.tech.split(': ').slice(1).join(': ').replace(/\s*\([^)]*\)\s*$/, '') + '|' + l.text, k2 = ((l as any)._d ?? '') + '|' + l.text; if (seenL.has(k1) || ((l as any)._d && seenL.has(k2))) return false; seenL.add(k1); if ((l as any)._d) seenL.add(k2); return true; }).map(l => { const { _d, ...rest } = l as any; void _d; return rest as Item; });
+  const linksU = links.filter(l => { const k1 = l.tech.split(': ').slice(1).join(': ').replace(/\s*·\s*[^·]*$/, '').replace(/\s*\([^)]*\)/g, '') + '|' + l.text, k2 = ((l as any)._d ?? '') + '|' + l.text; if (seenL.has(k1) || ((l as any)._d && seenL.has(k2))) return false; seenL.add(k1); if ((l as any)._d) seenL.add(k2); return true; }).map(l => { const { _d, ...rest } = l as any; void _d; return rest as Item; });
   return { title: partner ? `${me.name} & ${partner.name}` : me.name, opening, secs, truths: top, summary, next, events: cards, links: linksU.slice(0, 8) };
 }
 

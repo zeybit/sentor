@@ -60,7 +60,7 @@ export default function RelStory() {
     const them = partner && pc ? { name: partner.name || 'O', gender: partner.gender, chart: pc } : null;
     const evs = events.map(ev => ({ ev, c: eventChart(ev, ev.place ?? place)! })).filter(x => x.c);
     const flip = pov === 'them' && them;
-    try { return { full: fullStory(me, them, evs), story: flip ? storyActs(them, me, evs) : storyActs(me, them, evs) }; } catch { return null; }
+    try { return { full: flip ? fullStory(them, me, evs) : fullStory(me, them, evs), story: flip ? storyActs(them, me, evs) : storyActs(me, them, evs) }; } catch { return null; }
   }, [chart, profile, partner, events, opts, pov]);
   const [showTech, setShowTech] = useState(false);
 
