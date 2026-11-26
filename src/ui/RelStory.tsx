@@ -27,6 +27,8 @@ export default function RelStory() {
   const [evPlace, setEvPlace] = useState<Place | null>(null);
   const [results, setResults] = useState<Place[]>([]);
   const [busy, setBusy] = useState(false);
+  const [pov, setPov] = useState<'me' | 'them'>('me');
+  useEffect(() => setPov('me'), [pid]);
   const home: Place | null = profile ? { label: profile.place, lat: profile.birth.lat, lon: profile.birth.lon, tz: profile.birth.tz } : null;
   const short = (l: string) => l.split(',')[0].trim();
   useEffect(() => {
@@ -57,8 +59,9 @@ export default function RelStory() {
     const me = { name: profile.name || 'Sen', gender: profile.gender, chart };
     const them = partner && pc ? { name: partner.name || 'O', gender: partner.gender, chart: pc } : null;
     const evs = events.map(ev => ({ ev, c: eventChart(ev, ev.place ?? place)! })).filter(x => x.c);
-    try { return { full: fullStory(me, them, evs), story: storyActs(me, them, evs) }; } catch { return null; }
-  }, [chart, profile, partner, events, opts]);
+    const flip = pov === 'them' && them;
+    try { return { full: fullStory(me, them, evs), story: flip ? storyActs(them, me, evs) : storyActs(me, them, evs) }; } catch { return null; }
+  }, [chart, profile, partner, events, opts, pov]);
   const [showTech, setShowTech] = useState(false);
 
   if (!chart || !profile) return null;
@@ -118,6 +121,13 @@ export default function RelStory() {
         ) : null}
       </Section>
 
+      {reading && partner && events.length ? (
+        <View style={{ marginBottom: 4 }}>
+          <Text style={[st.rowLabel, { marginBottom: 6 }]}>Kimin gözünden?</Text>
+          <Chips items={[{ key: 'me', label: profile.name || 'Ben' }, { key: 'them', label: partner.name || 'O' }]} value={pov} onChange={setPov} />
+          <Sub style={{ marginTop: 4 }}>Hikâye seçtiğin kişiye “sen” diye anlatılır; diğerinden “o” diye bahsedilir.</Sub>
+        </View>
+      ) : null}
       {reading ? <StoryView story={reading.story} /> : null}
       {reading ? (
         <Pressable onPress={() => setShowTech(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: showTech }} style={({ pressed }) => [{ alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, marginBottom: 16 }, pressed && { opacity: 0.6 }]}>
