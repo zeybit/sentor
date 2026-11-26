@@ -8,8 +8,16 @@ import { Expand, P, Section, Sub, st } from './kit';
 import { C, F, serif } from '../theme';
 import type { T2 } from '../i18n2';
 import { fmtLocal, fmtTime, tzOffsetMinutes } from '../util';
-import { houseOf, norm } from '../engine/astro';
+import { houseOf, norm, positionsAt } from '../engine/astro';
 import { lunationHouseText } from '../content/loveExtras';
+import { MOON_SIGN_DAY } from '../content/forecast';
+import { HOUSES } from '../content/base';
+const PHASE_DO = {
+  new: { tr: 'Yeni bir başlangıç için niyet etme zamanı.', en: 'Time to set an intention for a fresh start.' },
+  firstQuarter: { tr: 'Harekete geç: ilk engeller çıkar, vazgeçme.', en: 'Take action: first obstacles appear, keep going.' },
+  full: { tr: 'Sonuçlar ve duygular görünür olur; bir konu netleşir.', en: 'Results and feelings come to light; something becomes clear.' },
+  lastQuarter: { tr: 'Toparlan ve bırak: işe yaramayanı geride bırakma zamanı.', en: 'Tidy up and let go of what no longer works.' },
+} as const;
 import { voidOfCourse } from '../engine/techniques';
 
 /** Boşlukta Ay: yeni işlere başlamak için uygun olmayan saatler */
@@ -95,20 +103,40 @@ export function LunarCalendar({ t, lang, tz, natal }: { t: T2; lang: Lang; tz: s
   return (
     <Section title={t.lunarCal}>
       <MonthNav month={month} setMonth={setMonth} lang={lang} />
+      <Sub style={{ marginBottom: 6 }}>{lang === 'tr' ? 'Ay her ay aynı dört evreden geçer: yeni ayda niyet et, ilk dördünde harekete geç, dolunayda sonucu gör, son dördünde bırak.' : 'Every month the Moon passes the same four phases: set intentions at the new moon, act at the first quarter, see results at the full moon, let go at the last quarter.'}</Sub>
       {data.lun.map((x, i) => (
         <View key={i} style={[st.row, { flexDirection: 'row', gap: 10, alignItems: 'center' }]}>
           <Text style={{ fontSize: 22, color: C.ink, width: 26 }}>{icon[x.kind]}</Text>
           <View style={{ flex: 1 }}>
-            <Text style={[st.p, { fontWeight: '600' }]}>{t.phaseNames[x.kind]} — {SIGNS[Math.floor(x.lon / 30)][lang]} {Math.floor(x.lon % 30)}°</Text>
+            <Text style={[st.p, { fontWeight: '600' }]}>{t.phaseNames[x.kind]} · {SIGNS[Math.floor(x.lon / 30)][lang]}</Text>
             <Sub>{fmtLocal(x.date, tz)}</Sub>
-            {natal && natal.cusps.length && (x.kind === 'new' || x.kind === 'full') ? <P style={{ marginTop: 2 }}>{lunationHouseText(x.kind, houseOf(norm(x.lon - natal.ayanamsa), natal.cusps))[lang]}</P> : null}
+            <P style={{ marginTop: 2 }}>{natal && natal.cusps.length && (x.kind === 'new' || x.kind === 'full') ? lunationHouseText(x.kind, houseOf(norm(x.lon - natal.ayanamsa), natal.cusps))[lang] : PHASE_DO[x.kind][lang]}</P>
           </View>
         </View>
       ))}
-      <Text style={[st.rowLabel, { marginTop: 10 }]}>{t.moonIngress}</Text>
-      <Expand more={lang === 'tr' ? 'Tümünü göster' : 'Show all'} less={lang === 'tr' ? 'Daha az' : 'Less'} initial={6} items={data.ing.map((x, i) => (
-        <Text key={i} style={[st.p, { paddingVertical: 2 }]}><Text style={{ color: C.rose }}>{fmtLocal(x.date, tz)}</Text>  ☽ → {SIGNS[x.sign][lang]}</Text>
-      ))} />
+      <Text style={{ fontFamily: serif, fontSize: 22, color: C.ink, marginTop: 26 }}>{lang === 'tr' ? 'Günlerin duygusal havası' : 'The mood of the days'}</Text>
+      <Sub style={{ marginTop: 2, marginBottom: 6 }}>{lang === 'tr' ? 'Ay her 2–3 günde bir burç değiştirir ve o günlerin havasını belirler: neye hevesli, neye hassas olacağını.' : 'The Moon changes sign every 2–3 days and sets the mood: what you will feel keen on and sensitive about.'}</Sub>
+      {(() => {
+        const nowT = Date.now();
+        const end = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1));
+        const spans = data.ing.map((x, i) => ({ sign: x.sign, from: x.date, to: data.ing[i + 1]?.date ?? end }));
+        const shown = spans.filter(sp => sp.to.getTime() > nowT);
+        const list = shown.length ? shown : spans;
+        const d = (dt: Date) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short', timeZone: tz }).format(dt);
+        return <Expand more={lang === 'tr' ? 'Sonraki günleri göster' : 'Show later days'} less={lang === 'tr' ? 'Daha az' : 'Less'} initial={3} items={list.map((sp, i) => {
+          const cur = sp.from.getTime() <= nowT && sp.to.getTime() > nowT;
+          const ref = cur ? new Date(nowT) : new Date((sp.from.getTime() + sp.to.getTime()) / 2);
+          const h = natal && natal.cusps.length ? houseOf(norm(positionsAt(ref, ['moon']).moon.lon - natal.ayanamsa), natal.cusps) : 0;
+          return (
+            <View key={i} style={[st.row, cur ? { borderLeftWidth: 3, borderLeftColor: C.gold, paddingLeft: 10 } : null]}>
+              <Text style={{ fontFamily: F.mono, fontSize: 11, letterSpacing: 1.2, color: cur ? C.gold : C.sub }}>{cur ? (lang === 'tr' ? 'ŞU AN · ' : 'NOW · ') : ''}{d(sp.from)} – {d(sp.to)}</Text>
+              <Text style={[st.p, { fontWeight: '600', marginTop: 2 }]}>{SIGNS[sp.sign][lang]} {lang === 'tr' ? 'günleri' : 'days'}</Text>
+              <P style={{ marginTop: 2 }}>{MOON_SIGN_DAY[sp.sign][lang].replace(/^[^:]+:\s*/, '')}</P>
+              {h ? <Sub style={{ marginTop: 2 }}>{lang === 'tr' ? `Senin için: ${HOUSES[h - 1].short.tr.toLocaleLowerCase('tr')} konuları hassaslaşır.` : `For you: ${HOUSES[h - 1].short.en.toLowerCase()} matters feel more sensitive.`}</Sub> : null}
+            </View>
+          );
+        })} />;
+      })()}
     </Section>
   );
 }
