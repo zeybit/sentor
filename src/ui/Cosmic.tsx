@@ -300,14 +300,14 @@ export function SignReadingPanel({ sel, lang }: { sel: number; lang: Lang }) {
 
 // ---------------- Konu kartları: dokun, aç, geri dön ----------------
 export interface HubItem { key: string; glyph: string; title: string; teaser: string; body: React.ReactNode }
-export function TodayHub({ items, open, onOpen, cols = 2, lang }: { items: HubItem[]; open: string | null; onOpen: (k: string | null) => void; cols?: number; lang: Lang }) {
+export function TodayHub({ items, open, onOpen, cols = 2, lang, heading, back }: { items: HubItem[]; open: string | null; onOpen: (k: string | null) => void; cols?: number; lang: Lang; heading?: string; back?: string }) {
   const cur = items.find(i => i.key === open);
   if (cur) return (
     <View style={{ marginTop: 8 }}>
       <Pressable onPress={() => onOpen(null)} accessibilityRole="button" accessibilityLabel={tx(lang, 'Konulara dön', 'Back to topics')} hitSlop={10}
         style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingVertical: 6, paddingRight: 12 }, pressed && { opacity: 0.6 }]}>
         <Text style={{ fontSize: 24, color: C.rose, marginRight: 6, marginTop: -2 }}>‹</Text>
-        <Text style={{ fontFamily: F.sansMed, fontSize: 15, color: C.rose }}>{tx(lang, 'Tüm konular', 'All topics')}</Text>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 15, color: C.rose }}>{back ?? tx(lang, 'Tüm konular', 'All topics')}</Text>
       </Pressable>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6, marginBottom: 14 }}>
         <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 19, color: C.gold }}>{cur.glyph}</Text></View>
@@ -318,7 +318,7 @@ export function TodayHub({ items, open, onOpen, cols = 2, lang }: { items: HubIt
   );
   return (
     <View style={{ marginTop: 10 }}>
-      <Text style={{ fontFamily: F.sans, fontSize: 20, color: C.ink, marginBottom: 12 }}>{tx(lang, 'Konular', 'Topics')}</Text>
+      {heading !== '' ? <Text style={{ fontFamily: F.sans, fontSize: 20, color: C.ink, marginBottom: 12 }}>{heading ?? tx(lang, 'Konular', 'Topics')}</Text> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
         {items.map(it => (
           <View key={it.key} style={{ width: `${100 / cols}%`, padding: 5 }}>

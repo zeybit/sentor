@@ -17,9 +17,13 @@ import { Cartography, Finder } from '../ui/Tools';
 import Rectify from '../ui/Rectify';
 import FutureScreen, { ActiveWindows } from './FutureScreen';
 import { takePendingKind, useNav } from '../nav';
-import { ChartPills, CoreEnergies } from '../ui/Cosmic';
+import { ChartPills, CoreEnergies, HubItem, TodayHub } from '../ui/Cosmic';
+import { natalStory } from '../content/story';
+import { BirthSecrets } from '../ui/ExtrasUI';
+import { BODIES } from '../content/base';
+import { scrollTop } from '../nav';
 import { Chips, H1, Segmented, Sub, st, useLayout } from '../ui/kit';
-import { C, serif } from '../theme';
+import { C, F, serif } from '../theme';
 import { KIND_INFO } from '../content/kindInfo';
 import { fmtLocal, tzOffsetMinutes } from '../util';
 import { ShareToggle, safeName } from '../ui/ShareImage';
@@ -37,6 +41,9 @@ export default function ChartScreen() {
   const [kind, setKind] = useState<Kind>(() => (takePendingKind() as Kind) || 'natal');
   const [view, setView] = useState<'readings' | 'tables'>('readings');
   const [date, setDate] = useState(() => new Date());
+  const [topic, setTopic] = useState<string | null>(null);
+  const [hubTab, setHubTab] = useState<'parts' | 'kinds'>('parts');
+  const chapters = useMemo(() => (chart ? natalStory(chart, lang) : []), [chart, lang]);
 
   const loc = location ?? (profile ? { label: profile.place, lat: profile.birth.lat, lon: profile.birth.lon, tz: profile.birth.tz } : null);
   const other = useMemo(() => {
@@ -63,6 +70,56 @@ export default function ChartScreen() {
   const shown = kind === 'natal' || kind === 'antiscia' ? chart : other;
   const kinds: Kind[] = ['natal', 'transit', 'progressed', 'timeline', 'solarArc', 'solarReturn', 'lunarReturn', 'primary', 'antiscia', 'draconic', 'now', 'cartography', 'finder', 'rectify'];
 
+  const gmt = (() => { const m = tzOffsetMinutes(chart.input.tz, chart.utc); const hh = m / 60; return `GMT${hh >= 0 ? '+' : ''}${Number.isInteger(hh) ? hh : hh.toFixed(1)}`; })();
+  const trL = (a: string, b: string) => (lang === 'tr' ? a : b);
+  const openKind = (k: Kind) => { setKind(k); setTopic(null); scrollTop(); };
+
+  if (kind === 'natal') {
+    const CH_GLYPH: Record<string, string> = { core: BODIES.sun.glyph, character: BODIES.moon.glyph, mind: BODIES.mercury.glyph, love: BODIES.venus.glyph, work: BODIES.saturn.glyph, growth: BODIES.jupiter.glyph, deep: BODIES.pluto.glyph, path: '☊', world: '✈' };
+    const firstS = (x: string) => (x.match(/[^.!?]+[.!?]+/) ?? [x])[0].trim();
+    const pStyle = { fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginBottom: 16, maxWidth: 660 };
+    const parts: HubItem[] = [
+      ...chapters.map(c => ({ key: 'ch-' + c.id, glyph: CH_GLYPH[c.id] ?? '✦', title: c.title[lang], teaser: firstS(c.intro[lang]),
+        body: <View><Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 17, lineHeight: 26, color: C.sub, marginBottom: 16, maxWidth: 640 }}>{c.intro[lang]}</Text>{c.paras.map((p, j) => <Text key={j} style={pStyle}>{p[lang]}</Text>)}</View> })),
+      { key: 'secrets', glyph: '✧', title: trL('Doğum sırların', 'Birth secrets'), teaser: trL('Haritanın az bilinen detayları', 'Little-known details of your chart'), body: <BirthSecrets chart={chart} lang={lang} /> },
+      { key: 'character', glyph: '◈', title: trL('Yerleşim yerleşim karakterin', 'Your character, placement by placement'), teaser: trL('Her gezegen tek tek', 'Planet by planet'), body: <CharacterBook chart={chart} lang={lang} /> },
+      { key: 'stellium', glyph: '⁂', title: trL('Stelyumların', 'Your stelliums'), teaser: trL('Enerjinin toplandığı yerler', 'Where your energy gathers'), body: <Stelliums chart={chart} lang={lang} /> },
+      { key: 'elements', glyph: '△', title: trL('Element dengen', 'Element balance'), teaser: trL('Ateş, toprak, hava, su', 'Fire, earth, air, water'), body: <ElementBalance chart={chart} lang={lang} /> },
+      { key: 'tables', glyph: '▦', title: trL('Tablolar', 'Tables'), teaser: trL('Dereceler, evler, açılar', 'Degrees, houses, aspects'), body: <Tables chart={chart} t={t} lang={lang} natal asteroids={showAsteroids} /> },
+    ];
+    const GLYPH: Partial<Record<Kind, string>> = { transit: '⟳', progressed: '↗', timeline: '◷', solarArc: '⌒', solarReturn: '☉', lunarReturn: '☾', primary: '⇢', antiscia: '⇋', draconic: '☊', now: '◉', cartography: '⌖', finder: '⌕', rectify: '✎' };
+    const kindItems: HubItem[] = kinds.filter(k => k !== 'natal').map(k => ({ key: k, glyph: GLYPH[k] ?? '✦', title: t.kinds[k], teaser: KIND_INFO[k] ? firstS(KIND_INFO[k].what[lang]) : '', body: null }));
+    const hubs = topic ? <TodayHub items={parts} open={topic} onOpen={k => { setTopic(k); scrollTop(); }} lang={lang} back={trL('Haritana dön', 'Back to your chart')} /> : !twoCol ? <>
+      <Segmented items={[{ key: 'parts', label: trL('Bölümler', 'Chapters') }, { key: 'kinds', label: trL('Diğer haritalar', 'Other charts') }]} value={hubTab} onChange={v => setHubTab(v as 'parts' | 'kinds')} />
+      {hubTab === 'parts'
+        ? <TodayHub items={parts} open={null} onOpen={k => { setTopic(k); scrollTop(); }} lang={lang} heading="" />
+        : <TodayHub items={kindItems} open={null} onOpen={k => k && openKind(k as Kind)} lang={lang} heading="" />}
+    </> : <>
+      <TodayHub items={parts} open={null} onOpen={k => { setTopic(k); scrollTop(); }} lang={lang} cols={wide ? 3 : 2} heading={trL('Haritanın bölümleri', 'Your chart, chapter by chapter')} />
+      <View style={{ height: 22 }} />
+      <TodayHub items={kindItems} open={null} onOpen={k => k && openKind(k as Kind)} lang={lang} cols={wide ? 3 : 2} heading={trL('Diğer haritalar', 'Other charts')} />
+    </>;
+    const wheelSize = twoCol ? 440 : Math.min(inner(wide ? 1180 : 760), 520);
+    const head = <>
+      <H1>{profile.name || s.tabs.chart}</H1>
+      <ChartPills chart={chart} place={profile.place} gmt={gmt} onEdit={() => navTo('settings')} />
+      <ShareToggle label={lang === 'tr' ? 'Büyük üçlü kartın' : 'Your Big Three card'} build={buildBig} filename={`buyuk-uclu-${safeName(profile.name)}.png`} lang={lang} />
+    </>;
+    const hero = topic ? null : <>
+      <View style={{ alignItems: 'center', marginVertical: 12 }}><Wheel chart={chart} outer={null} size={wheelSize} asteroids={showAsteroids} /></View>
+      <CoreEnergies chart={chart} lang={lang} />
+    </>;
+    return twoCol ? (
+      <View>
+        {head}
+        <View style={{ flexDirection: 'row', gap: 44, alignItems: 'flex-start', marginTop: 8 }}>
+          <View style={{ width: 440 }}>{topic ? <><Wheel chart={chart} outer={null} size={440} asteroids={showAsteroids} /><View style={{ height: 12 }} /><CoreEnergies chart={chart} lang={lang} /></> : hero}</View>
+          <View style={{ flex: 1, minWidth: 0, maxWidth: 700 }}>{hubs}</View>
+        </View>
+      </View>
+    ) : <View>{head}{hero}<View style={{ height: 16 }} />{hubs}</View>;
+  }
+
   return (
     <View>
       <H1>{profile.name || s.tabs.chart}</H1>
@@ -71,9 +128,11 @@ export default function ChartScreen() {
       {chart.houseSystemUsed !== chart.houseSystem ? <Sub style={{ color: C.rose }}>{s.polarNote}</Sub> : null}
       <ShareToggle label={lang === 'tr' ? 'Büyük üçlü kartın' : 'Your Big Three card'} build={buildBig} filename={`buyuk-uclu-${safeName(profile.name)}.png`} lang={lang} />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        <Chips items={kinds.map(k => ({ key: k, label: t.kinds[k] }))} value={kind} onChange={k => setKind(k as Kind)} />
-      </ScrollView>
+      <Pressable onPress={() => openKind('natal')} accessibilityRole="button" hitSlop={10} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 14, paddingVertical: 6, paddingRight: 12 }, pressed && { opacity: 0.6 }]}>
+        <Text style={{ fontSize: 24, color: C.rose, marginRight: 6, marginTop: -2 }}>‹</Text>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 15, color: C.rose }}>{lang === 'tr' ? 'Doğum haritan' : 'Your birth chart'}</Text>
+      </Pressable>
+      <Text accessibilityRole="header" style={{ fontFamily: F.sans, fontSize: 26, color: C.ink, marginTop: 4 }}>{t.kinds[kind]}</Text>
 
       <KindAbout key={kind} kind={kind} lang={lang} />
 
@@ -95,7 +154,7 @@ export default function ChartScreen() {
                   ? <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds.natal}</Text>   {lang === 'tr' ? 'İç halka: drakonik harita' : 'Inner ring: draconic chart'}</Text>
                   : <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds[kind as ChartKind]}</Text>   {t.innerLegend}</Text>) : null}
               </View>
-              {kind === 'natal' ? <><CoreEnergies chart={chart} lang={lang} /><Stelliums chart={chart} lang={lang} /><ElementBalance chart={chart} lang={lang} /></> : null}
+              {(kind as Kind) === 'natal' ? <><CoreEnergies chart={chart} lang={lang} /><Stelliums chart={chart} lang={lang} /><ElementBalance chart={chart} lang={lang} /></> : null}
             </View>
           );
           const right = (
@@ -103,15 +162,15 @@ export default function ChartScreen() {
               <Segmented items={[{ key: 'readings', label: t.views.readings }, { key: 'tables', label: t.views.tables }]} value={view} onChange={v => setView(v as any)} />
               {view === 'tables' ? (
 <>
-                  <Tables chart={shown ?? chart} t={t} lang={lang} natal={kind === 'natal'} asteroids={showAsteroids} />
-                  {kind === 'natal' ? (
+                  <Tables chart={shown ?? chart} t={t} lang={lang} natal={(kind as Kind) === 'natal'} asteroids={showAsteroids} />
+                  {(kind as Kind) === 'natal' ? (
                     <View style={{ marginTop: 32 }}>
                       <Text accessibilityRole="header" style={{ fontFamily: serif, fontSize: 28, lineHeight: 34, color: C.ink, marginBottom: 6 }}>{lang === 'tr' ? 'Karakterin, yerleşim yerleşim' : 'Your character, placement by placement'}</Text>
                       <CharacterBook chart={chart} lang={lang} />
                     </View>
                   ) : null}
                 </>
-              ) : kind === 'natal' ? (
+              ) : (kind as Kind) === 'natal' ? (
                 <NatalReading chart={chart} s={s} t={t} lang={lang} asteroids={showAsteroids} />
               ) : kind === 'draconic' && other ? (
                 <DraconicReading natal={chart} dr={other} lang={lang} />
@@ -122,7 +181,7 @@ export default function ChartScreen() {
           );
           return twoCol ? (
             <View style={{ flexDirection: 'row', gap: 48, alignItems: 'flex-start' }}>
-              <View style={{ width: 460, ...(kind === 'natal' ? {} : { position: 'sticky' as any, top: 0 }) }}>{left}</View>
+              <View style={{ width: 460, ...((kind as Kind) === 'natal' ? {} : { position: 'sticky' as any, top: 0 }) }}>{left}</View>
               <View style={{ flex: 1, maxWidth: 660 }}>{right}</View>
             </View>
           ) : <>{left}{right}</>;
