@@ -249,6 +249,10 @@ const OUTER_SOFT: Record<string, string> = {
   uranus: 'Uranüs uyumlu açıda: yenilik ve heyecan akışla geliyor; özgürlük alanı var.',
   neptune: 'Neptün uyumlu açıda: sezgi, şefkat ve romantizm var; idealize etme riski hafif.',
 };
+/** Aynı gezegenin Yükselen ve Alçalan'a (ya da MC ve IC'ye) aynı anda değmesi tek eksendir: birini tut */
+function axisDedup(hs: A[]): A[] {
+  return hs.filter(h => !((h.b === 'dsc' && hs.some(x => x.a === h.a && x.b === 'asc')) || (h.b === 'ic' && hs.some(x => x.a === h.a && x.b === 'mc'))));
+}
 const SUSPECT_TIMES = ['00:00', '00:01', '12:00', '23:59', '23:58'];
 export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person | null, all: { ev: RelEvent; c: Chart }[]): Reading {
   const secs: Sec[] = [], truths: string[] = [];
@@ -329,15 +333,15 @@ export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person |
     const V = P.venus, comb = angleDiff(V.lon, P.sun.lon);
     ch.push({ tech: `Venüs ${where(ec, 'venus')}${comb < 8 ? ` (yanık, Güneş’e ${comb.toFixed(1)}°)` : ''}`, text: comb < 8 ? 'Yanık Venüs: aşk egonun gölgesinde; ilişki “ben” ile başlamış.' : V.retro ? 'Retro Venüs ile başlayan aşk: geçmişten bir şey taşıyor, ya da kendisi geçmişe dönecek.' : 'Venüs kendi hâlinde; aşk dili bu burcun tarzında.' });
     if (timed) for (const h of [5, 7]) { const r = SIGN_RULERS[Math.floor(ec.cusps[h - 1] / 30)]; ch.push({ tech: `${h}. ev ${SIGNS[Math.floor(ec.cusps[h - 1] / 30)].tr}, yöneticisi ${NM[r]} ${where(ec, r)}`, text: h === 5 ? 'Flört ve keyif tarafı bu yöneticinin durumuna göre akar.' : 'Bağlılık ve ortaklık tarafı bu yöneticinin durumuna göre şekillenir.' }); }
-    secs.push({ emoji: '🌱', title: 'Başlangıç anının haritası', items: ch });
+    secs.push({ emoji: '🌱', title: ev.type === 'reunion' ? 'Barışma anının haritası' : 'Başlangıç anının haritası', items: ch });
     for (const o of ['saturn', 'pluto', 'uranus', 'neptune', 'mars'] as BodyId[]) { const x = findA(asp, 'venus', o, HARD); if (x) seeds.push({ tech: aTxt(x), text: o === 'saturn' ? 'Venüs’e Satürn: sevgi baştan yük ve mesafeyle sınanıyor.' : o === 'pluto' ? 'Venüs’e Plüton: baştan güç ve kıskançlık tohumu.' : o === 'uranus' ? 'Venüs’e Uranüs: istikrarsızlık tohumu; ani kopuşlar.' : o === 'neptune' ? 'Venüs’e Neptün: idealize etme ve hayal kırıklığı tohumu.' : 'Venüs’e Mars: tutku ile kavga aynı anda başlamış.' }); }
     const mm = findA(asp, 'moon', 'saturn', HARD); if (mm) seeds.push({ tech: aTxt(mm), text: 'Ay’a Satürn: duygusal soğukluk ve güvensizlik baştan var.' });
     if (timed && [0, 6].some(i => angleDiff(P.saturn.lon, ec.cusps[i]) <= 5)) seeds.push({ tech: 'Satürn Yükselen/Alçalan ekseninde', text: 'İlişkinin temelinde ağırlık ve “bu zor olacak” duygusu var.' });
-    if (ph.key === 'balsamic') seeds.push({ tech: 'Balsamik Ay’da başlangıç', text: 'Bu fazda başlayan bağlar genelde eski bir hikâyeyi kapatmak için gelir: kısa ama yoğun.' });
+    if (ph.key === 'balsamic') seeds.push({ tech: ev.type === 'reunion' ? 'Balsamik Ay’da yeniden başlangıç' : 'Balsamik Ay’da başlangıç', text: 'Bu fazda başlayan bağlar genelde eski bir hikâyeyi kapatmak için gelir: kısa ama yoğun.' });
   } else {
     const start = all.filter(x => START_TYPES.includes(x.ev.type) && x.c.utc < ec.utc).sort((a, b) => b.c.utc.getTime() - a.c.utc.getTime())[0];
     if (start) {
-      const hits = cross(ec, ['saturn', 'pluto', 'uranus', 'neptune', 'mars', 'venus', 'sun', 'moon'], start.c, ['sun', 'moon', 'venus', 'mars', ...(timedOf(start.c) ? ['asc', 'dsc'] as Pt[] : [])], HARD, 3).slice(0, 4);
+      const hits = axisDedup(cross(ec, ['saturn', 'pluto', 'uranus', 'neptune', 'mars', 'venus', 'sun', 'moon'], start.c, ['sun', 'moon', 'venus', 'mars', ...(timedOf(start.c) ? ['asc', 'dsc'] as Pt[] : [])], HARD, 3)).slice(0, 4);
       hits.forEach(h => seeds.push({ tech: `Ayrılık ${poss(NM[h.a])} ${ASP_TR[h.type]} ${EV_LABEL[start.ev.type].toLocaleLowerCase('tr')} ${poss(NM[h.b])} (${orbTxt(h.orb)})`, text: `${EV_LABEL[start.ev.type]} anında duran nokta ayrılıkta tetiklenmiş: sorun baştan beri oradaydı.` }));
       if (!hits.length) seeds.push({ tech: `${EV_LABEL[start.ev.type]} haritasıyla karşılaştırma`, text: 'Ayrılık, başlangıç haritasının ana noktalarına sıkı değmiyor; bu ayrılık baştan yazılı bir kader değil, sonradan biriken bir yorgunluk.' });
     }
@@ -349,17 +353,26 @@ export function readEvent(ev: RelEvent, ec: Chart, me: Person, partner: Person |
   const evPts: Pt[] = ['sun', 'moon', 'venus', ...(timed ? ['asc'] as Pt[] : [])];
   for (const ps of [me, partner].filter(Boolean) as Person[]) {
     const tg: Pt[] = ['sun', 'moon', 'venus', 'mars', ...(timedOf(ps.chart) ? ['asc', 'dsc', 'mc'] as Pt[] : [])];
-    for (const h of cross(ec, evPts, ps.chart, tg, ['conjunction'], 1.5)) fate.push({ tech: `Olay ${poss(NM[h.a])} = ${gen(ps.name)} doğum ${poss(NM[h.b])} (${orbTxt(h.orb)})`, text: 'Aynı derece iki haritada buluşuyor: kader işareti. Bu olay o kişinin özüne dokunmuş.' });
+    for (const h of axisDedup(cross(ec, evPts, ps.chart, tg, ['conjunction'], 1.5))) fate.push({ tech: `Olay ${poss(NM[h.a])} = ${gen(ps.name)} doğum ${poss(NM[h.b])} (${orbTxt(h.orb)})`, text: 'Aynı derece iki haritada buluşuyor: kader işareti. Bu olay o kişinin özüne dokunmuş.' });
   }
   if (fate.length) secs.push({ emoji: '🧿', title: 'Kader işaretleri', items: fate.slice(0, 4) });
 
   // Açılış ve acı gerçekler
   const harsh = heavyHard.length >= 2 || seeds.length >= 2 || ph.key === 'balsamic';
+  const thm = outer ? OUTER_START[outer].open : '';
+  const OPEN_START: Record<string, string> = {
+    meet: `Tanıştığınız an ${harsh ? 'sakin değildi' : 'akıcıydı'}${thm ? `: ${thm} ilk andan hissediliyor` : ''}.`,
+    firstMove: `İlk adımın atıldığı an ${harsh ? 'cesaret istiyordu' : 'kendiliğinden geldi'}${thm ? `; havada ${thm} vardı` : ''}.`,
+    firstDate: `Bu buluşmanın haritası ${harsh ? 'güçlü ama sorunlu' : 'akışı olan'} bir başlangıç gösteriyor${thm ? `; ${thm} baştan masada` : ''}.`,
+    start: `İlişkinin adının konduğu an ${harsh ? 'ağır yüklerle' : 'hafif ve umutlu'} geldi${thm ? `: ${thm}` : ''}.`,
+    reunion: `Barışma anı ${harsh ? 'eski yaraları kapatmadan' : 'temiz bir sayfa gibi'} geldi${thm ? `; ${thm} yine masada` : ''}.`,
+  };
   const opening = ev.type === 'breakup'
     ? `Bu harita, ayrılığın ${outer ? OUTER_THEME[outer].open : 'sessiz bir tükenme'} ile geldiğini söylüyor.${seeds.length && !isStart ? ' Ve sorun yeni değil: başlangıçta duran noktalar tetiklenmiş.' : ''}`
-    : `Bu ${EV_LABEL[ev.type].toLocaleLowerCase('tr')} haritası, ${harsh ? 'güçlü ama sorunlu bir başlangıcı' : 'akışı olan bir başlangıcı'} gösteriyor${outer ? `; ${OUTER_START[outer].open} baştan masada` : ''}.`;
+    : OPEN_START[ev.type];
   if (ev.type === 'breakup') {
-    if (outer === 'pluto') truths.push('Plüton’lu ayrılıklar geri dönüşsüzdür: dönülse bile aynı ilişkiye değil, başka bir şeye dönülür.');
+    const reunitedAfter = all.some(x => x.ev.type === 'reunion' && x.c.utc > ec.utc);
+    if (outer === 'pluto') truths.push(reunitedAfter ? 'Barıştınız; ama bu kopuş geri dönüşü zor bir yerden geldi: dönülen şey eski ilişki değil, yeni bir ilişki. Eskisi gibi olmasını beklemek hayal kırıklığı getirir.' : 'Plüton’lu ayrılıklar geri dönüşsüzdür: dönülse bile aynı ilişkiye değil, başka bir şeye dönülür.');
     if (outer === 'uranus') truths.push('Bu kopuş ani görünse de birinin içinde çoktan başlamıştı.');
     if (outer === 'saturn') truths.push('Bu ayrılık bir kaprisi değil, birikmiş bir yükü gösteriyor; “bir daha deneyelim” aynı yükü geri getirir.');
     if (outer === 'neptune') truths.push('Bu ilişkide gerçek ile hayal karışmış; ayrılık sisin dağılmasıdır.');
@@ -440,12 +453,30 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
   const sorted = [...events].sort((a, b) => b.c.utc.getTime() - a.c.utc.getTime());
   const reads = sorted.map(e => ({ e, r: readEvent(e.ev, e.c, me, partner, events) }));
   const cards: EventCard[] = [], evTruths: string[] = [], links: Item[] = [];
+  // aynı türden birden fazla olay: kronolojik sıraya göre rol adı (ilk kıvılcım / asıl dönüm noktası)
+  const asc = [...events].sort((a, b) => a.c.utc.getTime() - b.c.utc.getTime());
+  const roleOf = new Map<RelEvent, string>();
+  const seenT: Record<string, number> = {};
+  for (const x of asc) { const k = seenT[x.ev.type] = (seenT[x.ev.type] ?? 0) + 1; if (events.filter(y => y.ev.type === x.ev.type).length > 1) roleOf.set(x.ev, ACT_TITLE[x.ev.type][Math.min(k, 2) - 1]); }
   for (const { e, r } of reads) {
+    if (roleOf.has(e.ev)) r.title = r.title.replace(EV_LABEL[e.ev.type], `${EV_LABEL[e.ev.type]} (${roleOf.get(e.ev)!.toLocaleLowerCase('tr')})`);
     const secsE = r.secs.filter(sc => sc.title !== 'Kader işaretleri' && sc.title !== 'Baştan beri duran sorun tohumları');
     cards.push({ emoji: e.ev.type === 'breakup' ? '💥' : e.ev.type === 'reunion' ? '🔁' : '🌱', title: r.title, opening: r.opening, secs: secsE, note: r.note, when: e.c.utc.getTime() });
     for (const t of r.truths) if (!evTruths.includes(t)) evTruths.push(t);
     // olayların birbirine ve kişilere bağları tek bölümde
-    for (const sc of r.secs) if (sc.title === 'Baştan beri duran sorun tohumları' || sc.title === 'Kader işaretleri') for (const it of sc.items) links.push({ ...it, tech: `${EV_LABEL[e.ev.type]}: ${it.tech}` });
+    for (const sc of r.secs) if (sc.title === 'Baştan beri duran sorun tohumları' || sc.title === 'Kader işaretleri') for (const it of sc.items) links.push({ ...it, tech: `${EV_LABEL[e.ev.type]}: ${it.tech}`, _d: e.ev.date } as Item);
+  }
+  // aynı açılış cümlesi ikinci kez gelirse bunu söyle
+  const seenO = new Set<string>();
+  for (let i = cards.length - 1; i >= 0; i--) { const o = cards[i].opening; if (seenO.has(o)) cards[i].opening = 'Aynı tema bir kez daha: ' + o.charAt(0).toLocaleLowerCase('tr') + o.slice(1); seenO.add(o); }
+  // aynı gündeki olaylar tek kart: gökyüzü neredeyse aynı olduğu için ayrıntılar tekrar etmez
+  for (let i = cards.length - 1; i > 0; i--) {
+    const a = reads[i - 1].e.ev, b = reads[i].e.ev;
+    if (a.date === b.date) {
+      cards[i - 1].title = `${cards[i].title.split(' · ')[0]} + ${cards[i - 1].title}`;
+      cards[i - 1].note = [cards[i - 1].note, `Aynı gün iki olay var (${EV_LABEL[b.type].toLocaleLowerCase('tr')}${b.time ? ' ' + b.time : ''} ve ${EV_LABEL[a.type].toLocaleLowerCase('tr')}${a.time ? ' ' + a.time : ''}); gökyüzü neredeyse aynı olduğu için tek kartta okudum.`].filter(Boolean).join(' ');
+      cards.splice(i, 1);
+    }
   }
   // olay haritaları arasında aynı derece (kader işareti)
   for (let i = 0; i < sorted.length; i++) for (let j = i + 1; j < sorted.length; j++) {
@@ -481,7 +512,10 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
     : 'Özetle: ilişkilerinde tekrar eden şey karşındaki kişiler değil, yukarıdaki kalıplar. Onları görmeden kurulan her bağ benzer yerde zorlanır.';
   const summary = summary0 + evLine;
   const next = !partner ? 'Karşı tarafın doğum bilgisini eklersen sinastri ve kompozit zamanlamayı da okuyayım.' : nextTip ?? 'Barışma ya da yeni bir dönüm noktası olursa onu da ekle; haritaları birbirine bağlayayım.';
-  return { title: partner ? `${me.name} & ${partner.name}` : me.name, opening, secs, truths: top, summary, next, events: cards, links: links.slice(0, 8) };
+  // bağlarda aynı açı/aynı cümle tekrar etmesin (aynı gündeki olaylar aynı gökyüzünü paylaşır)
+  const seenL = new Set<string>();
+  const linksU = links.filter(l => { const k1 = l.tech.split(': ').slice(1).join(': ').replace(/\s*\([^)]*\)\s*$/, '') + '|' + l.text, k2 = ((l as any)._d ?? '') + '|' + l.text; if (seenL.has(k1) || ((l as any)._d && seenL.has(k2))) return false; seenL.add(k1); if ((l as any)._d) seenL.add(k2); return true; }).map(l => { const { _d, ...rest } = l as any; void _d; return rest as Item; });
+  return { title: partner ? `${me.name} & ${partner.name}` : me.name, opening, secs, truths: top, summary, next, events: cards, links: linksU.slice(0, 8) };
 }
 
 // =====================================================================
@@ -631,7 +665,7 @@ export function storyActs(me: Person, partner: Person | null, events: { ev: RelE
       }
       if (!timed) notes.push(`${EV_LABEL[ev.type]}: saat girilmediği için evler ve eksenler kullanılmadı`);
       else if (SUSPECT_TIMES.includes((ev.time ?? '').replace('.', ':').padStart(5, '0'))) notes.push(`${EV_LABEL[ev.type]}: saat ${ev.time} kesin değilse eksen yorumları temkinli okunmalı`);
-      if (ev.type === 'breakup') { const t = themes[themes.length - 1]; if (t === 'pluto') truths.push('Bu kopuş geri dönüşü zor bir yerden geldi: dönülse bile aynı ilişkiye dönülmez.'); if (t === 'uranus') truths.push('Ayrılık ani göründü ama birinin içinde çoktan başlamıştı.'); if (t === 'saturn') truths.push('Bu ayrılık bir kapris değil, biriken bir yükün sonucuydu.'); if (t === 'neptune') truths.push('Bu ilişkide gerçek ile hayal karışmıştı; ayrılık sisin dağılmasıydı.'); }
+      if (ev.type === 'breakup') { const t = themes[themes.length - 1]; if (t === 'pluto') truths.push(sorted.some(x => x.ev.type === 'reunion' && x.c.utc > c.utc) ? 'Barıştınız; ama dönülen şey eski ilişki değil, yeni bir ilişki. Eskisi gibi olmasını beklemek hayal kırıklığı getirir.' : 'Bu kopuş geri dönüşü zor bir yerden geldi: dönülse bile aynı ilişkiye dönülmez.'); if (t === 'uranus') truths.push('Ayrılık ani göründü ama birinin içinde çoktan başlamıştı.'); if (t === 'saturn') truths.push('Bu ayrılık bir kapris değil, biriken bir yükün sonucuydu.'); if (t === 'neptune') truths.push('Bu ilişkide gerçek ile hayal karışmıştı; ayrılık sisin dağılmasıydı.'); }
       if (START_TYPES.includes(ev.type) && ph.key === 'balsamic' && !truths.some(t => t.includes('kapatmak'))) truths.push('Bu bağ, eski bir hikâyeyi kapatmak için gelen türden: yoğun ama kısa ömürlü olma eğiliminde.');
     }
     const dd = (xs: string[]) => [...new Set(xs)];
