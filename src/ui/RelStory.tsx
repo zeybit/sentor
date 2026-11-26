@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStore, Profile } from '../store';
 import { searchPlaces, Place } from './BirthForm';
-import { EV_LABEL, EventCard, EvType, RelEvent, eventChart, fullStory, parseEventDate } from '../engine/relstory';
+import { EV_LABEL, EventCard, EvType, RelEvent, Story, eventChart, fullStory, parseEventDate, storyActs } from '../engine/relstory';
 import { Btn, Chips, Field, More, Section, Sub, st } from './kit';
 import { C, F } from '../theme';
 import { maskDate, maskTime, dateProblem, timeProblem } from '../util';
@@ -57,8 +57,9 @@ export default function RelStory() {
     const me = { name: profile.name || 'Sen', gender: profile.gender, chart };
     const them = partner && pc ? { name: partner.name || 'O', gender: partner.gender, chart: pc } : null;
     const evs = events.map(ev => ({ ev, c: eventChart(ev, ev.place ?? place)! })).filter(x => x.c);
-    try { return fullStory(me, them, evs); } catch { return null; }
+    try { return { full: fullStory(me, them, evs), story: storyActs(me, them, evs) }; } catch { return null; }
   }, [chart, profile, partner, events, opts]);
+  const [showTech, setShowTech] = useState(false);
 
   if (!chart || !profile) return null;
   const item = (i: { tech: string; text: string; voice?: string }, k: number) => (
@@ -117,32 +118,38 @@ export default function RelStory() {
         ) : null}
       </Section>
 
+      {reading ? <StoryView story={reading.story} /> : null}
       {reading ? (
+        <Pressable onPress={() => setShowTech(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: showTech }} style={({ pressed }) => [{ alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, marginBottom: 16 }, pressed && { opacity: 0.6 }]}>
+          <Text style={{ fontFamily: F.sansMed, fontSize: 14, color: C.ink }}>{showTech ? '▴ Ayrıntılı astrolojik raporu gizle' : '▾ Ayrıntılı astrolojik rapor'}</Text>
+        </Pressable>
+      ) : null}
+      {reading && showTech ? (() => { const R = reading.full; return (
         <View style={[st.panel, { marginBottom: 30 }]}>
-          <Text style={[st.rowLabel, { marginBottom: 6 }]}>{reading.title}</Text>
-          {reading.opening ? <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 32, color: C.ink }}>{reading.opening}</Text> : null}
-          {reading.links?.length ? sec({ emoji: '🔗', title: 'Olaylar arasındaki bağlar', items: reading.links }, 900) : null}
-          {reading.events?.length ? (
+          <Text style={[st.rowLabel, { marginBottom: 6 }]}>{R.title}</Text>
+          {R.opening ? <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 32, color: C.ink }}>{R.opening}</Text> : null}
+          {R.links?.length ? sec({ emoji: '🔗', title: 'Olaylar arasındaki bağlar', items: R.links }, 900) : null}
+          {R.events?.length ? (
             <View style={{ marginTop: 22 }}>
               <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 8 }}>🗓️ Olay haritaları</Text>
-              {reading.events.map((ev, k) => <EventBlock key={ev.title + k} ev={ev} initial={k === 0} sec={sec} hideOpening={k === 0} />)}
+              {R.events.map((ev, k) => <EventBlock key={ev.title + k} ev={ev} initial={k === 0} sec={sec} hideOpening={k === 0} />)}
             </View>
           ) : null}
-          {reading.secs.slice(0, 3).map(sec)}
-          {reading.secs.length > 3 ? <More count={reading.secs.length - 3}>{reading.secs.slice(3).map((s, k) => sec(s, k + 3))}</More> : null}
-          {reading.truths.length ? (
+          {R.secs.slice(0, 3).map(sec)}
+          {R.secs.length > 3 ? <More count={R.secs.length - 3}>{R.secs.slice(3).map((s, k) => sec(s, k + 3))}</More> : null}
+          {R.truths.length ? (
             <View style={{ marginTop: 24, borderLeftWidth: 3, borderLeftColor: C.second, paddingLeft: 12 }}>
               <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 6 }}>🩸 Acı gerçekler</Text>
-              {reading.truths.map((t, k) => <Text key={k} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 24, color: C.ink, marginTop: k ? 6 : 0 }}>• {t}</Text>)}
+              {R.truths.map((t, k) => <Text key={k} style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 24, color: C.ink, marginTop: k ? 6 : 0 }}>• {t}</Text>)}
             </View>
           ) : null}
           <Text style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 24, color: C.ink, marginTop: 20 }}>
-            <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>Özetle: </Text>{reading.summary.replace(/^Özetle:\s*/, '')}
+            <Text style={{ fontFamily: F.sansBold, fontWeight: '700' }}>Özetle: </Text>{R.summary.replace(/^Özetle:\s*/, '')}
           </Text>
-          <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.sub, marginTop: 12 }}>{reading.next}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.sub, marginTop: 12 }}>{R.next}</Text>
           <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.sub, marginTop: 14 }}>Harita olayları değil eğilimleri gösterir: kimin ne yaptığını ya da kimin ayrılığı başlattığını haritadan kesin olarak çıkaramam. (Bu bir astrolojik yorumdur, bilimsel bir kesinlik değildir.)</Text>
         </View>
-      ) : null}
+      ); })() : null}
     </View>
   );
 }
@@ -162,6 +169,52 @@ function EventBlock({ ev, initial, sec, hideOpening }: { ev: EventCard; initial:
         <Text style={{ fontSize: 20, color: C.sub }}>{open ? '▴' : '▾'}</Text>
       </Pressable>
       {open ? ev.secs.map((s2, k) => sec(s2, k)) : null}
+    </View>
+  );
+}
+
+/** Perdelerle anlatılan hikâye (ana görünüm) */
+function StoryView({ story }: { story: Story }) {
+  const P_ = (t: string, k: number) => <Text key={k} style={{ fontFamily: F.sans, fontSize: 16.5, lineHeight: 27, color: C.ink, marginTop: k ? 12 : 8 }}>{t}</Text>;
+  return (
+    <View style={[st.panel, { marginBottom: 16 }]}>
+      <View style={{ alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 10 }}>
+        <Text style={{ fontFamily: F.mono, fontSize: 11, letterSpacing: 1, color: C.sub }}>{story.badge.toLocaleUpperCase('tr')}</Text>
+      </View>
+      <Text accessibilityRole="header" style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 36, color: C.ink }}>{story.title}</Text>
+      {story.empty ? <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.sub, marginTop: 8 }}>Hikâyenin perdeleri olayları ekledikçe oluşur: tanışma, ilk buluşma, ayrılık, barışma… Şimdilik yalnızca ilişkinin genel dinamiğini okuyorum.</Text> : null}
+      {story.acts.map(a => <ActCard key={a.act} a={a} P_={P_} />)}
+      {story.core.length ? <View style={{ marginTop: 26 }}>
+        <Text style={{ fontFamily: F.serif, fontSize: 23, lineHeight: 29, color: C.ink }}>İlişkinin özü</Text>
+        {story.core.map(P_)}
+      </View> : null}
+      {story.future.length ? <View style={{ marginTop: 22 }}>
+        <Text style={{ fontFamily: F.serif, fontSize: 23, lineHeight: 29, color: C.ink }}>Bundan sonrası</Text>
+        {story.future.map(P_)}
+      </View> : null}
+      {story.truths.length ? (
+        <View style={{ marginTop: 22, borderLeftWidth: 3, borderLeftColor: C.second, paddingLeft: 12 }}>
+          <Text style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 27, color: C.ink, marginBottom: 4 }}>🩸 Acı gerçekler</Text>
+          {story.truths.map((t, k) => <Text key={k} style={{ fontFamily: F.sans, fontSize: 15.5, lineHeight: 23, color: C.ink, marginTop: k ? 6 : 0 }}>• {t}</Text>)}
+        </View>
+      ) : null}
+      <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.sub, marginTop: 16 }}>Harita olayları değil eğilimleri gösterir: kimin ne yaptığını ya da kimin ayrılığı başlattığını haritadan kesin olarak çıkaramam. (Bu bir astrolojik yorumdur, bilimsel bir kesinlik değildir.)</Text>
+    </View>
+  );
+}
+function ActCard({ a, P_ }: { a: Story['acts'][number]; P_: (t: string, k: number) => React.ReactNode }) {
+  const [tech, setTech] = useState(false);
+  return (
+    <View style={{ marginTop: 24, paddingTop: 18, borderTopWidth: 1, borderTopColor: C.line }}>
+      <Text style={{ fontFamily: F.serif, fontSize: 23, lineHeight: 29, color: C.ink }}>{a.title}</Text>
+      <Text style={{ fontFamily: F.mono, fontSize: 11.5, letterSpacing: 0.6, color: C.gold, marginTop: 4 }}>{a.summary}</Text>
+      {a.paras.map(P_)}
+      {a.notes.length ? (
+        <Pressable onPress={() => setTech(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: tech }} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 4 }}>
+          <Text style={{ fontFamily: F.sansMed, fontSize: 13.5, color: C.rose }}>{tech ? '▴ Astrolojik detayları gizle' : '▾ Astrolojik detayları göster'}</Text>
+        </Pressable>
+      ) : null}
+      {tech ? <View style={{ marginTop: 4, gap: 3 }}>{a.notes.map((n, k) => <Text key={k} style={{ fontFamily: F.mono, fontSize: 12, lineHeight: 18, color: C.sub }}>· {n}</Text>)}</View> : null}
     </View>
   );
 }

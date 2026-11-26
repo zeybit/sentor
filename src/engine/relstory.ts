@@ -483,3 +483,189 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
   const next = !partner ? 'Karşı tarafın doğum bilgisini eklersen sinastri ve kompozit zamanlamayı da okuyayım.' : nextTip ?? 'Barışma ya da yeni bir dönüm noktası olursa onu da ekle; haritaları birbirine bağlayayım.';
   return { title: partner ? `${me.name} & ${partner.name}` : me.name, opening, secs, truths: top, summary, next, events: cards, links: links.slice(0, 8) };
 }
+
+// =====================================================================
+// Perdelerle ilişki hikâyesi (kurallarla, yapay zekâsız)
+// Olaylar eskiden yeniye sıralanır; aynı gündekiler tek perdede birleşir; ana metinde astroloji terimi geçmez,
+// teknik bilgiler "Astrolojik detaylar" altında durur.
+// =====================================================================
+export interface Act { act: number; title: string; summary: string; paras: string[]; notes: string[] }
+export interface Story { badge: string; title: string; acts: Act[]; core: string[]; future: string[]; truths: string[]; empty: boolean }
+
+type Cls = 'hard' | 'soft' | 'mis' | 'conj';
+const clsOf = (t: Asp): Cls => (t === 'quincunx' ? 'mis' : t === 'conjunction' ? 'conj' : HARD.includes(t) ? 'hard' : 'soft');
+// iki gezegenin buluşmasını bir sahneye çeviren cümleler: [sert, uyumlu, uyumsuz, kavuşum]
+const SCENE: Record<string, [string, string, string, string]> = {
+  'venus|mars': ['Çekimle sürtüşme aynı anda geldi: yakınlaşmak isterken birbirinizin sınırına bastınız.', 'Birbirinizin varlığını bir anda çok yoğun hissettiğiniz, merakla arzunun birbirini beslediği bir çekim vardı.', 'Arzu ile sevgi aynı ritimde değildi; biri hızlanırken diğeri yavaşlamak istedi.', 'Karşı tarafın varlığını bir anda çok yoğun hissettiğiniz, merakın ve tenin birbirini beslediği, kontrol etmesi zor bir çekim başladı.'],
+  'venus|saturn': ['Sevgi bir sınavla geldi: biri kendini korumaya alıp mesafe koydu, diğeri yeterince değer görmediğini hissetti.', 'Çekim hızlı değil ama sağlamdı; ciddiye alınmanın verdiği bir güven hissi vardı.', 'Sevmek ile kendini korumak arasında bir ayar sorunu vardı; yakınlık hep bir adım geride kaldı.', 'Sevgi ağırbaşlı ve temkinli geldi; içten içe “bu kolay olmayacak” duygusu da onunla birlikteydi.'],
+  'moon|saturn': ['Söylenmeyenlerin biriktiği, birinin kendini korumak için duvar ördüğü ve kelimelerin boğazda düğümlendiği soğuk bir mesafe girdi.', 'Duygular kontrollüydü ama güven vericiydi; kimse acele etmedi.', 'Duygular ile sorumluluklar aynı dili konuşmadı; içinden gelen ile yapman gereken ayrı düştü.', 'Duygular bir ağırlığın altında kaldı; yalnızlık hissi sessizce masaya oturdu.'],
+  'mercury|saturn': ['Mesajlar kısaldı, cümleler tartıldı; söylenmesi gerekenler ertelendi.', 'Konuşmalar ciddi ve netti; verilen sözler önemsendi.', 'Söylenenle kastedilen arasında hep bir kayma vardı.', 'Kelimeler azaldı ama her biri ağırlaştı.'],
+  'sun|saturn': ['Biri sorumlulukların ağırlığı altında ezildi; ilişki bir yük gibi hissettirmeye başladı.', 'Olgun, ayakları yere basan bir an; kimse kendini kandırmadı.', 'Hayatın gerçekleri ile kalbin istediği ayrı yönlere çekti.', 'Gerçekler bütün çıplaklığıyla ortadaydı; “şimdi değil” duygusu ağır bastı.'],
+  'mars|saturn': ['Harekete geçmek isteyen bir taraf, frene basan diğer tarafla çarpıştı.', 'Kararlı ve sabırlı bir adım atıldı; acele edilmedi.', 'İstek vardı ama zamanlama hep ters düştü.', 'Bir adım atılmak istendi ama biri durdurdu; bastırılmış bir öfke kaldı.'],
+  'venus|pluto': ['Sevgiyle kontrol iç içe geçti; kıskançlık ve kaybetme korkusu çekimin bir parçası oldu.', 'Yüzeyde kalmayan, birbirinizin içini gören derin ve dönüştürücü bir yakınlık vardı.', 'Çekim derindi ama rahatsız ediciydi: yakınlaştıkça kontrol kaygısı da büyüdü.', 'Bırakması zor, takıntıya varan bir çekim başladı; bu bağ sizi değiştirecekti.'],
+  'moon|pluto': ['Duygular bir anda dipten yükseldi; kaybetme korkusu sahneye girdi.', 'Duygular derin ve dürüsttü; maskeler düştü.', 'Hissettikleriniz ile göstermeye cesaret ettikleriniz aynı değildi.', 'Duygular çok yoğundu; geri dönüşü olmayan bir şey içten içe başladı.'],
+  'mars|pluto': ['Güç meselesi ortaya çıktı: kim haklı, kim geri adım atacak sorusu her şeyin önüne geçti.', 'Kararlılık yüksekti; istenen şey için sonuna kadar gidildi.', 'Güç ile istek arasında sinsi bir gerilim vardı; kimse açıkça söylemedi.', 'Yoğun, sert bir enerji; ya hep ya hiç havası.'],
+  'venus|uranus': ['Heyecan da huzursuzluk da aynı anda geldi: elektrik gibi bir çekim ama ayağın yere basmadığı bir zemin.', 'Sıra dışı, ferahlatıcı bir çekim; kalıpların dışına çıkıldı.', 'Yakınlık isteğiyle özgürlük ihtiyacı birbirini itti.', 'Beklenmedik, şimşek gibi bir çekim; ne kadar süreceği belirsiz.'],
+  'moon|uranus': ['Duygular ani iniş çıkışlar yaptı; bir an yakın, bir an uzak.', 'Duygusal bir ferahlık; içinden geleni rahatça yaşayabildin.', 'İçindeki huzursuzluğun adını koyamadın.', 'Duygular aniden değişti; dün hissettiğin bugün geçerli değildi.'],
+  'mars|uranus': ['Kimsenin beklemediği bir anda gelen, özgürlük ihtiyacıyla panik duygusunun karıştığı ani bir fren ve kopuş yaşandı.', 'Cesur, beklenmedik bir adım atıldı; içgüdüye güvenildi.', 'Hareket etme isteği vardı ama nereye gidileceği belli değildi.', 'Düşünmeden atılan ani bir adım; sonrası belirsiz.'],
+  'sun|uranus': ['Biri kendine alan açmak için aniden geri çekildi.', 'Kendin olabildiğin, kalıpları kırdığın bir an.', 'Kim olduğunla ilişkinin senden istediği arasında sıkıştın.', 'Hayatın aniden yön değiştirdi.'],
+  'venus|neptune': ['Karşınızdakini olduğu gibi değil, görmek istediğiniz gibi gördüğünüz bir sis vardı.', 'Masalsı, şefkatli bir yakınlık; kelimelere gerek kalmadan anlaşıldığınız hissi.', 'Hayal ettiğin ile yaşadığın arasında küçük ama sürekli bir boşluk vardı.', 'Büyülü ama bulanık bir an; ne yaşadığını sonradan anlayacaktın.'],
+  'moon|neptune': ['Neyin gerçek neyin hayal olduğu karıştı; duygular bulanıklaştı.', 'Sezgilerin çok güçlüydü; söylenmeyeni hissettin.', 'Ne hissettiğini tam bilemedin.', 'Duygular sis gibi her yere yayıldı.'],
+  'mercury|neptune': ['Söylenenler yanlış anlaşıldı; mesajlar farklı yorumlandı.', 'Kelimeler şiir gibiydi; söylenenden fazlası anlaşıldı.', 'Ne dendiği ile ne anlaşıldığı ayrı kaldı.', 'Konuşmalar belirsizdi; kimse net konuşmadı.'],
+  'sun|moon': ['İstekler ile ihtiyaçlar çatıştı; biri bir şey isterken diğeri başka bir şeye ihtiyaç duydu.', 'İçinle dışın uyumluydu; ne istediğini biliyordun.', 'Ne istediğinle neye ihtiyaç duyduğun arasında bir ayar sorunu vardı.', 'Yeni bir döngü başlıyordu; her şey tohum hâlindeydi.'],
+  'venus|jupiter': ['Beklentiler gerçeğin önüne geçti; fazla umut yüklendi.', 'Umut ve cömertlik havadaydı; her şey olduğundan daha güzel görünüyordu.', 'Umut büyüktü ama gerçekle tam örtüşmedi.', 'Bolluk ve neşe hissi; kalbin genişledi.'],
+  'moon|mars': ['Duygular kısa sürede öfkeye dönüştü; küçük şeyler büyüdü.', 'Duygularını cesurca gösterdin.', 'Hissettiğin ile yaptığın birbirini tutmadı.', 'Duygular ateşlendi; tepkiler hızlıydı.'],
+  'mercury|mars': ['Sözler keskinleşti; söylenen bir cümle aklında kaldı.', 'Açık ve doğrudan konuşuldu.', 'Konuşmalarda bir gerginlik vardı ama adı konmadı.', 'Hızlı, ateşli konuşmalar.'],
+  'moon|venus': ['Sevgi verip almak arasında bir dengesizlik hissettin.', 'Sıcak, şefkatli bir yakınlık; birbirinizin yanında rahat ettiniz.', 'Sevgiyi ifade etme biçimleriniz farklıydı.', 'Kalbin yumuşadı; yakınlık kendiliğinden geldi.'],
+  'sun|venus': ['Gurur ile sevgi çekişti.', 'Sevildiğini hissettin; görünür oldun.', 'Sevmek ile kendin olmak arasında küçük bir ayar gerekti.', 'Kendini güzel ve değerli hissettin.'],
+};
+const SC_KEY = (a: string, b: string) => { const order = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto']; return [a, b].sort((x, y) => order.indexOf(x) - order.indexOf(y)).join('|'); };
+const JARGON = /Venüs|Mars|Satürn|Jüpiter|Plüton|Neptün|Uranüs|Merkür|Güneş|Ay’|Ay |kavuşum|kare|karşıt|üçgen|altmışlık|quincunx|retro|transit|yükselen|Yükselen|\d+\. ev|MC|IC|Kiron|Düğüm/;
+const PHASE_SCENE: Record<string, string> = {
+  new: 'Gökyüzünde her şeyin sıfırdan başladığı bir andı; olanlar içgüdüyle, düşünmeden gelişti.',
+  crescent: 'Yeni bir heyecan doğuyordu ama eski alışkanlıklar hâlâ geri çekiyordu.',
+  first: 'Karar anıydı: ya ileri gidilecek ya da geri çekilinecekti.',
+  gibbous: '“Doğru mu yapıyoruz?” sorusunun içten içe sorulduğu bir dönemdi.',
+  full: 'Her şeyin görünür olduğu, duyguların açığa çıktığı bir andı; saklanan ne varsa yüzeye çıktı.',
+  disseminating: 'Yaşananların sindirildiği, paylaşılmak istendiği olgun bir evreydi.',
+  last: 'Bir şeyin bırakılması gerektiği hissedilen bir evreydi.',
+  balsamic: 'Bir döngünün kapanmak üzere olduğu bir andı; böyle anlarda başlayan bağlar çoğu zaman eski bir hikâyeyi kapatmak için gelir: kısa ama yoğun.',
+};
+const NATAL_SPOT: Record<string, string> = { sun: 'kim olduğun ve gururun', moon: 'güvende hissetme ihtiyacın', venus: 'nasıl sevdiğin ve neyi değerli bulduğun', mars: 'isteklerin ve öfken', asc: 'dışarıya gösterdiğin yüz', dsc: 'ilişkilerde aradığın kişi', mc: 'hayattaki yönün', ic: 'evin ve kökün' };
+const NATAL_SPOT3: Record<string, string> = { sun: 'kimliği ve gururu', moon: 'güvende hissetme ihtiyacı', venus: 'sevme biçimi', mars: 'istekleri ve öfkesi', asc: 'dışarıya gösterdiği yüz', dsc: 'ilişkide aradığı şey', mc: 'hayattaki yönü', ic: 'evi ve kökü' };
+const ACT_INTRO: Record<EvType, [string, string]> = {
+  meet: ['Her şey bir karşılaşmayla başladı.', 'Bir karşılaşma daha oldu.'],
+  firstMove: ['İlk adım atıldı: o ilk mesaj, o ilk cesaret.', 'Bir adım daha atıldı.'],
+  firstDate: ['İlk buluşma: ilk kıvılcımın, ilk gözlemin günü.', 'Bu buluşma asıl dönüm noktasıydı: kıvılcım bu kez gerçekten tutuştu.'],
+  start: ['İlişki adını koydu ve resmen başladı.', 'İlişki bir kez daha, yeni bir sayfayla başladı.'],
+  breakup: ['Ve ayrılık geldi.', 'Bir ayrılık daha yaşandı; bu kez öncekinden farklı bir yerden kırıldı.'],
+  reunion: ['Yollar yeniden kesişti.', 'Bir kez daha geri dönüldü.'],
+};
+const ACT_TITLE: Record<EvType, string[]> = {
+  meet: ['Görünmez Temas', 'İkinci Karşılaşma'], firstMove: ['İlk Cesaret', 'Yeni Bir Adım'], firstDate: ['İlk Kıvılcım', 'Asıl Dönüm Noktası'],
+  start: ['Adı Konan Bağ', 'Yeni Bir Sayfa'], breakup: ['Kırılma', 'İkinci Kırılma'], reunion: ['Geri Dönüş', 'Bir Kez Daha'],
+};
+const timeMood = (t?: string) => {
+  if (!t) return '';
+  const h = parseInt(t, 10);
+  if (isNaN(h)) return '';
+  if (h < 5) return 'Gecenin en sessiz saatlerindeydi; dünyadan saklı, yoğun ve biraz yalnız bir an.';
+  if (h < 10) return 'Sabahın erken saatindeydi; günün henüz başlamadığı, kararların net olduğu bir an.';
+  if (h < 18) return 'Gün ışığındaydı; açık, sosyal, ayakları yere basan bir an.';
+  if (h < 22) return 'Akşamın yumuşak saatlerindeydi; günün yükünün bırakıldığı, kalbin açıldığı bir an.';
+  return 'Gece yarısına doğruydu; gizli, yoğun ve dışarıya kapalı bir an.';
+};
+const nightOf = (t?: string) => { const h = t ? parseInt(t, 10) : NaN; return !isNaN(h) && (h >= 22 || h < 5); };
+const STORY_TITLE: Record<string, string> = { pluto: 'Bırakamadığın Çekim', saturn: 'Yanlış Zamanda Doğru Kişi', uranus: 'Fren ve Kıvılcım', neptune: 'Sisin İçindeki Yüz', mars: 'Ateşle Kurulan Köprü', '': 'Sessiz Bir Hikâye' };
+const LESSON: Record<string, string> = {
+  pluto: 'Bu ilişkinin dersi kontrol ve güven: biri diğerini kaybetme korkusuyla sıkı tuttukça bağ boğulur.',
+  saturn: 'Bu ilişkinin dersi zamanlama ve sorumluluk: acele etmeden, kimsenin kendini yük gibi hissetmediği bir düzen kurulamazsa aynı duvar tekrar örülür.',
+  uranus: 'Bu ilişkinin dersi özgürlük ile bağlılığı aynı anda taşıyabilmek: biri nefes alamadıkça ani frenler tekrar eder.',
+  neptune: 'Bu ilişkinin dersi gerçekçilik: karşındakini olduğu gibi görmeden kurulan her yakınlık hayal kırıklığıyla biter.',
+  mars: 'Bu ilişkinin dersi öfkeyi konuşmaya çevirebilmek: kavga, çekimin diğer yüzü olarak kalırsa ilişkiyi yorar.',
+  '': 'Bu ilişkinin dersi, sessizce biriken küçük şeyleri zamanında konuşabilmek.',
+};
+const lowFirst = (x: string) => x.charAt(0).toLocaleLowerCase('tr') + x.slice(1);
+const TOUCH_ME = ['Bu an, senin en hassas yerine dokundu: {s}.', 'Bu kez dokunulan yer {s} oldu.', 'Burada doğrudan {s} sınandı.', 'Yine senin içinde bir yere dokunuldu: {s}.'];
+const LINK_OPEN = ['Bu tesadüf değildi:', 'Hikâye geriye bağlanıyordu:', 'Geçmiş burada yeniden konuştu:', 'Bir önceki perdeden kalan iz buradaydı:'];
+const START_OVERRIDE: Record<string, string> = { 'mars|uranus': 'Ani, sarsıcı bir enerji vardı: düşünmeden tepki verildi, sonrası belirsiz kaldı.' };
+const firstSent = (x: string) => (x.match(/[^.!?]+[.!?]+/) ?? [x])[0].trim();
+
+export function storyActs(me: Person, partner: Person | null, events: { ev: RelEvent; c: Chart }[]): Story {
+  const sorted = [...events].sort((a, b) => a.c.utc.getTime() - b.c.utc.getTime());
+  // aynı gün → tek perde
+  const groups: { ev: RelEvent; c: Chart }[][] = [];
+  for (const e of sorted) { const g = groups[groups.length - 1]; if (g && g[0].ev.date === e.ev.date) g.push(e); else groups.push([e]); }
+  const seenType: Record<string, number> = {};
+  const themes: string[] = [];
+  const acts: Act[] = [];
+  const truths: string[] = [];
+  const persons = [me, partner].filter(Boolean) as Person[];
+  groups.forEach((g, gi) => {
+    const paras: string[] = [], notes: string[] = [];
+    const titles: string[] = [], intros: string[] = [];
+    const p1: string[] = [], p2: string[] = [], p3: string[] = [];
+    for (const [ei, { ev, c }] of g.entries()) {
+      const k = seenType[ev.type] = (seenType[ev.type] ?? 0) + 1;
+      titles.push(ACT_TITLE[ev.type][Math.min(k, 2) - 1]);
+      p1.push(ei > 0 ? 'Aynı gün, saatler sonra: ' + lowFirst(ACT_INTRO[ev.type][Math.min(k, 2) - 1]) : ACT_INTRO[ev.type][Math.min(k, 2) - 1]);
+      const timed = timedOf(c);
+      const pts: Pt[] = timed ? [...PLANETS, 'asc', 'mc'] : [...PLANETS];
+      const asp = aspectsIn(c, pts).filter(x => x.orb <= (timed ? 4 : 3));
+      const personalSet = ['sun', 'moon', 'mercury', 'venus', 'mars'];
+      const keyAsp = asp.filter(x => personalSet.includes(x.a as string) || personalSet.includes(x.b as string)).filter(x => SCENE[SC_KEY(x.a, x.b)]);
+      const mood = timeMood(timed ? ev.time : undefined);
+      if (mood) p1.push(mood);
+      const used = new Set<string>();
+      let lastSoft: boolean | null = null;
+      for (const x of keyAsp) { const key = SC_KEY(x.a, x.b); if (used.has(key) || used.size >= 3) continue; used.add(key); const cl = clsOf(x.type); let sc = SCENE[key][cl === 'hard' ? 0 : cl === 'soft' ? 1 : cl === 'mis' ? 2 : 3]; if (START_TYPES.includes(ev.type) && cl === 'hard' && START_OVERRIDE[key]) sc = START_OVERRIDE[key]; if (ev.type === 'breakup' && (cl === 'soft' || (cl === 'conj' && /çekim|yakınlık/.test(sc)))) sc = 'Ayrılırken bile ' + lowFirst(sc); const soft = cl === 'soft' || (cl === 'conj' && !/mesafe|ağır|yük|takıntı|öfke/.test(sc)); if (lastSoft !== null && lastSoft !== soft) sc = 'Öte yandan ' + lowFirst(sc); lastSoft = soft; (used.size === 1 ? p1 : p2).push(sc); notes.push(`${EV_LABEL[ev.type]}: ${aTxt(x)}`); }
+      // tema (ağır gezegen)
+      const hv = asp.filter(x => (['pluto', 'saturn', 'uranus', 'neptune'].includes(x.a as string) || ['pluto', 'saturn', 'uranus', 'neptune'].includes(x.b as string)) && (HARD.includes(x.type) || x.type === 'quincunx') && (personalSet.includes(x.a as string) || personalSet.includes(x.b as string)));
+      if (hv[0]) themes.push((['pluto', 'saturn', 'uranus', 'neptune'].find(o => o === hv[0].a || o === hv[0].b))!);
+      // ay evresi ve geri hareketler
+      const ph = moonPhaseOf(c);
+      p2.push(PHASE_SCENE[ph.key]); notes.push(`Ay fazı: ${ph.name} (${Math.round(ph.a)}°)`);
+      const vs = station('venus', c.utc), ms = station('mercury', c.utc);
+      if (vs === 'retro' || vs === 'stationRx') { p2.push('Aşkın geriye baktığı bir dönemdi: geçmişten bir şey taşıyan, yarım kalmışlık hissi veren.'); notes.push('Venüs retro'); }
+      if (ms === 'retro' || ms === 'stationRx') { p2.push('Mesajların havada kaldığı, eski konuşmaların geri geldiği bir dönemdi.'); notes.push('Merkür retro'); }
+      // doğum haritalarına dokunuş
+      for (const ps of persons) {
+        const tg: Pt[] = ['sun', 'moon', 'venus', 'mars', ...(timedOf(ps.chart) ? ['asc', 'dsc'] as Pt[] : [])];
+        const h = cross(c, ['sun', 'moon', 'venus', 'mars', 'saturn', 'pluto', 'uranus', 'neptune'], ps.chart, tg, ['conjunction', 'opposition', 'square', 'trine'], 2)[0];
+        if (!h) continue;
+        const you = ps === me;
+        const spot = NATAL_SPOT[h.b as string] ?? 'özün';
+        const hardH = HARD.includes(h.type);
+        p3.push(you ? `${TOUCH_ME[gi % TOUCH_ME.length].replace('{s}', spot)} ${hardH ? 'O yüzden yaşananlar sana olduğundan daha büyük geldi.' : 'O yüzden bu an sende iz bıraktı, ama iyi bir iz.'}` : `${ps.name} için de sıradan bir an değildi: ${NATAL_SPOT3[h.b as string] ?? 'özü'} doğrudan etkilendi${hardH ? '; tepkisi bu yüzden sert ya da kapalı olmuş olabilir.' : '.'}`);
+        notes.push(`${EV_LABEL[ev.type]}: olay ${poss(NM[h.a])} ${ASP_TR[h.type]} ${gen(ps.name)} doğum ${poss(NM[h.b])} (${orbTxt(h.orb)})`);
+      }
+      // önceki perdelerle sebep–sonuç bağı
+      const prev = sorted.filter(x => x.c.utc < c.utc && x.ev.date !== ev.date);
+      for (const pv of prev.slice(-3).reverse()) {
+        const h = cross(c, ['sun', 'moon', 'venus', 'mars', 'saturn', 'pluto', 'uranus', 'neptune'], pv.c, ['sun', 'moon', 'venus', 'mars', ...(timedOf(pv.c) ? ['asc'] as Pt[] : [])], ['conjunction', 'opposition', 'square'], 2)[0];
+        if (!h) continue;
+        const what = (h.b === 'venus' ? 'kıvılcımı yakan çekim' : h.b === 'moon' ? 'o günkü duygular' : h.b === 'sun' ? 'o gün verilen karar' : h.b === 'mars' ? 'o günkü istek' : 'o günün havası');
+        p3.push(`${LINK_OPEN[gi % LINK_OPEN.length]} ${EV_LABEL[pv.ev.type].toLocaleLowerCase('tr')} gününde ${what}, bu kez ${h.type === 'conjunction' ? 'aynı noktada yeniden canlandı' : 'baskı altına girdi'}. ${h.type === 'conjunction' ? 'Hikâye kendini tekrar ediyordu.' : 'O gün ekilen tohum burada filizlendi.'}`);
+        notes.push(`${EV_LABEL[ev.type]} ${poss(NM[h.a])} ${ASP_TR[h.type]} ${EV_LABEL[pv.ev.type].toLocaleLowerCase('tr')} ${poss(NM[h.b])} (${orbTxt(h.orb)})`);
+        break;
+      }
+      if (!timed) notes.push(`${EV_LABEL[ev.type]}: saat girilmediği için evler ve eksenler kullanılmadı`);
+      else if (SUSPECT_TIMES.includes((ev.time ?? '').replace('.', ':').padStart(5, '0'))) notes.push(`${EV_LABEL[ev.type]}: saat ${ev.time} kesin değilse eksen yorumları temkinli okunmalı`);
+      if (ev.type === 'breakup') { const t = themes[themes.length - 1]; if (t === 'pluto') truths.push('Bu kopuş geri dönüşü zor bir yerden geldi: dönülse bile aynı ilişkiye dönülmez.'); if (t === 'uranus') truths.push('Ayrılık ani göründü ama birinin içinde çoktan başlamıştı.'); if (t === 'saturn') truths.push('Bu ayrılık bir kapris değil, biriken bir yükün sonucuydu.'); if (t === 'neptune') truths.push('Bu ilişkide gerçek ile hayal karışmıştı; ayrılık sisin dağılmasıydı.'); }
+      if (START_TYPES.includes(ev.type) && ph.key === 'balsamic' && !truths.some(t => t.includes('kapatmak'))) truths.push('Bu bağ, eski bir hikâyeyi kapatmak için gelen türden: yoğun ama kısa ömürlü olma eğiliminde.');
+    }
+    const dd = (xs: string[]) => [...new Set(xs)];
+    paras.push(dd(p1).join(' '));
+    if (p2.length) paras.push(dd(p2).slice(0, 3).join(' '));
+    if (p3.length) paras.push(dd(p3).slice(0, 3).join(' '));
+    const ttl = [...new Set(titles)].join(' ve ');
+    const summary = g.map(({ ev }) => `${EV_LABEL[ev.type]} · ${ev.date}${ev.time ? ' ' + ev.time : ''}${ev.place ? ' · ' + ev.place.label.split(',')[0] : ''}`).join('  |  ');
+    acts.push({ act: gi + 1, title: `${gi + 1}. Perde: ${ttl}`, summary, paras: paras.map(p => p.trim()).filter(Boolean), notes });
+  });
+
+  // genel sentez
+  const cnt = themes.reduce((m, t) => m.set(t, (m.get(t) ?? 0) + 1), new Map<string, number>());
+  const dom = [...cnt.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+  const core: string[] = [];
+  const pats = persons.map(p => ({ p, list: lovePatterns(p).filter(x => !JARGON.test(x.text)) }));
+  const meLine = pats[0]?.list.slice(0, 2).map(x => firstSent(x.text)).join(' ');
+  if (partner) {
+    const syn = synastryHonest(me, partner);
+    const pLine = pats[1]?.list.slice(0, 2).map(x => firstSent(x.text)).join(' ');
+    core.push(`${syn.ps >= syn.rs + 4 ? 'Aranızdaki çekim gerçek ve güçlü; sizi birbirinize iten şey sıradan bir merak değil.' : syn.rs >= syn.ps + 4 ? 'Aranızda çekimden çok sürtünme var; birbirinize dokundukça bir yerler acıyor.' : 'Aranızda hem güçlü bir çekim hem de güçlü bir sürtünme var: böyle bağlar kolay bitmez ama sürekli acıtır.'} ${meLine ? `${me.name} tarafında: ${meLine}` : ''} ${pLine ? `${partner.name} tarafında: ${pLine}` : ''}`.trim());
+  } else if (meLine) core.push(`Bu hikâyede değişmeyen şey senin aşk kalıbın: ${meLine} Karşına kim çıkarsa çıksın, bu kalıp hikâyeye yön veriyor.`);
+  const nights = sorted.filter(e => timedOf(e.c) && nightOf(e.ev.time)).length;
+  const c2: string[] = [];
+  if (acts.length) c2.push(dom ? `Perdeler boyunca tekrar eden tema belli: ${({ pluto: 'yoğunluk, kontrol ve bırakamamak', saturn: 'mesafe, yük ve zamanlama', uranus: 'ani frenler ve özgürlük ihtiyacı', neptune: 'sis, idealleştirme ve hayal kırıklığı', mars: 'tutku ile öfkenin iç içeliği' } as Record<string, string>)[dom]}.` : 'Perdeler boyunca tek bir ağır tema öne çıkmıyor; ilişki büyük kırılmalardan çok küçük birikimlerle şekillenmiş.');
+  if (nights >= 2) c2.push('Bu ilişkinin dönüm noktaları hep geceye düşmüş: gizli, yoğun, dünyadan saklı anlar. Gün ışığında aynı rahatlıkla yaşanamayan bir bağın işareti olabilir.');
+  if (c2.length) core.push(c2.join(' '));
+  const future: string[] = [];
+  if (partner) {
+    const tm = compositeTiming(me.chart, partner.chart);
+    const win = [...new Set(tm.list.slice(0, 6).map(t => `${halfMonth(t.start)} ${t.label === 'sınav' ? 'zorlayıcı, kararların netleştiği' : t.label === 'destekleyici' ? 'yakınlaşmaya açık' : 'eski duyguların yüzeye çıktığı'} bir dönem`))].slice(0, 3);
+    future.push(win.length ? `Önümüzdeki aylarda öne çıkan pencereler: ${win.join('; ')}.${tm.venusRx ? ` ${halfMonth(tm.venusRx.start)} civarı eski aşkların geri döndüğü klasik bir dönem; bir temas olabilir ama bu bir değişim değil, nostaljidir.` : ''}` : 'Önümüzdeki aylarda ilişkiye değen belirgin bir dönem görünmüyor; sakin bir dönem.');
+  }
+  future.push(`${LESSON[dom]} Bunlar kesinlik değil, eğilim: ne olacağını haritalar değil, ${partner ? 'ikinizin' : 'senin'} bu kalıplarla ne yaptığın${partner ? '' : ''} belirler.`.replace('ikinizin bu kalıplarla ne yaptığın', 'ikinizin bu kalıplarla ne yaptığı'));
+  for (const x of pats) for (const pt of x.list) if (pt.truth && truths.length < 5 && !JARGON.test(pt.truth)) truths.push(pt.truth);
+  return { badge: partner ? 'Çift harita + an haritaları' : 'Tek harita + an haritaları', title: STORY_TITLE[dom] ?? STORY_TITLE[''], acts, core, future, truths: [...new Set(truths)].slice(0, 5), empty: !events.length };
+}
