@@ -387,11 +387,20 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
     opening = '';
     for (const pt of pats[0].list) if (pt.truth && truths.length < 4) truths.push(pt.truth);
   }
-  for (const e of events) {
-    const r = readEvent(e.ev, e.c, me, partner, events);
-    secs.push({ emoji: e.ev.type === 'breakup' ? '💥' : '🌱', title: r.title, items: [{ tech: 'Özet', text: r.opening }] });
-    for (const s of r.secs) secs.push({ ...s, title: `${s.title} (${EV_LABEL[e.ev.type].toLocaleLowerCase('tr')})` });
-    truths.push(...r.truths);
+  // Olaylar: en yeni olay en üstte; açılış, acı gerçekler ve özet önce olaylardan beslenir
+  const evSecs: Sec[] = [], evTruths: string[] = [];
+  const sorted = [...events].sort((a, b) => b.c.utc.getTime() - a.c.utc.getTime());
+  const reads = sorted.map(e => ({ e, r: readEvent(e.ev, e.c, me, partner, events) }));
+  for (const { e, r } of reads) {
+    evSecs.push({ emoji: e.ev.type === 'breakup' ? '💥' : e.ev.type === 'reunion' ? '🔁' : '🌱', title: r.title, items: [{ tech: 'Bu anın özü', text: r.opening }] });
+    for (const sc of r.secs) evSecs.push({ ...sc, title: `${sc.title} (${EV_LABEL[e.ev.type].toLocaleLowerCase('tr')})` });
+    for (const t of r.truths) if (!evTruths.includes(t)) evTruths.push(t);
+  }
+  if (reads.length) {
+    const last = reads[0];
+    opening = `${EV_LABEL[last.e.ev.type]} (${last.e.ev.date}): ${last.r.opening}` + (reads.length > 1 ? ` Toplam ${reads.length} olay haritasını birlikte okudum.` : '');
+    secs.splice(0, 0, ...evSecs);
+    truths.splice(0, 0, ...evTruths);
   }
   // Bundan sonrası
   if (partner) {
@@ -403,9 +412,15 @@ export function fullStory(me: Person, partner: Person | null, events: { ev: RelE
     if (broke) items.unshift({ tech: 'Geri dönüş ihtimali', text: change ? 'Önümüzdeki aylarda kompozite Jüpiter değiyor: bir yakınlaşma penceresi var. Ama kişisel kalıplar değişmeden dönülürse aynı döngü tekrar eder.' : 'Kompozit haritada değişim gösteren güçlü bir transit yok. Dönerseniz büyük ihtimalle aynı döngü tekrar eder.' });
     secs.push({ emoji: '🔄', title: broke ? 'Geri dönüş ihtimali ve bundan sonrası' : 'Bundan sonrası: önümüzdeki 12 ay', items: items.length ? items : [{ tech: 'Önümüzdeki 12 ay', text: 'Kompozit haritaya değen belirgin bir transit yok; ilişki için sakin bir dönem.' }] });
   }
-  const top = truths.slice(0, 5);
-  const summary = partner && syn
+  const top = [...new Set(truths)].slice(0, 6);
+  const has = (t: EvType) => events.some(e => e.ev.type === t);
+  const evLine = reads.length ? ` En son eklediğin ${EV_LABEL[reads[0].e.ev.type].toLocaleLowerCase('tr')} haritası da şunu söylüyor: ${reads[0].r.opening.split(/(?<=[.!?])\s/)[0]}` : '';
+  const missing: [EvType, string][] = [['firstDate', 'İlk buluşmanın tarihini eklersen ilişkinin baştan beri taşıdığı sorun tohumlarını bulurum.'], ['breakup', 'Ayrılık tarihini eklersen kopuşun asıl sebebini haritadan okurum.'], ['start', 'İlişkinin başladığı günü eklersen ilişkinin “doğum karakterini” çıkarırım.'], ['meet', 'Tanıştığınız günü eklersen kaderin sizi nasıl karşılaştırdığına bakarım.']];
+  const nextTip = missing.find(([t]) => !has(t))?.[1];
+  const summary0 = partner && syn
     ? (syn.rs > syn.ps ? 'Özetle: bu bağın çekimi gerçek, ama haritalar uzun vadede yıpratan bir yapı gösteriyor. Kalıplar değişmedikçe sonuç değişmez.' : 'Özetle: aranızda gerçek bir çekim var; ilişkinin kaderini çekim değil, yukarıdaki kalıplarla ne yaptığınız belirler.')
     : 'Özetle: ilişkilerinde tekrar eden şey karşındaki kişiler değil, yukarıdaki kalıplar. Onları görmeden kurulan her bağ benzer yerde zorlanır.';
-  return { title: partner ? `${me.name} & ${partner.name}` : me.name, opening, secs, truths: top, summary, next: partner ? (events.length ? 'İstersen bir olay daha ekle (ilk buluşma, ayrılık, barışma); haritaları birbirine bağlayayım.' : 'İlk buluşma ya da ayrılık tarihini eklersen o anın haritasını da okuyayım.') : 'Karşı tarafın doğum bilgisini eklersen sinastri ve kompozit zamanlamayı da okuyayım.' };
+  const summary = summary0 + evLine;
+  const next = !partner ? 'Karşı tarafın doğum bilgisini eklersen sinastri ve kompozit zamanlamayı da okuyayım.' : nextTip ?? 'Barışma ya da yeni bir dönüm noktası olursa onu da ekle; haritaları birbirine bağlayayım.';
+  return { title: partner ? `${me.name} & ${partner.name}` : me.name, opening, secs, truths: top, summary, next };
 }

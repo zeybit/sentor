@@ -121,8 +121,8 @@ export default function RelStory() {
         <View style={[st.panel, { marginBottom: 30 }]}>
           <Text style={[st.rowLabel, { marginBottom: 6 }]}>{reading.title}</Text>
           {reading.opening ? <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 32, color: C.ink }}>{reading.opening}</Text> : null}
-          {reading.secs.slice(0, 4).map(sec)}
-          {reading.secs.length > 4 ? <More count={reading.secs.length - 4}>{reading.secs.slice(4).map((s, k) => sec(s, k + 4))}</More> : null}
+          {reading.secs.slice(0, 5).map(sec)}
+          {reading.secs.length > 5 ? <More count={reading.secs.length - 5}>{reading.secs.slice(5).map((s, k) => sec(s, k + 5))}</More> : null}
           {reading.truths.length ? (
             <View style={{ marginTop: 24, borderLeftWidth: 3, borderLeftColor: C.second, paddingLeft: 12 }}>
               <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 6 }}>🩸 Acı gerçekler</Text>
