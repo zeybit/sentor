@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStore, Profile } from '../store';
 import { searchPlaces, Place } from './BirthForm';
-import { EV_LABEL, EvType, RelEvent, eventChart, fullStory, parseEventDate } from '../engine/relstory';
+import { EV_LABEL, EventCard, EvType, RelEvent, eventChart, fullStory, parseEventDate } from '../engine/relstory';
 import { Btn, Chips, Field, More, Section, Sub, st } from './kit';
 import { C, F } from '../theme';
 import { maskDate, maskTime, dateProblem, timeProblem } from '../util';
@@ -121,8 +121,15 @@ export default function RelStory() {
         <View style={[st.panel, { marginBottom: 30 }]}>
           <Text style={[st.rowLabel, { marginBottom: 6 }]}>{reading.title}</Text>
           {reading.opening ? <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 32, color: C.ink }}>{reading.opening}</Text> : null}
-          {reading.secs.slice(0, 5).map(sec)}
-          {reading.secs.length > 5 ? <More count={reading.secs.length - 5}>{reading.secs.slice(5).map((s, k) => sec(s, k + 5))}</More> : null}
+          {reading.links?.length ? sec({ emoji: '🔗', title: 'Olaylar arasındaki bağlar', items: reading.links }, 900) : null}
+          {reading.events?.length ? (
+            <View style={{ marginTop: 22 }}>
+              <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 8 }}>🗓️ Olay haritaları</Text>
+              {reading.events.map((ev, k) => <EventBlock key={ev.title + k} ev={ev} initial={k === 0} sec={sec} hideOpening={k === 0} />)}
+            </View>
+          ) : null}
+          {reading.secs.slice(0, 3).map(sec)}
+          {reading.secs.length > 3 ? <More count={reading.secs.length - 3}>{reading.secs.slice(3).map((s, k) => sec(s, k + 3))}</More> : null}
           {reading.truths.length ? (
             <View style={{ marginTop: 24, borderLeftWidth: 3, borderLeftColor: C.second, paddingLeft: 12 }}>
               <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 6 }}>🩸 Acı gerçekler</Text>
@@ -136,6 +143,25 @@ export default function RelStory() {
           <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.sub, marginTop: 14 }}>Harita olayları değil eğilimleri gösterir: kimin ne yaptığını ya da kimin ayrılığı başlattığını haritadan kesin olarak çıkaramam. (Bu bir astrolojik yorumdur, bilimsel bir kesinlik değildir.)</Text>
         </View>
       ) : null}
+    </View>
+  );
+}
+
+/** Tek olayın kartı: başlık ve özü görünür, dokununca bölümleri açılır */
+function EventBlock({ ev, initial, sec, hideOpening }: { ev: EventCard; initial: boolean; sec: (s: { emoji: string; title: string; items: any[] }, k: number) => React.ReactNode; hideOpening: boolean }) {
+  const [open, setOpen] = useState(initial);
+  return (
+    <View style={{ borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 10 }}>
+      <Pressable onPress={() => setOpen(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: open }} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+        <Text style={{ fontSize: 20 }}>{ev.emoji}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 16, color: C.ink }}>{ev.title}</Text>
+          {!hideOpening || !open ? <Text style={{ fontFamily: F.sans, fontSize: 15, lineHeight: 22, color: C.sub, marginTop: 2 }} numberOfLines={open ? undefined : 2}>{ev.opening}</Text> : null}
+          {ev.note ? <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.second, marginTop: 4 }}>{ev.note}</Text> : null}
+        </View>
+        <Text style={{ fontSize: 20, color: C.sub }}>{open ? '▴' : '▾'}</Text>
+      </Pressable>
+      {open ? ev.secs.map((s2, k) => sec(s2, k)) : null}
     </View>
   );
 }
