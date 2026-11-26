@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Rasathane gece paleti (src/theme.ts DARK) */
+@layer base {
+  :root {
+    --background: 210 25% 3%;
+    --foreground: 42 45% 89%;
+    --card: 198 24% 8%;
+    --card-foreground: 42 45% 89%;
+    --popover: 198 24% 8%;
+    --popover-foreground: 42 45% 89%;
+    --primary: 165 38% 62%;
+    --primary-foreground: 210 25% 3%;
+    --secondary: 198 18% 13%;
+    --secondary-foreground: 42 45% 89%;
+    --muted: 198 18% 13%;
+    --muted-foreground: 126 5% 63%;
+    --accent: 41 35% 16%;
+    --accent-foreground: 41 61% 63%;
+    --destructive: 5 100% 75%;
+    --destructive-foreground: 210 25% 3%;
+    --border: 41 30% 20%;
+    --input: 41 30% 20%;
+    --ring: 41 61% 63%;
+    --gold: 41 61% 63%;
+    --radius: 0.75rem;
+  }
+}
+
+/* Uygulamanın genel metin yazı tipi kit'in serif sınıfını ezmesin */
+.font-serif { font-family: "Fraunces", Georgia, serif !important; }
