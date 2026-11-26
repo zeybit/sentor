@@ -16,7 +16,8 @@ import { NatalReading, KindReading, CharacterBook } from '../ui/Readings';
 import { Cartography, Finder } from '../ui/Tools';
 import Rectify from '../ui/Rectify';
 import FutureScreen, { ActiveWindows } from './FutureScreen';
-import { takePendingKind } from '../nav';
+import { takePendingKind, useNav } from '../nav';
+import { ChartPills, CoreEnergies } from '../ui/Cosmic';
 import { Chips, H1, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, serif } from '../theme';
 import { KIND_INFO } from '../content/kindInfo';
@@ -29,6 +30,7 @@ const DATED: Kind[] = ['transit', 'progressed', 'solarArc', 'solarReturn', 'luna
 const BIWHEEL: Kind[] = ['transit', 'progressed', 'solarArc'];
 
 export default function ChartScreen() {
+  const navTo = useNav();
   const { chart, s, lang, profile, opts, showAsteroids, location } = useStore();
   const t = T2S[lang];
   const { inner, twoCol, wide } = useLayout();
@@ -64,7 +66,8 @@ export default function ChartScreen() {
   return (
     <View>
       <H1>{profile.name || s.tabs.chart}</H1>
-      <Sub>{profile.place}, {chart.input.timeKnown ? `${String(chart.input.hour).padStart(2, '0')}:${String(chart.input.minute).padStart(2, '0')}` : '—'}. {s.hsNames[chart.houseSystemUsed]}, {chart.zodiac === 'sidereal' ? t.sidereal : t.tropical}{chart.isDayChart !== null ? `, ${(chart.isDayChart ? s.dayChart : s.nightChart).toLocaleLowerCase(lang)}` : ''}.</Sub>
+      <ChartPills chart={chart} place={profile.place} gmt={(() => { const m = tzOffsetMinutes(chart.input.tz, chart.utc); const h = m / 60; return `GMT${h >= 0 ? '+' : ''}${Number.isInteger(h) ? h : h.toFixed(1)}`; })()} onEdit={() => navTo('settings')} />
+      <Sub style={{ marginTop: 6 }}>{profile.place}, {chart.input.timeKnown ? `${String(chart.input.hour).padStart(2, '0')}:${String(chart.input.minute).padStart(2, '0')}` : '—'}. {s.hsNames[chart.houseSystemUsed]}, {chart.zodiac === 'sidereal' ? t.sidereal : t.tropical}{chart.isDayChart !== null ? `, ${(chart.isDayChart ? s.dayChart : s.nightChart).toLocaleLowerCase(lang)}` : ''}.</Sub>
       {chart.houseSystemUsed !== chart.houseSystem ? <Sub style={{ color: C.rose }}>{s.polarNote}</Sub> : null}
       <ShareToggle label={lang === 'tr' ? 'Büyük üçlü kartın' : 'Your Big Three card'} build={buildBig} filename={`buyuk-uclu-${safeName(profile.name)}.png`} lang={lang} />
 
@@ -92,7 +95,7 @@ export default function ChartScreen() {
                   ? <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds.natal}</Text>   {lang === 'tr' ? 'İç halka: drakonik harita' : 'Inner ring: draconic chart'}</Text>
                   : <Text style={[st.sub, { marginTop: 8 }]}><Text style={{ color: C.second }}>● {t.outerLegend}: {t.kinds[kind as ChartKind]}</Text>   {t.innerLegend}</Text>) : null}
               </View>
-              {kind === 'natal' ? <><Stelliums chart={chart} lang={lang} /><ElementBalance chart={chart} lang={lang} /></> : null}
+              {kind === 'natal' ? <><CoreEnergies chart={chart} lang={lang} /><Stelliums chart={chart} lang={lang} /><ElementBalance chart={chart} lang={lang} /></> : null}
             </View>
           );
           const right = (

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { ShareToggle, safeName } from '../ui/ShareImage';
 import { monthSvg } from '../content/shareCards';
 import { Pressable, Text, View } from 'react-native';
@@ -17,22 +17,38 @@ import { MonthlyTransits, LunarCalendar, PlanetaryHours, VoidMoon } from '../ui/
 import { PersonalMoon, BestDays } from '../ui/ExtrasUI';
 import { T2S } from '../i18n2';
 import { C, serif } from '../theme';
+import { DayCard, PlanetGuide, Rings, TodayHeader, ZodiacGuide } from '../ui/Cosmic';
+import { positionsAt } from '../engine/astro';
 
 export default function TodayScreen() {
   const { chart, s, lang, profile, location } = useStore();
   const t2 = T2S[lang];
-  const { inner } = useLayout();
+  const { inner, wide } = useLayout();
   const nav = useNav();
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
   const buildMonth = useCallback(() => (chart ? monthSvg(chart, profile?.name ?? '', lang) : ''), [chart, profile, lang]);
+  const calRef = useRef<any>(null);
   if (!chart || !daily) return null;
+  const toCal = () => { const el = calRef.current as any; if (el?.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  const SKY = positionsAt(now, ['sun', 'mars']);
+  const sg = (lon: number) => SIGNS[Math.floor(lon / 30) % 12][lang].toLocaleUpperCase(lang === 'tr' ? 'tr' : 'en');
+  const tr = lang === 'tr';
+  const sc = daily.scores;
+  const energies = [
+    { title: tr ? 'Kozmik' : 'Cosmic', caption: tr ? `Günlük enerji ${sc.energy}/5` : `Daily energy ${sc.energy}/5`, color: '#F4F1FF' },
+    { title: tr ? 'Duygusal' : 'Emotional', caption: tr ? `İç denge ${sc.mood}/5` : `Inner balance ${sc.mood}/5`, color: '#F0A35E' },
+    { title: tr ? 'Güneş tonu' : 'Solar tone', caption: tr ? `Güneş ${sg(SKY.sun.lon)} burcunda` : `Sun in ${sg(SKY.sun.lon)}`, color: '#F5C35A' },
+    { title: tr ? 'İlişki' : 'Relationship', caption: tr ? `Bağ kurma ${sc.love}/5` : `Connection ${sc.love}/5`, color: '#E8789A' },
+    { title: tr ? 'Ay tonu' : 'Lunar tone', caption: `${daily.phase.name[lang]} · %${Math.round(daily.phase.illum * 100)}`, color: '#8F8BFA' },
+    { title: tr ? 'Eylem' : 'Actions', caption: tr ? `Mars ${sg(SKY.mars.lon)} burcunda` : `Mars in ${sg(SKY.mars.lon)}`, color: '#6FD3C1' },
+  ];
+  const pct = (v: number) => Math.round((v / 5) * 100);
   const fmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
     <View>
-      <Sub>{fmt.format(now)}</Sub>
-      <H1>{profile?.name ? `${profile.name}, ${s.todayFor.toLocaleLowerCase(lang)}` : s.todayFor}</H1>
+      <TodayHeader name={profile?.name ?? ''} chart={chart} lang={lang} onCalendar={toCal} />
       {profile ? (() => { const bi = birthdayInfo(profile.birth); const since = -bi.daysTo; if (bi.daysTo > 30 || since > 14) return null;
         return (
           <Pressable accessibilityRole="button" onPress={() => nav('explore:year')} style={{ marginTop: 10, marginBottom: 6, padding: 16, borderRadius: 6, backgroundColor: '#0C1517', borderWidth: 1, borderColor: 'rgba(219,182,104,0.45)' }} {...({ dataSet: { pulse: '1' } } as any)}>
@@ -40,21 +56,29 @@ export default function TodayScreen() {
             <Text style={{ color: '#D5E1EA', fontSize: 15, marginTop: 4 }}>{lang === 'tr' ? 'Yeni yaşının hikâyesi hazır: aşk, şans, sınav ve en hareketli ayların. Okumak için dokun →' : 'The story of your new year is ready: love, luck, lessons and your busiest months. Tap to read →'}</Text>
           </Pressable>
         ); })() : null}
+      {(() => {
+        const rings = <Rings lang={lang} items={[
+          { label: tr ? 'Aşk' : 'Love', value: pct(sc.love), color: '#E8789A' },
+          { label: tr ? 'Enerji' : 'Energy', value: pct(sc.energy), color: '#6FD3C1' },
+          { label: tr ? 'Ruh hali' : 'Mood', value: pct(sc.mood), color: '#F0B35E' },
+          { label: tr ? 'Kariyer' : 'Career', value: pct(sc.career), color: '#8F8BFA' },
+        ]} />;
+        const day = <DayCard lang={lang} energies={energies} onCalendar={toCal} />;
+        const guide = <PlanetGuide hits={daily.hits} lang={lang} />;
+        const zod = <ZodiacGuide start={chart.positions.sun.sign} lang={lang} />;
+        return wide ? (
+          <View style={{ flexDirection: 'row', gap: 28, alignItems: 'flex-start' }}>
+            <View style={{ flex: 1.25, minWidth: 0 }}>{day}{guide}{rings}</View>
+            <View style={{ flex: 1, minWidth: 0, maxWidth: 460 }}>{zod}</View>
+          </View>
+        ) : <>{day}{guide}{rings}{zod}</>;
+      })()}
       <ShareToggle label={lang === 'tr' ? 'Aylık enerji kartın' : 'Your monthly energy card'} build={buildMonth} filename={`aylik-enerji-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
 
       <View style={{ marginTop: 8, marginBottom: 32 }}>
         <SkyBand natal={chart} width={inner(1180)} lang={lang} />
       </View>
       <NextPeriod />
-
-      <Section>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 16 }}>
-          <Meter label={s.scores.love} value={daily.scores.love} />
-          <Meter label={s.scores.career} value={daily.scores.career} />
-          <Meter label={s.scores.energy} value={daily.scores.energy} />
-          <Meter label={s.scores.mood} value={daily.scores.mood} />
-        </View>
-      </Section>
 
       <Section title={s.moonToday}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}>
@@ -88,6 +112,7 @@ export default function TodayScreen() {
 
       <YearCard chart={chart} lang={lang} />
 
+      <View ref={calRef} />
       <LunarCalendar t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} natal={chart} />
 
       <Section title={s.retrogrades}>

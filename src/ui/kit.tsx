@@ -202,7 +202,7 @@ const makeSt = () => ({
   sub: { fontFamily: F.sans, fontSize: 14, lineHeight: 21, color: C.sub },
   p: { fontFamily: F.sans, fontSize: 16, lineHeight: 25, color: C.ink },
   section: { marginBottom: 36 },
-  panel: { backgroundColor: C.glass, borderRadius: 4, padding: 20, borderWidth: 1, borderColor: C.line, ...(Platform.OS === 'web' ? { backdropFilter: 'blur(14px)' } : {}) },
+  panel: { backgroundColor: C.glass, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', ...(Platform.OS === 'web' ? { backdropFilter: 'blur(22px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 50px -30px rgba(0,0,0,0.6)' } : {}) } as any,
   row: { paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
   rowLabel: { fontFamily: F.mono, fontSize: 11.5, fontWeight: '500', color: C.gold, marginBottom: 5, letterSpacing: 1.4, textTransform: 'uppercase' },
   btn: { backgroundColor: C.gold, borderRadius: 4, minHeight: 48, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 8 },

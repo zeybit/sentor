@@ -41,18 +41,19 @@ const CSS = (dark: boolean) => {
 @keyframes rsFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes rsShine{from{background-position:200% 0}to{background-position:-200% 0}}
 .rs-root{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;background:${dark
-    ? 'radial-gradient(120% 90% at 70% 0%,#0D1A1C 0%,#080C0E 45%,#05070A 100%)'
+    ? 'radial-gradient(110% 80% at 75% -5%,#3A2F8C 0%,#1C1A55 32%,#0D0E2E 62%,#06071A 100%)'
     : 'radial-gradient(120% 90% at 70% 0%,#F3EBD8 0%,#ECE3CE 55%,#E2D6BC 100%)'}}
 .rs-grain{position:absolute;inset:0;background-image:${GRAIN};opacity:${dark ? '.07' : '.22'};mix-blend-mode:${dark ? 'screen' : 'multiply'}}
 .rs-vig{position:absolute;inset:0;background:radial-gradient(130% 100% at 50% 40%,transparent 55%,${dark ? 'rgba(0,0,0,.55)' : 'rgba(90,60,20,.18)'} 100%)}
 .rs-dots{position:absolute;left:0;top:0;width:1px;height:1px;border-radius:50%}
 .rs-d1{animation:rsTw 7s ease-in-out infinite}.rs-d2{animation:rsTw 11s ease-in-out infinite reverse}
-.rs-astro{position:absolute;width:1100px;height:1100px;left:-430px;bottom:-470px;color:${brass};opacity:${dark ? '.26' : '.32'}}
+.rs-astro{position:absolute;width:1100px;height:1100px;left:-430px;bottom:-470px;color:${dark ? '#C9CCFF' : brass};opacity:${dark ? '.07' : '.32'}}
 .rs-limb{position:absolute;inset:0}
 .rs-rete{position:absolute;inset:0;animation:rsSpin 480s linear infinite}
 .rs-rule{position:absolute;inset:0;animation:rsSpinR 260s linear infinite}
-.rs-con{position:absolute;right:3vw;top:5vh;width:min(36vw,440px);height:min(40vw,500px);color:${brass};opacity:${dark ? '.55' : '.6'}}
+.rs-con{position:absolute;right:3vw;top:5vh;width:min(36vw,440px);height:min(40vw,500px);color:${dark ? '#D9DBFF' : brass};opacity:${dark ? '.55' : '.6'}}
 @media (max-width:700px){.rs-con{opacity:.28;width:70vw;height:80vw;right:-4vw;top:12vh}.rs-con text{display:none}}
+${dark ? '.rs-con text{display:none}' : ''}
 .rs-con line{stroke-dasharray:1;stroke-dashoffset:1;animation:rsDraw 1.6s cubic-bezier(.6,.1,.2,1) forwards}
 .rs-con .st{transform-box:fill-box;transform-origin:center;opacity:0;animation:rsPop .6s ease-out forwards,rsStar var(--t,5s) ease-in-out infinite}
 .rs-con text{font-family:"IBM Plex Mono",monospace;letter-spacing:.18em;opacity:0;animation:rsUp 1s 1.6s ease forwards}
@@ -129,7 +130,7 @@ function ConstellationArt({ idx, lang }: { idx: number; lang: 'tr' | 'en' }) {
       ...k.edges.map(([a, b], i) => h('line', { key: i, x1: k.stars[a][0], y1: k.stars[a][1], x2: k.stars[b][0], y2: k.stars[b][1], pathLength: 1, style: { animationDelay: `${0.25 + i * 0.12}s` } }))),
     ...k.stars.map(([x, y, m], i) => h('g', { key: 's' + i },
       h('circle', { className: 'st', cx: x, cy: y, r: (4 - m) * 0.9, fill: 'currentColor', opacity: 0.16, style: { animationDelay: `${i * 0.1}s, ${1 + r() * 3}s`, ['--t' as any]: `${4 + r() * 4}s` } }),
-      h('circle', { className: 'st', cx: x, cy: y, r: (4 - m) * 0.34, fill: themeMode === 'dark' ? '#FFF6E0' : 'currentColor', style: { animationDelay: `${i * 0.1}s, ${1 + r() * 3}s`, ['--t' as any]: `${4 + r() * 4}s` } }))),
+      h('circle', { className: 'st', cx: x, cy: y, r: (4 - m) * 0.34, fill: themeMode === 'dark' ? '#FFFFFF' : 'currentColor', style: { animationDelay: `${i * 0.1}s, ${1 + r() * 3}s`, ['--t' as any]: `${4 + r() * 4}s` } }))),
     h('text', { x: 50, y: 112, fontSize: 3.6, textAnchor: 'middle', fill: 'currentColor' }, `${k.name.lat} · ${lang === 'tr' ? k.name.tr.toLocaleUpperCase('tr') : k.name.en.toUpperCase()}`),
     h('text', { x: 50, y: 118, fontSize: 2.6, textAnchor: 'middle', fill: 'currentColor', opacity: 0.7 }, lang === 'tr' ? 'GÜNEŞ BURCUNUN TAKIMYILDIZI' : 'YOUR SUN SIGN’S CONSTELLATION'));
 }
@@ -150,8 +151,8 @@ function WebSky({ chart, lang }: { chart: Chart | null; lang: 'tr' | 'en' }) {
   const dark = themeMode === 'dark';
   const sun = chart ? chart.positions.sun.sign : 8; // haritası yokken Sentor'un kendi takımyıldızı: Yay
   const dots = useMemo(() => ({
-    a: shadows(dark ? 260 : 120, 5, dark ? 'rgba(239,232,216,.55)' : 'rgba(110,82,34,.28)'),
-    b: shadows(dark ? 90 : 40, 17, dark ? 'rgba(255,240,205,.9)' : 'rgba(110,82,34,.45)'),
+    a: shadows(dark ? 320 : 120, 5, dark ? 'rgba(220,224,255,.6)' : 'rgba(110,82,34,.28)'),
+    b: shadows(dark ? 110 : 40, 17, dark ? 'rgba(255,255,255,.95)' : 'rgba(110,82,34,.45)'),
   }), [dark]);
   return h(React.Fragment, null,
     h('style', { dangerouslySetInnerHTML: { __html: CSS(dark) } }),
