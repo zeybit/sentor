@@ -110,7 +110,7 @@ export default function TodayMobile({ chart, name, lang, energies, rings, hits, 
   const dfmt = new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', weekday: 'long' });
   const TABS: { k: Tab; label: string }[] = [
     { k: 'day', label: tx(lang, 'Günün', 'Your day') }, { k: 'sign', label: tx(lang, 'Burcun', 'Sign') },
-    { k: 'planets', label: tx(lang, 'Gezegenler', 'Planets') }, { k: 'more', label: tx(lang, 'Daha fazla', 'More') },
+    { k: 'planets', label: tx(lang, 'Gezegenler', 'Planets') }, { k: 'more', label: tx(lang, 'Konular', 'Topics') },
   ];
 
   return (

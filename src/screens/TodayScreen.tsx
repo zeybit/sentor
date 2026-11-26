@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ShareToggle, safeName } from '../ui/ShareImage';
 import { monthSvg } from '../content/shareCards';
 import { Pressable, Text, View } from 'react-native';
@@ -17,7 +17,7 @@ import { MonthlyTransits, LunarCalendar, PlanetaryHours, VoidMoon } from '../ui/
 import { PersonalMoon, BestDays } from '../ui/ExtrasUI';
 import { T2S } from '../i18n2';
 import { C, serif } from '../theme';
-import { DayCard, PlanetGuide, Rings, TodayHeader, ZodiacGuide } from '../ui/Cosmic';
+import { DayCard, HubItem, PlanetGuide, Rings, TodayHeader, TodayHub, ZodiacGuide } from '../ui/Cosmic';
 import TodayMobile from '../ui/TodayMobile';
 import { positionsAt } from '../engine/astro';
 
@@ -29,9 +29,10 @@ export default function TodayScreen() {
   const now = new Date();
   const daily = useMemo(() => chart && computeDaily(chart, now), [chart, now.toDateString()]);
   const buildMonth = useCallback(() => (chart ? monthSvg(chart, profile?.name ?? '', lang) : ''), [chart, profile, lang]);
-  const calRef = useRef<any>(null);
+  const [grp, setGrp] = useState<string | null>(null);
+  const hubRef = useRef<any>(null);
   if (!chart || !daily) return null;
-  const toCal = () => { const el = calRef.current as any; if (el?.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  const toCal = () => { setGrp('calendar'); const el = hubRef.current as any; if (el?.scrollIntoView) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); };
   const SKY = positionsAt(now, ['sun', 'mars']);
   const sg = (lon: number) => SIGNS[Math.floor(lon / 30) % 12][lang].toLocaleUpperCase(lang === 'tr' ? 'tr' : 'en');
   const tr = lang === 'tr';
@@ -62,53 +63,51 @@ export default function TodayScreen() {
           </Pressable>
         ); })() : null}
   </>;
-  const rest = <>
-      <ShareToggle label={lang === 'tr' ? 'Aylık enerji kartın' : 'Your monthly energy card'} build={buildMonth} filename={`aylik-enerji-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
-
-      <View style={{ marginTop: 8, marginBottom: 32 }}>
-        <SkyBand natal={chart} width={inner(1180)} lang={lang} />
-      </View>
-      <NextPeriod />
-
-      <Section title={s.moonToday}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}>
-          <Text style={{ fontSize: 40, color: C.water }}>{SIGN_GLYPHS[daily.moonSign]}</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: serif, fontSize: 20, color: C.ink }}>{daily.phase.name[lang]}, {SIGNS[daily.moonSign][lang]}</Text>
-            <Sub>{lang === 'tr' ? `Aydınlık %${Math.round(daily.phase.illum * 100)}. ` : `${Math.round(daily.phase.illum * 100)}% lit. `}{MOON_PHASE_TIP[daily.phase.idx][lang]}</Sub>
+  const T = (a: string, b: string) => (tr ? a : b);
+  const tz = location?.tz ?? chart.input.tz;
+  const groups: HubItem[] = [
+    { key: 'sky', glyph: '☉', title: T('Gökyüzü şu an', 'The sky now'), teaser: daily.retrogrades.length ? T(`${daily.retrogrades.length} gezegen geri gidiyor`, `${daily.retrogrades.length} planets retrograde`) : T('Gezegenler şu an nerede?', 'Where the planets are'),
+      body: <>
+        <View style={{ marginTop: 4, marginBottom: 24 }}><SkyBand natal={chart} width={Math.min(inner(1180), wide ? 820 : inner(1180))} lang={lang} /></View>
+        <Section title={s.retrogrades}><P>{daily.retrogrades.length ? daily.retrogrades.map(r => `${BODIES[r].glyph} ${BODIES[r].name[lang]}`).join('   ') : s.none}</P></Section>
+      </> },
+    { key: 'moon', glyph: '☾', title: T('Ay ve döngüsü', 'Moon and its cycle'), teaser: `${daily.phase.name[lang]} · ${SIGNS[daily.moonSign][lang]}`,
+      body: <>
+        <Section title={s.moonToday}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+            <Text style={{ fontSize: 40, color: C.water }}>{SIGN_GLYPHS[daily.moonSign]}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: serif, fontSize: 20, color: C.ink }}>{daily.phase.name[lang]}, {SIGNS[daily.moonSign][lang]}</Text>
+              <Sub>{tr ? `Aydınlık %${Math.round(daily.phase.illum * 100)}. ` : `${Math.round(daily.phase.illum * 100)}% lit. `}{MOON_PHASE_TIP[daily.phase.idx][lang]}</Sub>
+            </View>
           </View>
-        </View>
-        <P>{MOON_SIGN_DAY[daily.moonSign][lang]}</P>
-        {daily.moonHouse ? <P style={{ marginTop: 6 }}>{MOON_HOUSE_DAY(daily.moonHouse)[lang]}</P> : null}
-      </Section>
-
-      <PersonalMoon chart={chart} lang={lang} />
-
-      <Section title={s.activeTransits}>
+          <P>{MOON_SIGN_DAY[daily.moonSign][lang]}</P>
+          {daily.moonHouse ? <P style={{ marginTop: 6 }}>{MOON_HOUSE_DAY(daily.moonHouse)[lang]}</P> : null}
+        </Section>
+        <PersonalMoon chart={chart} lang={lang} />
+        <VoidMoon lang={lang} tz={tz} />
+      </> },
+    { key: 'transits', glyph: '⟡', title: T('Sana etki edenler', 'What affects you'), teaser: daily.hits.length ? T(`${daily.hits.length} aktif etki`, `${daily.hits.length} active influences`) : T('Bugün sakin', 'Quiet today'),
+      body: <Section title={s.activeTransits}>
         {daily.hits.length === 0 ? <P>{s.noTransits}</P> : (
           <Expand more={s.showMore} less={s.showLess} initial={5} items={daily.hits.map((h, i) => {
             const r = lifeAspect(h.transit, h.natal, h.type, 'transit');
             return <View key={i} style={st.row}><Text style={{ fontFamily: serif, fontSize: 18, color: C.ink }}>{r.title[lang]}</Text><Sub>{strength(h.orb, lang)}</Sub><P style={{ marginTop: 4 }}>{r.body[lang]}</P></View>;
           })} />
         )}
-      </Section>
-
-      <VoidMoon lang={lang} tz={location?.tz ?? chart.input.tz} />
-      {location ? <PlanetaryHours t={t2} lang={lang} lat={location.lat} lon={location.lon} tz={location.tz} /> : null}
-
-      <MonthlyTransits natal={chart} t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} />
-
-      <BestDays chart={chart} kind="career" lang={lang} />
-
-      <YearCard chart={chart} lang={lang} />
-
-      <View ref={calRef} />
-      <LunarCalendar t={t2} lang={lang} tz={location?.tz ?? chart.input.tz} natal={chart} />
-
-      <Section title={s.retrogrades}>
-        <P>{daily.retrogrades.length ? daily.retrogrades.map(r => `${BODIES[r].glyph} ${BODIES[r].name[lang]}`).join('   ') : s.none}</P>
-      </Section>
-
+      </Section> },
+    { key: 'periods', glyph: '◷', title: T('Hayat takvimin', 'Your life calendar'), teaser: T('Önümüzdeki büyük dönemler', 'Big periods ahead'), body: <NextPeriod /> },
+    { key: 'month', glyph: '▦', title: T('Bu ay', 'This month'), teaser: T('Ayın önemli günleri', 'Key days this month'),
+      body: <><MonthlyTransits natal={chart} t={t2} lang={lang} tz={tz} /><BestDays chart={chart} kind="career" lang={lang} /></> },
+    { key: 'calendar', glyph: '◐', title: T('Gökyüzü takvimi', 'Sky calendar'), teaser: T('Yeni ay, dolunay, tutulma', 'New moons, full moons, eclipses'),
+      body: <LunarCalendar t={t2} lang={lang} tz={tz} natal={chart} /> },
+    ...(location ? [{ key: 'hours', glyph: '✶', title: T('Gezegen saatleri', 'Planetary hours'), teaser: T('Günün uygun saatleri', 'The best hours today'),
+      body: <PlanetaryHours t={t2} lang={lang} lat={location.lat} lon={location.lon} tz={location.tz} /> }] : []),
+    { key: 'year', glyph: '◎', title: T('Bu yılın', 'Your year'), teaser: T('Yılın ana teması', 'The theme of your year'), body: <YearCard chart={chart} lang={lang} /> },
+  ];
+  const rest = <>
+    <ShareToggle label={tr ? 'Aylık enerji kartın' : 'Your monthly energy card'} build={buildMonth} filename={`aylik-enerji-${safeName(profile?.name ?? 'ben')}.png`} lang={lang} />
+    <TodayHub items={groups} open={grp} onOpen={setGrp} cols={wide ? 4 : 2} lang={lang} />
   </>;
   if (!wide && !tablet) return <TodayMobile chart={chart} name={profile?.name ?? ''} lang={lang} energies={energies} rings={ringItems} hits={daily.hits} details={<>{birthday}{rest}</>} />;
 
@@ -128,6 +127,7 @@ export default function TodayScreen() {
         ) : <>{day}{guide}{rings}{zod}</>;
       })()}
       {birthday}
+      <View ref={hubRef} />
       {rest}
     </View>
   );

@@ -298,6 +298,48 @@ export function SignReadingPanel({ sel, lang }: { sel: number; lang: Lang }) {
   );
 }
 
+// ---------------- Konu kartları: dokun, aç, geri dön ----------------
+export interface HubItem { key: string; glyph: string; title: string; teaser: string; body: React.ReactNode }
+export function TodayHub({ items, open, onOpen, cols = 2, lang }: { items: HubItem[]; open: string | null; onOpen: (k: string | null) => void; cols?: number; lang: Lang }) {
+  const cur = items.find(i => i.key === open);
+  if (cur) return (
+    <View style={{ marginTop: 8 }}>
+      <Pressable onPress={() => onOpen(null)} accessibilityRole="button" accessibilityLabel={tx(lang, 'Konulara dön', 'Back to topics')} hitSlop={10}
+        style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingVertical: 6, paddingRight: 12 }, pressed && { opacity: 0.6 }]}>
+        <Text style={{ fontSize: 24, color: C.rose, marginRight: 6, marginTop: -2 }}>‹</Text>
+        <Text style={{ fontFamily: F.sansMed, fontSize: 15, color: C.rose }}>{tx(lang, 'Tüm konular', 'All topics')}</Text>
+      </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6, marginBottom: 14 }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 19, color: C.gold }}>{cur.glyph}</Text></View>
+        <Text accessibilityRole="header" style={{ fontFamily: F.sans, fontSize: 24, color: C.ink, flex: 1 }}>{cur.title}</Text>
+      </View>
+      {cur.body}
+    </View>
+  );
+  return (
+    <View style={{ marginTop: 10 }}>
+      <Text style={{ fontFamily: F.sans, fontSize: 20, color: C.ink, marginBottom: 12 }}>{tx(lang, 'Konular', 'Topics')}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
+        {items.map(it => (
+          <View key={it.key} style={{ width: `${100 / cols}%`, padding: 5 }}>
+            <Pressable onPress={() => onOpen(it.key)} accessibilityRole="button" accessibilityLabel={`${it.title}. ${it.teaser}`}
+              style={({ pressed }) => [pressed && { opacity: 0.75, transform: [{ scale: 0.98 }] }]}>
+              <Glass pad={14} style={{ minHeight: 132, borderRadius: 20 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 17, color: C.gold }}>{it.glyph}</Text></View>
+                  <Text style={{ fontSize: 20, color: C.sub }}>›</Text>
+                </View>
+                <Text style={{ fontFamily: F.sansMed, fontSize: 16, lineHeight: 21, color: C.ink, marginTop: 12 }}>{it.title}</Text>
+                <Text numberOfLines={2} style={{ fontFamily: F.mono, fontSize: 11, lineHeight: 15, color: C.sub, marginTop: 4 }}>{it.teaser}</Text>
+              </Glass>
+            </Pressable>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ---------------- Harita: haplar ve çekirdek enerjiler ----------------
 export function ChartPills({ chart, place, gmt, onEdit }: { chart: Chart; place: string; gmt: string; onEdit?: () => void }) {
   const i = chart.input;
