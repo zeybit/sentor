@@ -5,6 +5,8 @@ import { useStore } from '../store';
 import { destinyMatrix, compatMatrix, healthMap, ageMap, Matrix } from '../engine/matrix';
 import { COUPLE, COUPLE_INTRO, COUPLE_POS, buildCouple } from '../content/coupleArcana';
 import { ARCANA, POS, CHAKRA, MxPos, mxStory, SECTION_INTRO, ADVICE } from '../content/arcana';
+import { HubItem, TodayHub } from '../ui/Cosmic';
+import { scrollTop } from '../nav';
 import { Chips, Expand, H1, H3, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F } from '../theme';
 import { TarotCard, TAROT_CREDIT } from '../ui/TarotCard';
@@ -84,6 +86,7 @@ export default function MatrixScreen() {
   const [pid, setPid] = useState(profile?.id ?? '');
   const [pair, setPair] = useState<string>('none');
   const [view, setView] = useState<View_>('reading');
+  const [topic, setTopic] = useState<string | null>(null);
   const person = people.find(p => p.id === pid) ?? profile!;
   const partner = people.find(p => p.id === pair) ?? null;
   const m = useMemo(() => {
@@ -149,15 +152,17 @@ export default function MatrixScreen() {
     </View>
   );
 
-  const reading = (
-    <View>
-      <Section title={tx('Ana enerjilerin', 'Your core energies', lang)}>
+  const rs = {
+    core: (
+        <Section>
         <Spread />
         <ShareToggle label={tx('Matris açılım kartın', 'Your matrix spread card', lang)} build={buildMx} filename={`kader-matrisi-${safeName(person.name)}.png`} lang={lang} />
         <Intro k="core" />
         <Item pos="A" n={m.A} /><Item pos="B" n={m.B} /><Item pos="C" n={m.C} /><Item pos="D" n={m.D} label={tx('Bu hayattaki görevin', 'Your task in this life', lang)} /><Item pos="E" n={m.E} />
       </Section>
-      <Section title={tx('Karmik kuyruğun', 'Your karmic tail', lang)}>
+    ),
+    tail: (
+        <Section>
         <Intro k="tail" />
         <Text style={{ fontFamily: F.serif, fontSize: 34, color: C.danger, marginBottom: 8 }}>{m.tail[2]}-{m.tail[1]}-{m.tail[0]}</Text>
         <P style={{ marginBottom: 18, maxWidth: 640 }}>{lang === 'tr'
@@ -167,16 +172,22 @@ export default function MatrixScreen() {
         <Item pos="tail" n={m.D2} explain={false} label={tx('Bugün nasıl yaşıyorsun', 'How you live it today', lang)} />
         <Item pos="D" n={m.D} explain={false} label={tx('Çözüldüğünde varacağın yer', 'Where you arrive once resolved', lang)} />
       </Section>
-      <Section title={tx('Yeteneklerin', 'Your talents', lang)}>
+    ),
+    talent: (
+        <Section>
         <Intro k="talent" />
         <Item pos="talent" n={m.B2} explain={false} label={tx('Doğuştan getirdiğin yetenek', 'The gift you were born with', lang)} />
         <Item pos="talent" n={m.B1} explain={false} label={tx('Geliştirdikçe açılan yetenek', 'The gift that opens as you develop it', lang)} />
       </Section>
-      <Section title={tx('Aşk ve para', 'Love and money', lang)}>
+    ),
+    lovemoney: (
+        <Section>
         <Intro k="lovemoney" />
         <Item pos="love" n={m.love} /><Item pos="money" n={m.money} /><Item pos="X" n={m.X} />
       </Section>
-      <Section title={tx('Hayat amaçların', 'Your life purposes', lang)}>
+    ),
+    purpose: (
+        <Section>
         <Intro k="purpose" />
         {(['personal', 'social', 'spiritual', 'planetary'] as MxPos[]).map(k => {
           const n = (m as any)[k] as number;
@@ -190,7 +201,9 @@ export default function MatrixScreen() {
           ? `Kişisel amacın iki çizgiden doğar: gök çizgisi (${an(m.sky)}) ruhsal değerlerini, yer çizgisi (${an(m.earth)}) ise maddi becerilerini anlatır.`
           : `Your personal purpose comes from two lines: the sky line (${an(m.sky)}) for spiritual values and the earth line (${an(m.earth)}) for practical skills.`}</Sub>
       </Section>
-      <Section title={tx('Ailenden gelen enerjiler', 'Energies from your family', lang)}>
+    ),
+    family: (
+        <Section>
         <Intro k="ancestry" />
         {([[m.F, m.H, tx('Baba tarafın', 'Your father’s side', lang), m.male], [m.G, m.I, tx('Anne tarafın', 'Your mother’s side', lang), m.female]] as [number, number, string, number][]).map(([x, y, label, line]) => (
           <View key={label} style={{ marginBottom: 22 }}>
@@ -207,8 +220,9 @@ export default function MatrixScreen() {
           </View>
         ))}
       </Section>
-    </View>
-  );
+    ),
+  };
+  const reading = <View>{rs.core}{rs.tail}{rs.talent}{rs.lovemoney}{rs.purpose}{rs.family}</View>;
 
   const cr = partner ? buildCouple(m as any) : null;
   const coupleReading = cr ? (
@@ -235,7 +249,7 @@ export default function MatrixScreen() {
   ) : null;
 
   const health = (
-    <Section title={tx('Enerji haritası', 'Energy map', lang)}>
+    <Section>
       <Intro k="health" />
       <View style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.ink }}>
         <Text style={[st.sub, { flex: 1 }]}>{tx('Çakra', 'Chakra', lang)}</Text>
@@ -262,7 +276,7 @@ export default function MatrixScreen() {
 
   const fmtAge = (a: number) => (Number.isInteger(a) ? `${a}` : a.toFixed(a % 1 === 0.5 ? 1 : 2).replace('.', lang === 'tr' ? ',' : '.'));
   const agesView = (
-    <Section title={tx('Yaş haritası', 'Age map', lang)}>
+    <Section>
       <Intro k="ages" />
       <View style={[st.panel, { marginBottom: 16, backgroundColor: C.goldSoft, borderColor: C.goldSoft }]}>
         <Text style={{ fontFamily: F.sansMed, fontSize: 13, color: C.ink }}>{tx(`Şu an (${Math.floor(age)} yaş)`, `Now (age ${Math.floor(age)})`, lang)}</Text>
@@ -280,14 +294,8 @@ export default function MatrixScreen() {
     </Section>
   );
 
-  const others = people.filter(p => p.id !== person.id);
-  return (
-    <View>
-      <H1>{tx('Kader matrisi', 'Destiny matrix', lang)}</H1>
-      <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{partner
-        ? tx(`${person.name || 'Sen'} ve ${partner.name || 'partner'} için uyum matrisi: iki matrisin her noktası toplanır.`, `Compatibility matrix for ${person.name || 'you'} and ${partner.name || 'partner'}: each point of the two matrices is added.`, lang)
-        : tx(`${person.name || 'Sen'}, ${date}. Doğum tarihindeki sayılar 22 Büyük Arkana’ya indirgenir; saat ve yer gerekmez.`, `${person.name || 'You'}, ${date}. Your birth date is reduced to the 22 Major Arcana; no time or place needed.`, lang)}</Sub>
-      <View style={[st.panel, { marginBottom: 24 }]}>
+  const info = (
+      <View style={[st.panel, { marginBottom: 8 }]}>
         <Text style={{ fontFamily: F.serif, fontSize: 22, color: C.ink, marginBottom: 6 }}>{tx('Kader matrisi nedir?', 'What is a destiny matrix?', lang)}</Text>
         <P style={{ maxWidth: 640 }}>{tx(
           'Kader matrisi, doğum tarihindeki sayılardan kurulan bir kendini tanıma haritasıdır. Gün, ay ve yıl toplanarak 1 ile 22 arasında sayılara indirgenir. Her sayı, tarot destesindeki 22 Büyük Arkana kartından birine karşılık gelir ve bir enerjiyi, bir karakter özelliğini anlatır. Astrolojiden farklı olarak doğum saati veya yeri gerekmez.',
@@ -305,31 +313,52 @@ export default function MatrixScreen() {
         ))}
         <Sub style={{ marginTop: 10 }}>{tx('Matris bilimsel bir yöntem değildir; kendini düşünmek için bir araç olarak kullan.', 'The matrix is not a scientific method; use it as a tool for reflection.', lang)}</Sub>
       </View>
+  );
+  const others = people.filter(p => p.id !== person.id);
+  return (
+    <View>
+      <H1>{tx('Kader matrisi', 'Destiny matrix', lang)}</H1>
+      <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{partner
+        ? tx(`${person.name || 'Sen'} ve ${partner.name || 'partner'} için uyum matrisi: iki matrisin her noktası toplanır.`, `Compatibility matrix for ${person.name || 'you'} and ${partner.name || 'partner'}: each point of the two matrices is added.`, lang)
+        : tx(`${person.name || 'Sen'}, ${date}. Doğum tarihindeki sayılar 22 Büyük Arkana’ya indirgenir; saat ve yer gerekmez.`, `${person.name || 'You'}, ${date}. Your birth date is reduced to the 22 Major Arcana; no time or place needed.`, lang)}</Sub>
       {people.length > 1 ? (
         <>
           <Text style={st.label}>{tx('Kimin matrisi?', 'Whose matrix?', lang)}</Text>
           <Chips items={people.map(p => ({ key: p.id, label: p.name || p.place }))} value={person.id} onChange={v => { setPid(v); if (v === pair) setPair('none'); }} />
           <Text style={st.label}>{tx('Uyum için ikinci kişi', 'Second person for compatibility', lang)}</Text>
-          <Chips items={[{ key: 'none', label: tx('Yok', 'None', lang) }, ...others.map(p => ({ key: p.id, label: p.name || p.place }))]} value={pair} onChange={v => { setPair(v); if (v !== 'none' && view === 'ages') setView('reading'); }} />
+          <Chips items={[{ key: 'none', label: tx('Yok', 'None', lang) }, ...others.map(p => ({ key: p.id, label: p.name || p.place }))]} value={pair} onChange={v => { setPair(v); setTopic(null); }} />
         </>
       ) : null}
-      {twoCol ? (
-        <View style={{ flexDirection: 'row', gap: 48, alignItems: 'flex-start' }}>
-          <View style={{ width: 480, position: 'sticky' as any, top: 0 }}>{diagram}</View>
-          <View style={{ flex: 1, maxWidth: 640 }}>
-            <Segmented items={[{ key: 'reading', label: tx('Yorum', 'Reading', lang) }, { key: 'health', label: tx('Enerji haritası', 'Energy map', lang) }, ...(partner ? [] : [{ key: 'ages' as View_, label: tx('Yaş haritası', 'Age map', lang) }])]} value={view} onChange={setView} />
-            {view === 'reading' ? (partner ? coupleReading : reading) : view === 'health' ? health : agesView}
-            {view === 'reading' ? <Sub style={{ marginBottom: 20 }}>{TAROT_CREDIT[lang]}</Sub> : null}
+      {(() => {
+        const items: HubItem[] = partner && cr ? [
+          ...(cr.summary ? [{ key: 'theme', glyph: '✦', title: tx('İlişkinizin ana teması', 'Your main theme', lang), teaser: tx('İkinizin ortak enerjisi', 'Your shared energy', lang), body: <P full style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.summary[lang]}</P> }] : []),
+          ...cr.sections.map((sec, k) => ({ key: 'c' + k, glyph: ['◇', '♡', '◎', '⟡', '☊', '✧'][k % 6], title: sec.title[lang], teaser: sec.items.map(it => an(it.n)).slice(0, 2).join(' · '),
+            body: <View>{sec.title.tr === 'İlişkinin karmik düğümü' ? <Text style={{ fontFamily: F.serif, fontSize: 34, color: C.danger, marginBottom: 8 }}>{m.tail[2]}-{m.tail[1]}-{m.tail[0]}</Text> : null}{sec.items.map(it => <CardRow key={it.pos} n={it.n} label={COUPLE_POS[it.pos].title[lang]} title={<>{an(it.n)}{it.repeat ? <Text style={{ fontFamily: F.sans, fontSize: 13, color: C.sub }}>{tx('  · tekrar eden enerji', '  · repeated energy', lang)}</Text> : null}</>}>{it.text[lang]}</CardRow>)}</View> })),
+          { key: 'families', glyph: '⌂', title: tx('Ailelerinizin etkisi', 'Your families’ influence', lang), teaser: tx('Soyların ilişkiye kattıkları', 'What your lineages bring', lang), body: <P full style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>{cr.families[lang]}</P> },
+          { key: 'health', glyph: '⚘', title: tx('Enerji haritası', 'Energy map', lang), teaser: tx('İlişkinin duygusal dengesi', 'The emotional balance of the bond', lang), body: health },
+          { key: 'info', glyph: 'i', title: tx('Matris nedir?', 'What is the matrix?', lang), teaser: tx('Nasıl okunur, ne anlatır', 'How to read it', lang), body: info },
+        ] : [
+          { key: 'core', glyph: '✦', title: tx('Ana enerjilerin', 'Your core energies', lang), teaser: tx(`Özün: ${an(m.E)}`, `Core: ${an(m.E)}`, lang), body: rs.core },
+          { key: 'tail', glyph: '∞', title: tx('Karmik kuyruğun', 'Your karmic tail', lang), teaser: `${m.tail[2]}-${m.tail[1]}-${m.tail[0]}`, body: rs.tail },
+          { key: 'talent', glyph: '✧', title: tx('Yeteneklerin', 'Your talents', lang), teaser: an(m.B2), body: rs.talent },
+          { key: 'lovemoney', glyph: '♡', title: tx('Aşk ve para', 'Love and money', lang), teaser: tx(`Aşk ${m.love} · Para ${m.money}`, `Love ${m.love} · Money ${m.money}`, lang), body: rs.lovemoney },
+          { key: 'purpose', glyph: '◎', title: tx('Hayat amaçların', 'Your life purposes', lang), teaser: an(m.personal), body: rs.purpose },
+          { key: 'family', glyph: '⌂', title: tx('Ailenden gelenler', 'From your family', lang), teaser: tx('Anne ve baba tarafın', 'Mother’s and father’s side', lang), body: rs.family },
+          { key: 'health', glyph: '⚘', title: tx('Enerji haritası', 'Energy map', lang), teaser: tx('Bedenindeki enerji merkezleri', 'The energy centres of your body', lang), body: health },
+          { key: 'ages', glyph: '◷', title: tx('Yaş haritası', 'Age map', lang), teaser: tx(`Şu an: ${an(ages[curIdx].arcana)}`, `Now: ${an(ages[curIdx].arcana)}`, lang), body: agesView },
+          { key: 'info', glyph: 'i', title: tx('Matris nedir?', 'What is the matrix?', lang), teaser: tx('Nasıl okunur, ne anlatır', 'How to read it', lang), body: info },
+        ];
+        const hub = <>
+          <TodayHub lang={lang} heading={topic ? undefined : ''} cols={2} open={topic} onOpen={k => { setTopic(k); scrollTop(); }} back={tx('Matrise dön', 'Back to the matrix', lang)} items={items} />
+          {topic && topic !== 'info' && topic !== 'health' && topic !== 'ages' ? <Sub style={{ marginBottom: 20 }}>{TAROT_CREDIT[lang]}</Sub> : null}
+        </>;
+        return twoCol ? (
+          <View style={{ flexDirection: 'row', gap: 48, alignItems: 'flex-start' }}>
+            <View style={{ width: 480 }}>{diagram}</View>
+            <View style={{ flex: 1, maxWidth: 640 }}>{hub}</View>
           </View>
-        </View>
-      ) : (
-        <>
-          {diagram}
-          <Segmented items={[{ key: 'reading', label: tx('Yorum', 'Reading', lang) }, { key: 'health', label: tx('Enerji', 'Energy', lang) }, ...(partner ? [] : [{ key: 'ages' as View_, label: tx('Yaşlar', 'Ages', lang) }])]} value={view} onChange={setView} />
-          {view === 'reading' ? (partner ? coupleReading : reading) : view === 'health' ? health : agesView}
-            {view === 'reading' ? <Sub style={{ marginBottom: 20 }}>{TAROT_CREDIT[lang]}</Sub> : null}
-        </>
-      )}
+        ) : <>{topic ? null : diagram}{hub}</>;
+      })()}
     </View>
   );
 }

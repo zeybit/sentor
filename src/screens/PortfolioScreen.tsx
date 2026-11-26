@@ -4,7 +4,9 @@ import { useStore } from '../store';
 import { buildPortfolio } from '../content/portfolio';
 import { SIGNS, HOUSES } from '../content/base';
 import { ord } from '../content/life';
-import { H1, P, Row, Section, Segmented, Sub, st } from '../ui/kit';
+import { H1, P, Row, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
+import { TodayHub } from '../ui/Cosmic';
+import { scrollTop } from '../nav';
 import TrendsScreen from './TrendsScreen';
 import { takePendingKind } from '../nav';
 import StyleScreen from './StyleScreen';
@@ -26,7 +28,7 @@ function Swatches({ items, lang }: { items: Sw[]; lang: 'tr' | 'en' }) {
   );
 }
 
-function Report() {
+function Report({ only }: { only?: 's1' | 's2' | 's3' | 's4' | 'advice' }) {
   const { chart, s, lang, profile } = useStore();
   const pf = useMemo(() => chart && buildPortfolio(chart), [chart]);
   if (!chart || !pf) return null;
@@ -39,7 +41,8 @@ function Report() {
   return (
     <View>
 
-      <Section title={t.s1}>
+      {(!only || only === 's1') ? <>
+      <Section title={only ? undefined : t.s1}>
         <Row label={t.aesthetic}>{aura.aesthetic[lang]}</Row>
         <Row label={t.body}>{aura.body[lang]}</Row>
         {aura.lilly.length ? <Row label={t.lillyBody}>{aura.lilly.map(x => x[lang]).join('\n\n')}</Row> : null}
@@ -51,8 +54,10 @@ function Report() {
           {aura.classicColours ? <Sub style={{ marginTop: 8 }}>{aura.classicColours[lang]}</Sub> : null}
         </View>
       </Section>
+      </> : null}
 
-      <Section title={male ? (lang === 'tr' ? '2. Bakım, saç ve görünüm' : '2. Grooming, hair and look') : t.s2}>
+      {(!only || only === 's2') ? <>
+      <Section title={only ? undefined : male ? (lang === 'tr' ? '2. Bakım, saç ve görünüm' : '2. Grooming, hair and look') : t.s2}>
         {male ? <Row label={lang === 'tr' ? 'Bakım' : 'Grooming'}>{STYLE_M[venusS].grooming[lang]}</Row> : <>
         <Row label={t.makeup}>{`${beauty.trend[lang]}. ${beauty.makeup[lang]}`}</Row>
         <Row label={t.finish}>{beauty.finish[lang]}</Row></>}
@@ -64,8 +69,10 @@ function Report() {
         <Row label={t.hairColor}>{beauty.hairColor[lang]}</Row></>}
         {beauty.venusMods.length ? <Row label={t.venusMods}>{beauty.venusMods.map(v => v[lang]).join('\n\n')}</Row> : null}
       </Section>
+      </> : null}
 
-      <Section title={t.s3}>
+      {(!only || only === 's3') ? <>
+      <Section title={only ? undefined : t.s3}>
         {spouse.desc === null ? <P>{s.needsTime}</P> : (
           <>
             <Text style={{ fontFamily: serif, fontSize: 19, color: C.ink, marginBottom: 4 }}>
@@ -83,8 +90,10 @@ function Report() {
         <Row label={t.dynamic}>{spouse.dynamic[lang]}</Row>
         <Sub style={{ marginTop: 8 }}>{t.note}</Sub>
       </Section>
+      </> : null}
 
-      <Section title={t.s4}>
+      {(!only || only === 's4') ? <>
+      <Section title={only ? undefined : t.s4}>
         {core.chartRuler ? <Row label={t.chartRuler}>{core.chartRuler[lang]}</Row> : null}
         {core.career ? <Row label={t.careerT}>{`${core.career[lang]}${core.in10.length ? '\n\n' + core.in10.map(x => x[lang]).join('\n\n') : ''}`}</Row> : null}
         {core.careerFields ? <Row label={t.fields}>{core.careerFields[lang]}</Row> : null}
@@ -100,8 +109,10 @@ function Report() {
         </Row>
         {(!chart.cusps.length) ? <Sub>{s.needsTime}</Sub> : null}
       </Section>
+      </> : null}
 
-      <Section title={t.advice}>
+      {(!only || only === 'advice') ? <>
+      <Section title={only ? undefined : t.advice}>
         {core.advice.map((a, i) => (
           <View key={i} style={[st.row, { flexDirection: 'row', gap: 12 }]}>
             <Text style={{ fontFamily: serif, fontSize: 22, color: C.rose, width: 22 }}>{i + 1}</Text>
@@ -109,6 +120,7 @@ function Report() {
           </View>
         ))}
       </Section>
+      </> : null}
     </View>
   );
 }
@@ -116,15 +128,25 @@ function Report() {
 type Part = 'report' | 'style' | 'trends';
 export default function PortfolioScreen() {
   const { s, lang, profile } = useStore();
-  const [part, setPart] = useState<Part>(() => (takePendingKind() as Part) || 'report');
+  const pend = takePendingKind();
+  const [topic, setTopic] = useState<string | null>(() => pend === 'style' || pend === 'trends' ? pend : null);
+  const { wide } = useLayout();
+  const strip = (x: string) => x.replace(/^\d+\.\s*/, '');
   const t = s.pf;
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   return (
     <View>
       <H1>{t.title}</H1>
       <Sub style={{ marginBottom: 18, maxWidth: 620 }}>{profile?.name ? `${profile.name}. ` : ''}{t.method}</Sub>
-      <Segmented<Part> items={[{ key: 'report', label: L('Rapor', 'Report') }, { key: 'style', label: L('Stil ve görünüm', 'Style and looks') }, { key: 'trends', label: L('Trendler', 'Trends') }]} value={part} onChange={setPart} />
-      {part === 'report' ? <Report /> : part === 'style' ? <StyleScreen /> : <TrendsScreen embedded />}
+      <TodayHub lang={lang} heading="" cols={wide ? 3 : 2} open={topic} onOpen={k => { setTopic(k); scrollTop(); }} back={L('Portföye dön', 'Back to portfolio')} items={[
+        { key: 's1', glyph: '◇', title: strip(t.s1), teaser: L('Estetiğin, duruşun, gardırobun, renklerin', 'Your aesthetic, posture, wardrobe, colours'), body: <Report only="s1" /> },
+        { key: 's2', glyph: '✿', title: profile?.gender === 'm' ? L('Bakım, saç ve görünüm', 'Grooming, hair and look') : strip(t.s2), teaser: profile?.gender === 'm' ? L('Bakım ve saç kesimi', 'Grooming and haircut') : L('Makyaj, ten, saç, ruj tonları', 'Makeup, skin, hair, lip shades'), body: <Report only="s2" /> },
+        { key: 's3', glyph: '♀', title: strip(t.s3), teaser: L('Eşin nasıl biri, nerede tanışırsınız', 'Who your partner is, where you meet'), body: <Report only="s3" /> },
+        { key: 's4', glyph: '◎', title: strip(t.s4), teaser: L('Kariyer, para, zihin, karmik yol', 'Career, money, mind, karmic path'), body: <Report only="s4" /> },
+        { key: 'advice', glyph: '✦', title: strip(t.advice), teaser: L('Hemen uygulayabileceğin adımlar', 'Steps you can take right away'), body: <Report only="advice" /> },
+        { key: 'style', glyph: '✂', title: L('Stil ve görünüm', 'Style and looks'), teaser: L('Sana yakışan tarz, kumaş, aksesuar', 'Styles, fabrics and accessories that suit you'), body: <StyleScreen /> },
+        { key: 'trends', glyph: '↗', title: L('Trendler', 'Trends'), teaser: L('Sosyal medyadaki burç trendleri', 'Zodiac trends on social media'), body: <TrendsScreen embedded /> },
+      ]} />
     </View>
   );
 }

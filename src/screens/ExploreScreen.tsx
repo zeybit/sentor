@@ -19,7 +19,8 @@ import { TarotCard } from '../ui/TarotCard';
 import { ShareToggle, safeName } from '../ui/ShareImage';
 import { Chips, H1, P, Section, Segmented, Sub, st, useLayout } from '../ui/kit';
 import { C, F, serif, ELEMENT_COLOR } from '../theme';
-import { takePendingKind } from '../nav';
+import { scrollTop, takePendingKind } from '../nav';
+import { TodayHub } from '../ui/Cosmic';
 import { SkyAge } from '../ui/ExtrasUI';
 import Mirror from '../ui/Mirror';
 
@@ -30,14 +31,20 @@ const YEAR = 365.2422 * 864e5, DAY = 864e5;
 
 export default function ExploreScreen() {
   const { lang, chart } = useStore();
-  const [part, setPart] = useState<Part>(() => { const k = takePendingKind(); return (['mirror', 'year', 'twin', 'tests', 'cities', 'sky'] as Part[]).includes(k as Part) ? (k as Part) : 'mirror'; });
+  const [part, setPart] = useState<Part | null>(() => { const k = takePendingKind(); return (['mirror', 'year', 'twin', 'tests', 'cities', 'sky'] as Part[]).includes(k as Part) ? (k as Part) : null; });
+  const { wide } = useLayout();
   return (
     <View>
       <H1>{tx('Keşfet', 'Discover', lang)}</H1>
       <Sub style={{ marginBottom: 16, maxWidth: 620 }}>{tx('Haritanla oynamanın eğlenceli yolları: seni anlatan cümleler, yeni yaşının hikâyesi, ünlü ikizlerin, kısa testler, sana iyi gelen şehirler ve gökyüzü yaşın.', 'Fun ways to play with your chart: lines that describe you, the story of your new year, celebrity twins, quick tests, the cities that suit you and your sky age.', lang)}</Sub>
-      <Segmented items={[{ key: 'mirror', label: tx('Kendini bul', 'Find yourself', lang) }, { key: 'year', label: tx('Yeni yaşın', 'New year', lang) }, { key: 'twin', label: tx('Ünlü ikizin', 'Celeb twin', lang) }, { key: 'tests', label: tx('Testler', 'Tests', lang) }, { key: 'cities', label: tx('Şehirlerin', 'Cities', lang) }, { key: 'sky', label: tx('Gökyüzü yaşın', 'Sky age', lang) }]} value={part} onChange={v => setPart(v as Part)} />
-      <View style={{ height: 16 }} />
-      {part === 'mirror' ? (chart ? <Mirror chart={chart} lang={lang} /> : null) : part === 'year' ? <YearStory /> : part === 'twin' ? <Twins /> : part === 'tests' ? <Tests /> : part === 'sky' ? (chart ? <SkyAge chart={chart} lang={lang} /> : null) : <Cities />}
+      <TodayHub lang={lang} heading="" cols={wide ? 3 : 2} open={part} onOpen={k => { setPart(k as Part | null); scrollTop(); }} back={tx('Keşfet’e dön', 'Back to Discover', lang)} items={[
+        { key: 'mirror', glyph: '◐', title: tx('Kendini bul', 'Find yourself', lang), teaser: tx('Seni anlatan cümleler: sağa sola kaydır', 'Lines that describe you: swipe', lang), body: chart ? <Mirror chart={chart} lang={lang} /> : null },
+        { key: 'year', glyph: '✦', title: tx('Yeni yaşın', 'Your new year', lang), teaser: tx('Yeni yaşının hikâyesi ve en hareketli ayların', 'The story of your new year', lang), body: <YearStory /> },
+        { key: 'twin', glyph: '☆', title: tx('Ünlü ikizin', 'Celebrity twin', lang), teaser: tx('Haritası seninkine en çok benzeyen ünlüler', 'Celebrities with the closest chart', lang), body: <Twins /> },
+        { key: 'tests', glyph: '?', title: tx('Testler', 'Tests', lang), teaser: tx('Haritanla kısa kişilik testleri', 'Quick personality tests', lang), body: <Tests /> },
+        { key: 'cities', glyph: '⌖', title: tx('Şehirlerin', 'Your cities', lang), teaser: tx('Sana iyi gelen şehirler ve neden', 'The cities that suit you and why', lang), body: <Cities /> },
+        { key: 'sky', glyph: '◷', title: tx('Gökyüzü yaşın', 'Your sky age', lang), teaser: tx('Gökyüzüne göre kaç yaşındasın?', 'How old are you by the sky?', lang), body: chart ? <SkyAge chart={chart} lang={lang} /> : null },
+      ]} />
     </View>
   );
 }
