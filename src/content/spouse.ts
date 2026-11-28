@@ -16,7 +16,7 @@ const low = (s: string, lang: Lang) => (lang === 'tr' ? (s[0] === 'İ' ? 'i' : s
 export interface SpouseSection { id: string; title: L; text: L; why: L }
 
 /** Partnerin karakteri: 7. ev burcu */
-const CHAR: L[] = [
+export const CHAR: L[] = [
   l('enerjik, cesur ve girişken; kararlarını hızlı veren, rekabeti seven ve seni harekete geçiren biri', 'energetic, brave and enterprising; quick to decide, fond of a challenge and someone who gets you moving'),
   l('sakin, sadık ve güven veren; sözünün eri, konforu ve güzel şeyleri seven, acele etmeyen biri', 'calm, loyal and reassuring; true to their word, fond of comfort and beautiful things, never in a hurry'),
   l('zeki, konuşkan ve meraklı; esprili, genç ruhlu ve seninle her konuda sohbet edebilen biri', 'clever, talkative and curious; witty, young at heart and able to talk with you about anything'),
@@ -122,17 +122,18 @@ export function spouseProfile(ch: Chart, lang: Lang): SpouseSection[] | null {
 
   // 1. Nasıl biri?
   const mix = s7 !== rp.sign ? (lang === 'tr' ? ` Buna ${SIGNS[rp.sign].tr} burcunun tonu da karışır: ${CHAR[rp.sign].tr.split(';')[0]}.` : ` The tone of ${SIGNS[rp.sign].en} blends in too: ${CHAR[rp.sign].en.split(';')[0]}.`) : '';
-  out.push({ id: 'who', title: l('Nasıl biri?', 'What are they like?'),
+  out.push({ id: 'who', title: l('Yedinci evin anlattığı kişi: ilk izlenim', 'The person your seventh house describes: first impression'),
     text: l(`Haritan, hayatına girecek ciddi partnerin ${CHAR[s7].tr} olacağını gösteriyor.${mix}`, `Your chart suggests your serious partner will be ${CHAR[s7].en}.${mix}`),
     why: l(`Partnerini temsil eden yedinci evin ${SIGNS[s7].tr} burcuyla başlaması ve bu evin gezegeninin (${name(r7).tr}) ${SIGNS[rp.sign].tr} burcunda olması.`, `Your seventh house, which represents your partner, begins in ${SIGNS[s7].en}, and its planet (${name(r7).en}) is in ${SIGNS[rp.sign].en}.`) });
 
   // 2. Görünüşü
   const strip = (x?: string) => (x ?? '').replace(/^[^:]{2,20}:\s*/, '');
   const signLook = strip(LILLY_SIGN_FORM[s7][lang]), planetLook = strip(LILLY_PLANET_FORM[r7]?.[lang]);
+  const lk = mergeLook(strip(LILLY_SIGN_FORM[s7].tr), strip(LILLY_PLANET_FORM[r7]?.tr));
   if (signLook) out.push({ id: 'look', title: l('Görünüşü', 'Their appearance'),
-    text: l(`Geleneksel astrolojide partnerin dış görünüşü yedinci evin burcundan ve o evin gezegeninden okunur. Senin haritana göre partnerin için şu tarif öne çıkıyor: ${low(signLook, 'tr').replace(/\.$/, '')}.${planetLook ? ` Partnerini temsil eden gezegen de şu özellikleri ekler: ${low(planetLook, 'tr')}` : ''}`,
+    text: l(`Partnerin için öne çıkan tarif: ${lk.text}.${lk.agree.length ? ` İki kaynağın da aynı şeyi söylediği, en güvenilir özellikler: ${lk.agree.join(', ')}.` : ''}${lk.conflict ? ' Boy konusunda kaynaklar ayrıldığı için ortalamayı aldım.' : ''}`,
       `In traditional astrology a partner’s looks are read from the seventh house sign and that house’s planet. For your chart this description stands out: ${low(signLook, 'en').replace(/\.$/, '')}.${planetLook ? ` The planet that represents your partner adds: ${low(planetLook, 'en')}` : ''}`),
-    why: l('Görünüş tarifleri eğilim gösterir; gerçek kişi bunlardan bazılarını taşır, hepsini değil.', 'Appearance descriptions show tendencies; the real person will carry some of these traits, not all.') });
+    why: l(`Geleneksel astrolojide partnerin görünüşü yedinci evin burcundan (${SIGNS[s7].tr}) ve o evin yöneticisinden (${name(r7).tr}) okunur; iki tarif birleştirildi. Tarifler eğilim gösterir: gerçek kişi bunların hepsini değil, bir kısmını taşır.`, `In traditional astrology a partner’s looks are read from the seventh house sign (${SIGNS[s7].en}) and its ruler (${name(r7).en}); both descriptions are combined. They show tendencies: the real person carries some of these traits, not all.`) });
 
   // 3. Hayatı ve işi
   if (rp.house) out.push({ id: 'life', title: l('Hayat tarzı', 'Their way of life'),
@@ -211,20 +212,79 @@ const ARCH_HOUSE: L[] = [
   l('Eşinle ruhsal bir bağ kurarsın; ilişki başta sessiz ya da gizli ilerleyebilir.', 'You form a spiritual bond; the relationship may move quietly or privately at first.'),
 ];
 
-/** Eş arketipi: kadınsa Güneş, erkekse Ay */
-export function spouseArchetype(ch: Chart, gender: 'f' | 'm'): SpouseSection {
+/** Eş arketipi: kadınsa Güneş, erkekse Ay. Karakter, meslek ve tanışma ayrı maddelerdir (ayrı kartlarda durur). */
+export function spouseArchetypeParts(ch: Chart, gender: 'f' | 'm'): SpouseSection[] {
   const id: BodyId = gender === 'f' ? 'sun' : 'moon';
   const p = ch.positions[id];
   const a = SPOUSE_ARCH[p.sign];
   const planet = gender === 'f' ? l('Güneş', 'the Sun') : l('Ay', 'the Moon');
+  const pTr = planet.tr + (gender === 'f' ? '’in' : '’ın');
   const house = p.house ? ARCH_HOUSE[p.house - 1] : null;
-  return {
-    id: 'arch', title: l('Eşinin karakteri ve mesleği', 'Your spouse’s character and work'),
-    text: l(`Eşin büyük ihtimalle ${a.char.tr} olacak. Mesleği ${a.jobs.tr} gibi alanlarda olabilir.${house ? ' ' + house.tr : ''}`,
-      `Your spouse is likely to be ${a.char.en}. They may work in fields like ${a.jobs.en}.${house ? ' ' + house.en : ''}`),
-    why: l(`Klasik astrolojide ${gender === 'f' ? 'kadın' : 'erkek'} haritasında eşi ${planet.tr} temsil eder. Senin ${planet.tr}${gender === 'f' ? '’in' : '’ın'} ${SIGNS[p.sign].tr} burcunda${p.house ? ` ve ${p.house}. evde` : ''}.`,
-      `In classical astrology ${planet.en} represents the spouse in a ${gender === 'f' ? 'woman’s' : 'man’s'} chart. Yours is in ${SIGNS[p.sign].en}${p.house ? `, house ${p.house}` : ''}.`),
-  };
+  const why = l(`Klasik astrolojide ${gender === 'f' ? 'kadın' : 'erkek'} haritasında eşi ${planet.tr} temsil eder. Senin ${pTr} ${SIGNS[p.sign].tr} burcunda${p.house ? ` ve ${p.house}. evde` : ''}.`,
+    `In classical astrology ${planet.en} represents the spouse in a ${gender === 'f' ? 'woman’s' : 'man’s'} chart. Yours is in ${SIGNS[p.sign].en}${p.house ? `, house ${p.house}` : ''}.`);
+  const out: SpouseSection[] = [
+    { id: 'arch', title: l(`${pTr} anlattığı kişi: yakından tanıdıkça`, `What ${planet.en} describes: up close`), text: l(`Eşin büyük ihtimalle ${a.char.tr} olacak.`, `Your spouse is likely to be ${a.char.en}.`), why },
+    { id: 'archjob', title: l(`${planet.tr}${gender === 'f' ? '’e' : '’a'} göre mesleği`, `Work, from ${planet.en}`), text: l(`Mesleği ${a.jobs.tr} gibi alanlarda olabilir.`, `They may work in fields like ${a.jobs.en}.`), why },
+  ];
+  if (house) out.push({ id: 'archmeet', title: l('Hayatına nasıl girer?', 'How they enter your life'), text: house, why });
+  return out;
+}
+
+const ELEM = ['fire', 'earth', 'air', 'water'] as const;
+const TONE: Record<string, L> = { fire: l('enerjik ve hareketli', 'energetic and active'), earth: l('ayakları yere basan ve güven veren', 'grounded and reassuring'), air: l('konuşkan, meraklı ve sosyal', 'talkative, curious and social'), water: l('duygusal, şefkatli ve koruyucu', 'emotional, caring and protective') };
+const DK_ELEM: Record<string, string> = { sun: 'fire', mars: 'fire', jupiter: 'fire', moon: 'water', venus: 'air', mercury: 'air', saturn: 'earth' };
+const two = (x: string) => { const w = x.split(';')[0].split(/, | ve /).map(t => t.trim()).filter(Boolean); return w.slice(0, 2).join(' ve '); };
+/** Teknikleri birleştiren kısa özet: ilk izlenim (7. ev), yakından (Güneş/Ay), zihin (Darakaraka) ve ortak ton */
+export function spouseSummary(ch: Chart, gender: 'f' | 'm' | null | undefined, dk?: { planet: BodyId; who: L }): SpouseSection | null {
+  const parts: string[] = [], why: string[] = [], els: string[] = [];
+  if (ch.cusps.length) {
+    const s7 = Math.floor(ch.cusps[6] / 30), rp = ch.positions[SIGN_RULERS[s7]];
+    parts.push(`ilk tanıştığınızda ${two(CHAR[s7].tr)} biri gibi görünür`); why.push('yedinci ev ilk izlenimi');
+    els.push(ELEM[s7 % 4], ELEM[rp.sign % 4]);
+  }
+  if (gender) {
+    const p = ch.positions[gender === 'f' ? 'sun' : 'moon'];
+    parts.push(`yakından tanıdıkça ${two(SPOUSE_ARCH[p.sign].char.tr)} yanı ortaya çıkar`); why.push(`${gender === 'f' ? 'Güneş' : 'Ay'} yakından tanınan karakteri`);
+    els.push(ELEM[p.sign % 4]);
+  }
+  if (dk) { parts.push(`düşünme ve konuşma biçimi ${two(dk.who.tr)}`); why.push('Darakaraka zihni ve konuşmayı'); els.push(DK_ELEM[dk.planet] ?? 'air'); }
+  if (parts.length < 2) return null;
+  const cnt = els.reduce((m, e) => m.set(e, (m.get(e) ?? 0) + 1), new Map<string, number>());
+  const top = [...cnt.entries()].sort((a, b) => b[1] - a[1]);
+  const tone = top[0][1] >= 2 && (!top[1] || top[1][1] < top[0][1])
+    ? `Tekniklerin en çok buluştuğu ton: ${TONE[top[0][0]].tr}. Bunu eşinin en belirgin özelliği olarak düşünebilirsin.`
+    : top[1] && top[0][1] === top[1][1] && top[0][1] >= 2
+      ? `Haritanda iki ton eşit güçte: ${TONE[top[0][0]].tr} bir yan ile ${TONE[top[1][0]].tr} bir yan. Bu bir çelişki değil; eşin çok yönlü biri olur, bir yüzünü dışarıda, diğerini evde gösterir.`
+      : 'Teknikler farklı tonlar gösteriyor; eşin tek bir kalıba sığmayan, çok yönlü biri olur.';
+  const txt = parts.join('; ');
+  return { id: 'sum', title: l('Kısaca eşin', 'Your spouse in short'),
+    text: l(`${txt.charAt(0).toLocaleUpperCase('tr') + txt.slice(1)}. ${tone}`, `${txt}. ${tone}`),
+    why: l(`Her teknik eşin başka bir yüzünü anlatır: ${why.join(', ')}. Aşağıda her birini ayrı ayrı okuyabilirsin.`, 'Each technique describes a different side of your spouse; read each one below.') };
+}
+
+/** Görünüş: burç ve yönetici tariflerini çelişmeyecek şekilde birleştirir (yalnız Türkçe metin) */
+function mergeLook(sign: string, planet: string): { text: string; agree: string[]; conflict: boolean } {
+  const seg = (x: string) => x.replace(/\.$/, '').replace(/;/g, ',').split(/,\s*/).map(t => t.trim()).filter(Boolean);
+  const isH = (t: string) => /boy|kısa|ufak|^uzun( ve| değil|$)|^dik\b|^(düzgün|dik), uzun/i.test(t);
+  const height = (xs: string[]) => { const h = xs.filter(isH).join(' ').toLocaleLowerCase('tr'); if (!h) return ''; if (/kısa|ufak|değil|aşmayan/.test(h)) return 'short'; if (/üst|uzun/.test(h)) return 'tall'; return 'mid'; };
+  const KEYS: [string, RegExp][] = [['ten', /\bten|tenli/], ['yüz', /yüz/], ['göz', /göz/], ['saç', /saç/], ['beden', /beden|yapılı|yapı\b/]];
+  const keyOf = (t: string) => KEYS.find(([, r]) => r.test(t))?.[0];
+  const a = seg(sign), b = seg(planet);
+  const hA = height(a), hB = height(b);
+  const conflict = !!hA && !!hB && ((hA === 'short' && hB === 'tall') || (hA === 'tall' && hB === 'short'));
+  const agree = a.filter(x => b.some(y => y.toLocaleLowerCase('tr') === x.toLocaleLowerCase('tr')) && !isH(x)).map(x => x.toLocaleLowerCase('tr'));
+  const out: string[] = [];
+  if (conflict) out.push('boyu ortalama civarında');
+  for (const x of a) { if (conflict && isH(x)) continue; out.push(x); }
+  const have = new Set(a.map(keyOf).filter(Boolean));
+  for (const y of b) {
+    if (isH(y)) { if (!hA && !conflict) out.push(y); continue; }
+    const k = keyOf(y); if (k && have.has(k)) continue;
+    if (out.some(o => o.toLocaleLowerCase('tr') === y.toLocaleLowerCase('tr'))) continue;
+    out.push(y);
+  }
+  const t = out.join(', ');
+  return { text: t.charAt(0).toLocaleLowerCase('tr') + t.slice(1), agree, conflict };
 }
 
 /** Eşin mesleği: eşin 10. evi, türetilmiş ev tekniğiyle senin 4. evindir (7. evden 10 ev ileri) */

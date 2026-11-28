@@ -109,13 +109,21 @@ const DK: Record<string, { who: L; work: L }> = {
   venus: { who: l('çekici, estetik duygusu güçlü, romantik ve sosyal; tartışmadan kaçan', 'charming, aesthetic, romantic and sociable; avoids conflict'), work: l('sanat, müzik, film, moda, tasarım, güzellik ya da diplomasi', 'art, music, film, fashion, design, beauty or diplomacy') },
   saturn: { who: l('ciddi, disiplinli, güvenilir, duygularını tutan; yaşından olgun ya da senden büyük', 'serious, disciplined, reliable and reserved; mature for their age or older than you'), work: l('kamu, hukuk, mühendislik, inşaat, sosyal hizmet ya da uzun soluklu kurumsal işler', 'civil service, law, engineering, construction, social work or long-term institutional roles') },
 };
+export function darakarakaOf(ch: Chart): { planet: BodyId; who: { tr: string; en: string } } {
+  const d = SEVEN.map(b => ({ b, d: sid(ch, ch.positions[b].lon) % 30 })).sort((a, b) => a.d - b.d)[0].b;
+  return { planet: d, who: DK[d].who };
+}
+export function darakarakaJob(ch: Chart): SpouseSection {
+  const d = darakarakaOf(ch).planet;
+  return { id: 'dkjob', title: l('Darakaraka’ya göre mesleği', 'Work, from the Darakaraka'), text: l(`Meslekte ${DK[d].work.tr} gibi alanlar ona yakın.`, `Fields such as ${DK[d].work.en} suit them.`), why: l(`Vedik astrolojide eşi gösteren gezegen (Darakaraka) senin haritanda ${nm(d).tr}; bu gezegenin konuları eşinin iş hayatına da yansır.`, `Your Darakaraka is ${nm(d).en}; its themes reflect in your spouse’s work too.`) };
+}
 export function darakaraka(ch: Chart): SpouseSection {
   const deg = SEVEN.map(b => ({ b, d: sid(ch, ch.positions[b].lon) % 30 })).sort((a, b) => a.d - b.d);
   const dk = deg[0].b, s = Math.floor(sid(ch, ch.positions[dk].lon) / 30);
   const x = DK[dk];
   return {
-    id: 'darakaraka', title: l('Darakaraka: Vedik astrolojide eşini gösteren gezegen', 'Darakaraka: the planet of your spouse in Vedic astrology'),
-    text: l(`Eşin ${x.who.tr} biri. Meslekte ${x.work.tr} gibi alanlar ona yakın. Bu gezegen Vedik haritanda ${SIGNS[s].tr} burcunda; eşinde bu burcun tonu da hissedilir.`,
+    id: 'darakaraka', title: l('Darakaraka: Vedik astrolojiye göre eşin', 'Darakaraka: your spouse in Vedic astrology'),
+    text: l(`Eşin ${x.who.tr} biri. Bu gezegen Vedik haritanda ${SIGNS[s].tr} burcunda; eşinde bu burcun tonu da hissedilir.`,
       `Your spouse is ${x.who.en}. Fields such as ${x.work.en} suit them. This planet sits in ${SIGNS[s].en} in your Vedic chart, so that sign colours them too.`),
     why: l(`Jaimini sisteminde gezegenler burç içindeki derecelerine göre sıralanır; en düşük derecedeki gezegen eşi gösterir (Darakaraka). Senin haritanda bu ${nm(dk).tr} (${deg[0].d.toFixed(1)}°). Hesap, Vedik astrolojideki gibi sidereal (Lahiri) zodyakla yapıldı.`,
       `In the Jaimini system planets are ranked by degree within their sign; the lowest one shows the spouse (Darakaraka). In your chart it is ${nm(dk).en} (${deg[0].d.toFixed(1)}°), computed in the sidereal (Lahiri) zodiac as in Vedic astrology.`),
@@ -202,7 +210,7 @@ export function descBound(ch: Chart): SpouseSection | null {
   return {
     id: 'bound', title: l('Eşinin gizli tarafı', 'Your spouse’s hidden side'),
     text: l(`Dışarıdan görünenin altında, eşin ${tone.tr} biri. Bu yan, ilişki ilerledikçe ortaya çıkar.`, `Beneath what shows, your spouse is ${tone.en}. This side emerges as the relationship deepens.`),
-    why: l(`Alçalanın ${SIGNS[Math.floor(dsc / 30)].tr} ${deg}°. Klasik astrolojide her burç “terim” denen beş parçaya bölünür; alçalanın düştüğü terimin yöneticisi (${nm(tr).tr}) eşin ilk bakışta görünmeyen tonunu verir. Tablo: Batlamyus terimleri (Lilly).`,
+    why: l(`Alçalanın ${SIGNS[Math.floor(dsc / 30)].tr} burcunun ${deg}. derecesinde. Klasik astrolojide her burç “terim” denen beş parçaya bölünür; alçalanın düştüğü terimin yöneticisi (${nm(tr).tr}) eşin ilk bakışta görünmeyen tonunu verir. Tablo: Batlamyus terimleri (Lilly).`,
       `Your Descendant is ${SIGNS[Math.floor(dsc / 30)].en} ${deg}°. In classical astrology each sign is split into five “terms”; the ruler of the term holding the Descendant (${nm(tr).en}) gives the spouse’s hidden tone. Table: Ptolemaic terms (Lilly).`),
   };
 }
@@ -235,6 +243,7 @@ export function deepSpouse(ch: Chart, gender?: 'f' | 'm' | null): SpouseSection[
   const out: (SpouseSection | null)[] = [
     gender ? ptolemyMarriage(ch, gender) : null,
     darakaraka(ch),
+    darakarakaJob(ch),
     navamsaSpouse(ch),
     upapada(ch),
     descBound(ch),
