@@ -19,6 +19,7 @@ import { WindowCard } from './FutureScreen';
 import { useNav, takePendingKind, scrollTop } from '../nav';
 import GroupCompat from '../ui/GroupCompat';
 import { BestDays } from '../ui/ExtrasUI';
+import { TodayHub } from '../ui/Cosmic';
 import RelStory from '../ui/RelStory';
 import { LoveBack, LoveHub, LoveItem, LovePart, LoveRail } from '../ui/LoveNav';
 import { inviteLink, shareLink } from '../invite';
@@ -98,7 +99,7 @@ export default function LoveScreen() {
 
   const body = cur === null ? null : (
     <>
-      {cur === 'story' ? <RelStory /> : cur === 'spouse' ? <><SpouseBlock /><BestDays chart={chart} kind="love" lang={lang} /></> : <>
+      {cur === 'story' ? <RelStory /> : cur === 'spouse' ? <SpouseBlock /> : <>
       <Segmented items={[{ key: 'pair', label: L('İki kişi', 'Two people') }, { key: 'group', label: L('Grup', 'Group') }]} value={cmode} onChange={v => setCmode(v as 'pair' | 'group')} />
       {cmode === 'group' ? <GroupCompat onOpenPair={id => { setPid(id); setCmode('pair'); scrollTop(); }} /> : <>
 
@@ -233,6 +234,9 @@ function SpouseBlock() {
   const nav = useNav();
   const gender = profile?.gender ?? null;
   const [wins, setWins] = useState<Window[] | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const { width } = useWindowDimensions();
+  const wide = width >= 960;
   useEffect(() => {
     setWins(null);
     if (!chart) return;
@@ -242,70 +246,41 @@ function SpouseBlock() {
   if (!chart) return null;
   const base = spouseProfile(chart, lang) ?? [];
   const job = spouseJob(chart);
-  const prof = chart.cusps.length || gender ? [
-    ...(gender ? [spouseArchetype(chart, gender)] : []),
-    ...base.filter(x => x.id !== 'life'),
-    ...fateSections(chart, gender),
-    ...(job ? [job] : []),
-    ...base.filter(x => x.id === 'life'),
-  ] : null;
+  const has = !!(chart.cusps.length || gender);
+  const deep = deepSpouse(chart, gender);
+  const all = [...(gender ? [spouseArchetype(chart, gender)] : []), ...base, ...(has ? fateSections(chart, gender) : []), ...(job ? [job] : []), ...deep];
+  const pick = (ids: string[]) => ids.map(id => all.find(x => x.id === id)).filter(Boolean) as typeof all;
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   const P_ = chart.positions;
-  return (
-    <Section title={L('Gelecekteki eşin', 'Your future partner')}>
-      <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 18, lineHeight: 27, color: C.sub, marginBottom: 16, maxWidth: 640 }}>
-        {L('Haritanda evlilik ve uzun süreli ilişkileri anlatan yedinci ev, onun gezegeni ve aşk gezegeni Venüs birlikte okunduğunda, hayatına girecek ciddi partnerin hakkında bir portre çıkar. Her bölümün altında bunun haritanın neresinden geldiğini görebilirsin.',
-          'Reading your seventh house (marriage and long-term bonds), its planet and Venus, the planet of love, together gives a portrait of the serious partner who will enter your life. Under each part you can see where in your chart it comes from.')}
-      </Text>
-      {gender ? null : <Sub style={{ marginBottom: 16 }}>{L('Eşini anlatan gezegen cinsiyete göre değişir. Ayarlar’da kişinin bilgilerini düzenleyip cinsiyet eklersen bu bölüm daha ayrıntılı olur.', 'The planet describing your partner depends on gender. Add it by editing this person in Settings for a more detailed reading.')}</Sub>}
-      {prof ? prof.map(x => (
-        <View key={x.id} style={{ marginBottom: 20 }}>
-          <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{x.title[lang]}</Text>
-          <P style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</P>
-          <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
-        </View>
-      )) : <P>{s.needsTime}</P>}
-      <View style={{ marginTop: 8, marginBottom: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: C.line }}>
-        <Text style={{ fontFamily: F.sansMed, fontSize: 11, letterSpacing: 1.6, color: C.gold }}>{L('DERİN OKUMA', 'DEEP READING')}</Text>
-        <Text style={{ fontFamily: F.serif, fontSize: 26, lineHeight: 32, color: C.ink, marginTop: 2 }}>{L('Klasik ve Vedik kaynaklardan eşin', 'Your spouse in classical and Vedic sources')}</Text>
-        <Sub style={{ marginTop: 4, marginBottom: 14, maxWidth: 640 }}>{L('Popüler uygulamaların kullanmadığı eski teknikler: Batlamyus’un Tetrabiblos’u, Jaimini’nin Darakaraka ve Upapada’sı, Navamsa (D9) evlilik haritası, Ptolemy terimleri ve William Lilly’nin yön kuralı. Teknikler aynı şeyi söylediğinde o özellik çok daha güçlüdür.', 'Old techniques popular apps don’t use: Ptolemy’s Tetrabiblos, Jaimini’s Darakaraka and Upapada, the Navamsa (D9) marriage chart, Ptolemaic terms and William Lilly’s rule of direction. Where techniques agree, that trait is much stronger.')}</Sub>
-        {deepSpouse(chart, gender).map(x => (
-          <View key={x.id} style={{ marginBottom: 20 }}>
-            <Text style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 27, color: C.ink }}>{x.title[lang]}</Text>
-            <P style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</P>
-            <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
+  const juno = junoRules(chart), derived = derivedSpouse(chart);
+  const card = (x: (typeof all)[number]) => (
+    <View key={x.id} style={{ marginBottom: 20 }}>
+      <Text style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 27, color: C.ink }}>{x.title[lang]}</Text>
+      <P style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{x.text[lang]}</P>
+      <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: ', 'Why: ')}{x.why[lang]}</Text>
+    </View>
+  );
+  const g1 = pick(['arch', 'who', 'darakaraka', 'look', 'bound']);
+  const g2 = pick(['job', 'life']);
+  const g3 = pick(['meet', 'direction', 'vertex']);
+  const g4 = pick(['colour', 'lot', 'upapada', 'navamsa', 'ptolemy']);
+  const noTime = !chart.cusps.length ? <Sub style={{ marginBottom: 12 }}>{s.needsTime}</Sub> : null;
+  const items = [
+    { key: 'who', glyph: '☉', title: L('Nasıl biri?', 'What are they like?'), teaser: L('Karakteri, görünüşü, gizli tarafı', 'Character, looks, hidden side'), body: <>{noTime}{g1.map(card)}{juno.length ? card({ id: 'juno', title: { tr: 'Juno’nun ipuçları', en: 'Clues from Juno' }, text: { tr: juno.map(x => x.tr).join(' '), en: juno.map(x => x.en).join(' ') }, why: { tr: 'Juno, evlilik ve bağlılığı anlatan asteroittir; yakın durduğu gezegenler ve bulunduğu ev eşin hakkında ek bilgi verir.', en: 'Juno is the asteroid of marriage and commitment; the planets it sits close to and its house add details about your spouse.' } } as any) : null}</> },
+    { key: 'life', glyph: '♄', title: L('Hayatı ve mesleği', 'Their life and work'), teaser: L('Mesleği, hayat tarzı, ailesi ve parası', 'Work, lifestyle, family, money'), body: <>{noTime}{g2.map(card)}{derived.length ? (
+      <View style={{ marginBottom: 20 }}>
+        <Text style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 27, color: C.ink }}>{L('Eşinin hayatından ayrıntılar', 'Details of your spouse’s life')}</Text>
+        <Sub style={{ marginTop: 2, marginBottom: 8, maxWidth: 640 }}>{L('Yedinci ev eşini temsil ettiği için, evleri yedinci evden başlayarak saydığında eşinin hayatının diğer alanlarını da okuyabilirsin. Buna türetilmiş evler denir.', 'Because the seventh house is your spouse, counting houses from it lets you read other parts of their life. This is called derived houses.')}</Sub>
+        {derived.map((d, i) => (
+          <View key={i} style={{ marginBottom: 12 }}>
+            <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink }}>{d.title[lang]}</Text>
+            <P style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, maxWidth: 660 }}>{d.text[lang]}</P>
           </View>
         ))}
-        {!gender ? <Sub style={{ maxWidth: 640 }}>{L('Batlamyus’un kuralı cinsiyete göre Ay’a ya da Güneş’e bakar; Ayarlar’dan cinsiyet eklersen o bölüm de açılır.', 'Ptolemy’s rule uses the Moon or Sun depending on gender; add gender in Settings to see it.')}</Sub> : null}
-      </View>
-      {junoRules(chart).length ? (
-        <View style={{ marginBottom: 20 }}>
-          <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Juno’nun ipuçları', 'Clues from Juno')}</Text>
-          <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>{junoRules(chart).map(x => x[lang]).join(' ')}</Text>
-          <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: C.sub, marginTop: 4 }}>{L('Neden: Juno, evlilik ve bağlılığı anlatan asteroittir; yakın durduğu gezegenler ve bulunduğu ev eşin hakkında ek bilgi verir.', 'Why: Juno is the asteroid of marriage and commitment; the planets it sits close to and its house add details about your spouse.')}</Text>
-        </View>
-      ) : null}
-      {derivedSpouse(chart).length ? (
-        <View style={{ marginBottom: 20 }}>
-          <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Eşinin hayatından ayrıntılar', 'Details of your spouse’s life')}</Text>
-          <Sub style={{ marginTop: 2, marginBottom: 8, maxWidth: 640 }}>{L('Yedinci ev eşini temsil ettiği için, evleri yedinci evden başlayarak saydığında eşinin hayatının diğer alanlarını da okuyabilirsin. Buna türetilmiş evler denir.', 'Because the seventh house is your spouse, counting houses from it lets you read other parts of their life. This is called derived houses.')}</Sub>
-          {derivedSpouse(chart).map((d, i) => (
-            <View key={i} style={{ marginBottom: 12 }}>
-              <Text style={{ fontFamily: F.sansBold, fontWeight: '700', fontSize: 15, color: C.ink }}>{d.title[lang]}</Text>
-              <P style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 26, color: C.ink, maxWidth: 660 }}>{d.text[lang]}</P>
-            </View>
-          ))}
-        </View>
-      ) : null}
-      <View style={{ marginBottom: 20 }}>
-        <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink }}>{L('Nasıl seversin, nasıl çekersin?', 'How you love and attract')}</Text>
-        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 4, maxWidth: 660 }}>
-          {L(`Venüs’ün ${SIGNS[P_.venus.sign].tr} burcunda. ${VENUS[P_.venus.sign].tr} Mars’ın da ${SIGNS[P_.mars.sign].tr} burcunda. ${MARS_DESIRE[P_.mars.sign].tr}`,
-            `Your Venus is in ${SIGNS[P_.venus.sign].en}: ${VENUS[P_.venus.sign].en} Your Mars is in ${SIGNS[P_.mars.sign].en}: ${MARS_DESIRE[P_.mars.sign].en}`)}
-        </Text>
-        {P_.venus.house ? <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 8, maxWidth: 660 }}>{L(`Venüs’ün ${P_.venus.house}. evinde, bu yüzden insanlar seni en çok şu yanınla beğenir: `, `Your Venus is in house ${P_.venus.house}, so people admire you most for this: `)}{(lang === 'tr' ? (x: string) => x.charAt(0).toLocaleLowerCase('tr') + x.slice(1) : (x: string) => x.charAt(0).toLowerCase() + x.slice(1))(VENUS_ADMIRED[P_.venus.house - 1][lang])}</Text> : null}
-      </View>
-      <Text style={{ fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.ink, marginBottom: 8 }}>{L('Ne zaman?', 'When?')}</Text>
+      </View>) : null}</> },
+    { key: 'meet', glyph: '⌖', title: L('Nerede, nasıl tanışırsınız?', 'Where and how you meet'), teaser: L('Tanışma yeri, yönü, kader anı', 'Place, direction, fated moment'), body: <>{noTime}{g3.map(card)}</> },
+    { key: 'marriage', glyph: '⚭', title: L('Evliliğin nasıl olur?', 'What your marriage is like'), teaser: L('İlişkinin rengi, evlilik noktası, eski teknikler', 'Tone, Lot of Marriage, classical methods'), body: <>{noTime}{g4.map(card)}{!gender ? <Sub style={{ maxWidth: 640 }}>{L('Batlamyus’un kuralı cinsiyete göre Ay’a ya da Güneş’e bakar; Ayarlar’dan cinsiyet eklersen o bölüm de açılır.', 'Ptolemy’s rule uses the Moon or Sun depending on gender; add gender in Settings to see it.')}</Sub> : null}</> },
+    { key: 'when', glyph: '◷', title: L('Ne zaman?', 'When?'), teaser: wins === null ? L('Hesaplanıyor…', 'Calculating…') : wins.length ? L(`${wins.length} güçlü dönem bulundu`, `${wins.length} strong periods found`) : L('Belirgin dönem yok', 'No marked period'), body: <>
       {wins === null ? <ActivityIndicator color={C.rose} style={{ alignSelf: 'flex-start', marginVertical: 12 }} />
         : wins.length ? (
           <>
@@ -327,6 +302,25 @@ function SpouseBlock() {
       <Pressable onPress={() => nav('chart:timeline')} accessibilityRole="link" style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
         <Text style={{ fontFamily: F.sansBold, fontWeight: '700', color: C.rose, fontSize: 15 }}>{L('Bütün hayat takvimini aç', 'Open your full life calendar')}</Text>
       </Pressable>
+      <BestDays chart={chart} kind="love" lang={lang} />
+    </> },
+    { key: 'you', glyph: '♀', title: L('Sen nasıl seversin?', 'How you love'), teaser: L(`Venüs ${SIGNS[P_.venus.sign].tr}, Mars ${SIGNS[P_.mars.sign].tr}`, `Venus in ${SIGNS[P_.venus.sign].en}, Mars in ${SIGNS[P_.mars.sign].en}`), body: (
+      <View style={{ marginBottom: 20 }}>
+        <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, maxWidth: 660 }}>
+          {L(`Venüs’ün ${SIGNS[P_.venus.sign].tr} burcunda. ${VENUS[P_.venus.sign].tr} Mars’ın da ${SIGNS[P_.mars.sign].tr} burcunda. ${MARS_DESIRE[P_.mars.sign].tr}`,
+            `Your Venus is in ${SIGNS[P_.venus.sign].en}: ${VENUS[P_.venus.sign].en} Your Mars is in ${SIGNS[P_.mars.sign].en}: ${MARS_DESIRE[P_.mars.sign].en}`)}
+        </Text>
+        {P_.venus.house ? <Text style={{ fontFamily: F.sans, fontSize: 17, lineHeight: 28, color: C.ink, marginTop: 8, maxWidth: 660 }}>{L(`Venüs’ün ${P_.venus.house}. evinde, bu yüzden insanlar seni en çok şu yanınla beğenir: `, `Your Venus is in house ${P_.venus.house}, so people admire you most for this: `)}{(lang === 'tr' ? (x: string) => x.charAt(0).toLocaleLowerCase('tr') + x.slice(1) : (x: string) => x.charAt(0).toLowerCase() + x.slice(1))(VENUS_ADMIRED[P_.venus.house - 1][lang])}</Text> : null}
+      </View>) },
+  ];
+  return (
+    <Section title={L('Gelecekteki eşin', 'Your future partner')}>
+      {open ? null : <Text style={{ fontFamily: F.serifItalic, fontStyle: 'italic', fontSize: 17, lineHeight: 26, color: C.sub, marginBottom: 4, maxWidth: 640 }}>
+        {L('Yedinci ev, onun gezegeni ve Venüs birlikte okunduğunda hayatına girecek ciddi partnerin portresi çıkar; klasik ve Vedik teknikler de bu portreye eklenir. Bir konuya dokun, ayrıntısı açılsın.',
+          'Reading your seventh house, its planet and Venus together gives a portrait of your serious partner, with classical and Vedic techniques added. Tap a topic to open it.')}
+      </Text>}
+      {gender || open ? null : <Sub style={{ marginBottom: 4 }}>{L('Eşini anlatan gezegen cinsiyete göre değişir. Ayarlar’da cinsiyet eklersen bu bölüm daha ayrıntılı olur.', 'The planet describing your partner depends on gender. Add it in Settings for a more detailed reading.')}</Sub>}
+      <TodayHub lang={lang} heading="" cols={wide ? 3 : 2} open={open} onOpen={k => { setOpen(k); scrollTop(); }} back={L('Eş konularına dön', 'Back to partner topics')} items={items} />
     </Section>
   );
 }
