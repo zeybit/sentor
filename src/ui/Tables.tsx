@@ -6,6 +6,7 @@ import { elementQuality, midpoints, lots, parallels, starContacts } from '../eng
 import { BODIES, SIGNS, SIGN_GLYPHS, ASPECT_INFO, ELEMENTS, dignityOf } from '../content/base';
 import { LOT_TEXT, STAR_NATURE, ptName } from '../content/techniqueTexts';
 import LillyTable from './LillyTable';
+import { declinationReading, isOOB } from '../content/declination';
 import { Expand, P, Section, Sub, st } from './kit';
 import { C, ELEMENT_COLOR } from '../theme';
 import type { T2 } from '../i18n2';
@@ -60,7 +61,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
               <Text style={[cell, { flex: 2, color: C.ink }]}>{BODIES[id].glyph} {BODIES[id].name[lang]}{p.retro ? ' ℞' : ''}</Text>
               <Text style={[cell, { flex: 2, color: dig ? C.gold : C.ink }]}>{SIGN_GLYPHS[p.sign]} {SIGNS[p.sign][lang]} {fmtDeg(p.lon)}</Text>
               <Text style={[cell, { width: 36, textAlign: 'right' }]}>{p.house || '–'}</Text>
-              <Text style={[cell, { width: 64, textAlign: 'right' }]}>{p.dec >= 0 ? '+' : ''}{p.dec.toFixed(1)}°</Text>
+              <Text style={[cell, { width: 64, textAlign: 'right' }, isOOB(chart, id) ? { color: C.gold, fontWeight: '700' } : null]}>{p.dec >= 0 ? '+' : ''}{p.dec.toFixed(1)}°{isOOB(chart, id) ? ' SD' : ''}</Text>
             </View>
           );
         })}
@@ -68,6 +69,18 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
           <Sub style={{ marginTop: 8 }}>ASC {SIGN_GLYPHS[Math.floor(chart.asc / 30)]} {SIGNS[Math.floor(chart.asc / 30)][lang]} {fmtDeg(chart.asc)}, MC {SIGN_GLYPHS[Math.floor(chart.mc! / 30)]} {SIGNS[Math.floor(chart.mc! / 30)][lang]} {fmtDeg(chart.mc!)}, Vertex {SIGN_GLYPHS[Math.floor(chart.vertex! / 30)]} {SIGNS[Math.floor(chart.vertex! / 30)][lang]} {fmtDeg(chart.vertex!)}{chart.zodiac === 'sidereal' ? `, Ayanamsa ${chart.ayanamsa.toFixed(2)}°` : ''}</Sub>
         ) : null}
       </Section>
+      {natal ? (() => { const d = declinationReading(chart); return (
+        <Section title={lang === 'tr' ? 'Deklinasyon yorumu' : 'Declination reading'}>
+          <Sub style={{ marginBottom: 10, maxWidth: 660 }}>{d.intro[lang]}</Sub>
+          {d.items.length ? d.items.map((x, i) => (
+            <View key={i} style={{ paddingVertical: 8, borderTopWidth: i ? 1 : 0, borderTopColor: C.line }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: x.oob ? C.gold : C.ink }}>{x.tech[lang]}</Text>
+              <P style={{ marginTop: 2 }}>{x.text[lang]}</P>
+            </View>
+          )) : <P>{lang === 'tr' ? 'Haritanda sınır dışı ya da sınırda duran bir gezegen, belirgin bir paralel de yok: gezegenlerin Güneş’in düzeni içinde, dengeli çalışıyor.' : 'No out-of-bounds or edge planets and no notable parallels: your planets work within the Sun’s order.'}</P>}
+          <Sub style={{ marginTop: 6 }}>{lang === 'tr' ? 'Tablodaki “SD” işareti sınır dışı gezegenleri gösterir.' : '“SD” in the table marks out-of-bounds planets.'}</Sub>
+        </Section>
+      ); })() : null}
 
       {chart.cusps.length ? (
         <Section title={t.houses}>
