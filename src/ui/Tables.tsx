@@ -58,14 +58,14 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
           return (
             <View key={id} style={{ flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: C.line, alignItems: 'center' }}>
               <Text style={[cell, { flex: 2, color: C.ink }]}>{BODIES[id].glyph} {BODIES[id].name[lang]}{p.retro ? ' ℞' : ''}</Text>
-              <Text style={[cell, { flex: 2, color: dig ? C.gold : C.ink }]}>{SIGN_GLYPHS[p.sign]} {fmtDeg(p.lon)}</Text>
+              <Text style={[cell, { flex: 2, color: dig ? C.gold : C.ink }]}>{SIGN_GLYPHS[p.sign]} {SIGNS[p.sign][lang]} {fmtDeg(p.lon)}</Text>
               <Text style={[cell, { width: 36, textAlign: 'right' }]}>{p.house || '–'}</Text>
               <Text style={[cell, { width: 64, textAlign: 'right' }]}>{p.dec >= 0 ? '+' : ''}{p.dec.toFixed(1)}°</Text>
             </View>
           );
         })}
         {chart.asc !== null ? (
-          <Sub style={{ marginTop: 8 }}>ASC {SIGN_GLYPHS[Math.floor(chart.asc / 30)]} {fmtDeg(chart.asc)}, MC {SIGN_GLYPHS[Math.floor(chart.mc! / 30)]} {fmtDeg(chart.mc!)}, Vertex {SIGN_GLYPHS[Math.floor(chart.vertex! / 30)]} {fmtDeg(chart.vertex!)}{chart.zodiac === 'sidereal' ? `, Ayanamsa ${chart.ayanamsa.toFixed(2)}°` : ''}</Sub>
+          <Sub style={{ marginTop: 8 }}>ASC {SIGN_GLYPHS[Math.floor(chart.asc / 30)]} {SIGNS[Math.floor(chart.asc / 30)][lang]} {fmtDeg(chart.asc)}, MC {SIGN_GLYPHS[Math.floor(chart.mc! / 30)]} {SIGNS[Math.floor(chart.mc! / 30)][lang]} {fmtDeg(chart.mc!)}, Vertex {SIGN_GLYPHS[Math.floor(chart.vertex! / 30)]} {SIGNS[Math.floor(chart.vertex! / 30)][lang]} {fmtDeg(chart.vertex!)}{chart.zodiac === 'sidereal' ? `, Ayanamsa ${chart.ayanamsa.toFixed(2)}°` : ''}</Sub>
         ) : null}
       </Section>
 
@@ -132,7 +132,7 @@ export default function Tables({ chart, t, lang, natal = true, asteroids = true,
             <Expand more={lang === 'tr' ? 'Tümünü göster' : 'Show all'} less={lang === 'tr' ? 'Daha az' : 'Less'} initial={8}
               items={[...extra.mids].sort((a, b) => b.hits.length - a.hits.length).map((m, i) => (
                 <Text key={i} style={[cell, { paddingVertical: 3 }]}>
-                  {glyph(m.a)}/{glyph(m.b)}  {SIGN_GLYPHS[Math.floor(m.lon / 30)]} {fmtDeg(m.lon)}{m.hits.length ? `  ←  ${m.hits.map(h => `${ptName(h)[lang]}`).join(', ')} ${t.onMid}` : ''}
+                  {glyph(m.a)}/{glyph(m.b)}  {SIGN_GLYPHS[Math.floor(m.lon / 30)]} {SIGNS[Math.floor(m.lon / 30)][lang]} {fmtDeg(m.lon)}{m.hits.length ? `  ←  ${m.hits.map(h => `${ptName(h)[lang]}`).join(', ')} ${t.onMid}` : ''}
                 </Text>
               ))} />
           </Section>
