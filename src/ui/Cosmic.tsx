@@ -362,25 +362,20 @@ export function CoreEnergies({ chart, lang }: { chart: Chart; lang: Lang }) {
     { kicker: tx(lang, 'Duygu dünyan', 'Emotional world'), title: BODIES.moon.name[lang], glyph: '☾', color: '#9DA6F2', sign: chart.positions.moon.sign, text: first(placementText('moon', chart.positions.moon.sign)[lang]) },
   ];
   if (chart.asc !== null) { const a = signOf(chart.asc); items.push({ kicker: tx(lang, 'Dış görünüşün', 'How you come across'), title: tx(lang, 'Yükselen', 'Rising'), glyph: '↑', color: C.gold, sign: a, text: first(ASC[a][lang]) }); }
+  // Kart değil, düz bir şerit: tıklanabilir görünmez, az yer kaplar. Uzun yorumlar haritanın bölümlerinde.
   return (
-    <View style={{ marginTop: 6, marginBottom: 10 }}>
-      <Text style={{ fontFamily: F.sans, fontSize: 22, color: C.ink, marginBottom: 12 }}>{tx(lang, 'Çekirdek enerjiler', 'Core energies')}</Text>
-      <View style={{ gap: 10 }}>
+    <View style={{ marginTop: 6, marginBottom: 14 }} accessibilityRole="summary">
+      <Text style={{ fontFamily: F.mono, fontSize: 11, letterSpacing: 1.6, color: C.sub, marginBottom: 8 }}>{tx(lang, 'ÇEKİRDEK ENERJİLER', 'CORE ENERGIES')}</Text>
+      <View style={{ flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.line, paddingVertical: 12 }}>
         {items.map((it, k) => (
-          <Glass key={k} pad={16}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Kicker>{it.kicker}</Kicker>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 }}>
-                <Text style={{ fontFamily: F.sans, fontSize: 12.5, color: C.ink }}>{SIGNS[it.sign][lang]}</Text>
-                <Text style={{ fontSize: 13, color: C.ink }}>{SIGN_GLYPHS[it.sign]}</Text>
-              </View>
+          <View key={k} style={{ flex: 1, paddingHorizontal: 10, borderLeftWidth: k ? 1 : 0, borderLeftColor: C.line }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Text style={[{ fontSize: 11, color: it.color }, web ? ({ textShadow: `0 0 8px ${it.color}` } as any) : null]}>{it.glyph}</Text>
+              <Text numberOfLines={1} style={{ fontFamily: F.sans, fontSize: 12.5, color: C.sub }}>{it.title}</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <Text style={[{ fontSize: 13, color: it.color }, web ? ({ textShadow: `0 0 10px ${it.color}` } as any) : null]}>{it.glyph}</Text>
-              <Text style={{ fontFamily: F.sans, fontSize: 21, color: C.ink }}>{it.title}</Text>
-            </View>
-            <Text style={{ fontFamily: F.mono, fontSize: 12, lineHeight: 18, color: C.ink, opacity: 0.82, marginTop: 6 }}>{it.text}</Text>
-          </Glass>
+            <Text numberOfLines={1} style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 27, color: C.ink, marginTop: 2 }}>{SIGN_GLYPHS[it.sign]} {SIGNS[it.sign][lang]}</Text>
+            <Text numberOfLines={1} style={{ fontFamily: F.mono, fontSize: 10.5, color: C.sub, marginTop: 1 }}>{it.kicker}</Text>
+          </View>
         ))}
       </View>
     </View>
