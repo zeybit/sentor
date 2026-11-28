@@ -63,14 +63,14 @@ export function ageHint(ch: Chart, r7: BodyId, s7: number): L | null {
   const P = ch.positions;
   const satIn7 = P.saturn.house === 7, satRules = r7 === 'saturn' || s7 === 9 || s7 === 10;
   const satVenus = [0, 90, 180].some(x => Math.abs(angleDiff(P.saturn.lon, P.venus.lon) - x) <= 6);
-  if (satIn7 || satRules) return l('Partnerinin senden yaşça büyük ya da yaşından olgun biri olma ihtimali yüksek. Ciddi bir bağlılık için acele etmezsin; evlilik genellikle hayatın biraz daha oturduğu yıllarda gelir.', 'Your partner is likely older than you or mature beyond their years. You don’t rush serious commitment; marriage tends to come once life is more settled.');
-  if (r7 === 'mercury' || s7 === 2 || s7 === 5 || P.mercury.house === 7) return l('Partnerin yaşıtın ya da senden biraz genç olabilir; genç ruhlu, öğrenmeye açık biri.', 'Your partner may be your age or a little younger; young at heart and eager to learn.');
+  if (satIn7 || satRules) return l('Eşinin senden yaşça büyük ya da yaşından olgun biri olma ihtimali yüksek. Ciddi bir bağlılık için acele etmezsin; evlilik genellikle hayatın biraz daha oturduğu yıllarda gelir.', 'Your partner is likely older than you or mature beyond their years. You don’t rush serious commitment; marriage tends to come once life is more settled.');
+  if (r7 === 'mercury' || s7 === 2 || s7 === 5 || P.mercury.house === 7) return l('Eşin yaşıtın ya da senden biraz genç olabilir; genç ruhlu, öğrenmeye açık biri.', 'Your partner may be your age or a little younger; young at heart and eager to learn.');
   if (satVenus) return l('Aşkta ciddiyet ve güven ararsın; ilişkilerin yavaş başlar ama kalıcı olur. Kendinden büyük birine çekilme eğilimin olabilir.', 'You look for seriousness and trust in love; relationships start slowly but last. You may be drawn to someone older.');
   return null;
 }
 function foreignHint(ch: Chart, r7: BodyId, s7: number): L | null {
   const P = ch.positions;
-  if (s7 === 8 || P[r7].house === 9 || P.jupiter.house === 7 || r7 === 'jupiter') return l('Partnerinle aranızda kültür, şehir ya da yaşam tarzı farkı olabilir; ilişki sana yeni ufuklar açar.', 'There may be a difference in culture, city or lifestyle between you; the relationship widens your horizons.');
+  if (s7 === 8 || P[r7].house === 9 || P.jupiter.house === 7 || r7 === 'jupiter') return l('Eşinle aranızda kültür, şehir ya da yaşam tarzı farkı olabilir; ilişki sana yeni ufuklar açar.', 'There may be a difference in culture, city or lifestyle between you; the relationship widens your horizons.');
   if (P.uranus.house === 7 || s7 === 10) return l('Sıra dışı, alışılmadık bir ilişki yaşayabilirsin; partnerin çevrene göre “farklı” biri olabilir.', 'You may have an unconventional relationship; your partner may seem “different” to those around you.');
   return null;
 }
@@ -146,23 +146,25 @@ export function spouseProfile(ch: Chart, lang: Lang): SpouseSection[] | null {
     why: l('Tanışma yeri, partnerini temsil eden gezegenin bulunduğu evden okunur.', 'The meeting place is read from the house of the planet that represents your partner.') });
 
   // 5. Yaş, kültür, ilişkinin rengi
-  const extra = [ageHint(ch, r7, s7), foreignHint(ch, r7, s7)].filter(Boolean) as L[];
+  const age = ageHint(ch, r7, s7);
+  const extra = [age, foreignHint(ch, r7, s7)].filter(Boolean) as L[];
   const in7t: Partial<Record<BodyId, L>> = {
-    sun: l('Partnerin güçlü bir kişiliğe sahip, kendine güvenen ve parlayan biri olur.', 'Your partner has a strong, confident, radiant personality.'),
-    moon: l('Partnerinle aranızda derin bir duygusal bağ olur; ilişki ruh hâlini çok etkiler.', 'You share a deep emotional bond; the relationship strongly affects your mood.'),
+    sun: l('Eşin güçlü bir kişiliğe sahip, kendine güvenen ve parlayan biri olur.', 'Your partner has a strong, confident, radiant personality.'),
+    moon: l('Eşinle aranızda derin bir duygusal bağ olur; ilişki ruh hâlini çok etkiler.', 'You share a deep emotional bond; the relationship strongly affects your mood.'),
     mercury: l('Konuşabildiğin, zihnen uyuştuğun biriyle evlenme eğilimin var.', 'You tend to marry someone you can talk to and who matches your mind.'),
     venus: l('Evlilik için çok uyumlu bir işaret: ilişkin sevgi dolu ve uyumlu olur.', 'A very harmonious sign for marriage: your relationship is loving and agreeable.'),
-    mars: l('Tutkulu ama zaman zaman tartışmalı bir ilişki; partnerin güçlü ve iddialı biri.', 'A passionate but sometimes argumentative relationship; your partner is strong and assertive.'),
-    jupiter: l('Evlilikte şanslı sayılırsın; partnerin cömert, bilge ve hayatını genişleten biri.', 'You are considered lucky in marriage; your partner is generous, wise and broadens your life.'),
+    mars: l('Tutkulu ama zaman zaman tartışmalı bir ilişki; eşin güçlü ve iddialı biri.', 'A passionate but sometimes argumentative relationship; your partner is strong and assertive.'),
+    jupiter: l('Evlilikte şanslı sayılırsın; eşin cömert, bilge ve hayatını genişleten biri.', 'You are considered lucky in marriage; your partner is generous, wise and broadens your life.'),
     saturn: l('Evlilik geç ama sağlam gelir; zamanla güçlenen, kalıcı bir bağ.', 'Marriage comes later but solidly; a lasting bond that grows stronger with time.'),
     uranus: l('İlişki beklenmedik bir şekilde başlar; özgürlüğüne saygı duyan biri gerekir.', 'The relationship starts unexpectedly; you need someone who respects your freedom.'),
-    neptune: l('Ruh eşi gibi hissettiren bir bağ; partnerini idealize etmemeye dikkat et.', 'A soulmate-like bond; be careful not to idealise your partner.'),
+    neptune: l('Ruh eşi gibi hissettiren bir bağ; eşini idealize etmemeye dikkat et.', 'A soulmate-like bond; be careful not to idealise your partner.'),
     pluto: l('Kader gibi hissettiren, seni derinden dönüştüren yoğun bir ilişki.', 'An intense, fated-feeling relationship that transforms you deeply.'),
   };
-  in7.forEach(p => in7t[p] && extra.push(in7t[p]!));
-  if (P.juno) extra.push(l(`Uzun süreli bağlılıkta aradığın şeyi gösteren Juno ${SIGNS[P.juno.sign].tr} burcunda: partnerinde ${CHAR[P.juno.sign].tr.split(';')[0]} birini ararsın.`, `Juno, which shows what you seek in commitment, is in ${SIGNS[P.juno.sign].en}: you look for someone ${CHAR[P.juno.sign].en.split(';')[0]}.`));
-  if (extra.length) out.push({ id: 'colour', title: l('İlişkinin rengi', 'The colour of the relationship'),
-    text: { tr: extra.map(x => x.tr).join(' '), en: extra.map(x => x.en).join(' ') },
+  const ageSat = ch.positions.saturn.house === 7 || r7 === 'saturn' || s7 === 9 || s7 === 10;
+  in7.forEach(p => { if (p === 'saturn' && ageSat) { const k = age ? extra.indexOf(age) : -1; const m = l('Eşinin senden yaşça büyük ya da yaşından olgun biri olma ihtimali yüksek. Evlilik geç ama sağlam gelir: acele etmezsin, bağ zamanla güçlenir ve kalıcı olur.', 'Your spouse is likely older or mature for their age. Marriage comes late but solidly: you don’t rush, and the bond grows stronger and lasts.'); if (k >= 0) extra[k] = m; else extra.unshift(m); return; } if (in7t[p]) extra.push(in7t[p]!); });
+  if (P.juno) extra.push(l(`Uzun süreli bağlılıkta aradığın şeyi gösteren Juno ${SIGNS[P.juno.sign].tr} burcunda: eşinde ${CHAR[P.juno.sign].tr.split(';')[0]} birini ararsın.`, `Juno, which shows what you seek in commitment, is in ${SIGNS[P.juno.sign].en}: you look for someone ${CHAR[P.juno.sign].en.split(';')[0]}.`));
+  if (extra.some(x => x.tr)) out.push({ id: 'colour', title: l('İlişkinin rengi', 'The colour of the relationship'),
+    text: { tr: extra.filter(x => x.tr).map(x => x.tr).join(' '), en: extra.filter(x => x.en).map(x => x.en).join(' ') },
     why: l(`Yedinci evdeki gezegenler${in7.length ? ` (${in7.map(p => name(p).tr).join(', ')})` : ''}, Satürn ve Jüpiter bağlantıları ile Juno’nun burcu.`, `Planets in the seventh house${in7.length ? ` (${in7.map(p => name(p).en).join(', ')})` : ''}, Saturn and Jupiter links, and Juno’s sign.`) });
 
   return out;

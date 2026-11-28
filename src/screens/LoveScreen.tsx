@@ -10,7 +10,7 @@ import { synastry, SYN_LABEL } from '../content/forecast';
 import { concord } from '../content/lillyNatal';
 import { SIGNS } from '../content/base';
 import { HARMONY } from '../content/techniqueTexts';
-import { deepSpouse, darakarakaOf } from '../content/spouseDeep';
+import { deepSpouse, darakarakaOf, marriageSummary } from '../content/spouseDeep';
 import { spouseProfile, marriageWindows, spouseArchetypeParts, spouseSummary, spouseJob, fateSections } from '../content/spouse';
 import { personCtx } from '../engine/person';
 import { lifeTimeline } from '../engine/timeline';
@@ -249,7 +249,8 @@ function SpouseBlock() {
   const has = !!(chart.cusps.length || gender);
   const deep = deepSpouse(chart, gender);
   const sum = spouseSummary(chart, gender, darakarakaOf(chart));
-  const all = [...(sum ? [sum] : []), ...(gender ? spouseArchetypeParts(chart, gender) : []), ...base, ...(has ? fateSections(chart, gender) : []), ...(job ? [job] : []), ...deep];
+  const msum = marriageSummary(chart, gender);
+  const all = [...(sum ? [sum] : []), ...(msum ? [msum] : []), ...(gender ? spouseArchetypeParts(chart, gender) : []), ...base, ...(has ? fateSections(chart, gender) : []), ...(job ? [job] : []), ...deep];
   const pick = (ids: string[]) => ids.map(id => all.find(x => x.id === id)).filter(Boolean) as typeof all;
   const L = (tr: string, en: string) => (lang === 'tr' ? tr : en);
   const P_ = chart.positions;
@@ -264,7 +265,7 @@ function SpouseBlock() {
   const g1 = pick(['sum', 'who', 'arch', 'darakaraka', 'look', 'bound']);
   const g2 = pick(['job', 'archjob', 'dkjob', 'life']);
   const g3 = pick(['meet', 'archmeet', 'direction', 'vertex']);
-  const g4 = pick(['colour', 'lot', 'upapada', 'navamsa', 'ptolemy']);
+  const g4 = pick(['msum', 'colour', 'lot', 'upapada', 'navamsa', 'ptolemy']);
   const noTime = !chart.cusps.length ? <Sub style={{ marginBottom: 12 }}>{s.needsTime}</Sub> : null;
   const items = [
     { key: 'who', glyph: '☉', title: L('Nasıl biri?', 'What are they like?'), teaser: L('Karakteri, görünüşü, gizli tarafı', 'Character, looks, hidden side'), body: <>{noTime}{g1.map(card)}{juno.length ? card({ id: 'juno', title: { tr: 'Juno’nun ipuçları', en: 'Clues from Juno' }, text: { tr: juno.map(x => x.tr).join(' '), en: juno.map(x => x.en).join(' ') }, why: { tr: 'Juno, evlilik ve bağlılığı anlatan asteroittir; yakın durduğu gezegenler ve bulunduğu ev eşin hakkında ek bilgi verir.', en: 'Juno is the asteroid of marriage and commitment; the planets it sits close to and its house add details about your spouse.' } } as any) : null}</> },

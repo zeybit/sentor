@@ -64,7 +64,7 @@ export function ptolemyMarriage(ch: Chart, gender: 'f' | 'm'): SpouseSection {
     const h = P.house;
     const east = [10, 11, 12, 4, 5, 6].includes(h);
     parts.push(east
-      ? l(gender === 'm' ? 'Erken evlenmeye ya da kendinden genç biriyle evlenmeye yatkınsın.' : 'Erken evlenmeye ya da kendinden genç biriyle evlenmeye yatkınsın.', 'You tend to marry early, or to marry someone younger than you.')
+      ? l('Hayatına erken yaşta ciddi bir bağ girmeye ya da kendinden genç biriyle yakınlaşmaya yatkınsın; bu kural özellikle ilk ciddi bağın zamanını anlatır.', 'You tend to form a serious bond early, or with someone younger; this rule speaks mainly of the first serious bond.')
       : l('Geç evlenmeye ya da kendinden büyük biriyle evlenmeye yatkınsın.', 'You tend to marry late, or to marry someone older than you.'));
     why.push(l(`${nm(sig).tr} ${h}. evde, yani haritanın ${east ? 'doğu' : 'batı'} çeyreğinde.`, `${nm(sig).en} is in house ${h}, the ${east ? 'eastern' : 'western'} quadrant.`));
   }
@@ -179,18 +179,61 @@ export function upapada(ch: Chart): SpouseSection | null {
   const sgn = (b: BodyId) => Math.floor(sid(ch, ch.positions[b].lon) / 30);
   const inUL = SEVEN.filter(b => sgn(b) === ul), in2 = SEVEN.filter(b => sgn(b) === (ul + 1) % 12);
   const parts: L[] = [l(`Evliliğinin dışarıdan görünen yüzü ${SIGNS[ul].tr}: eşin ve onun ailesi ${SIGN_SPOUSE[ul].tr} bir havada.`, `The public face of your marriage is ${SIGNS[ul].en}: your spouse and their family carry a ${SIGN_SPOUSE[ul].en} air.`)];
-  if (inUL.some(b => b === 'jupiter' || b === 'venus')) parts.push(l('Jüpiter ya da Venüs bu noktada: evliliğe destek, iyi niyet ve uzun ömür getirir.', 'Jupiter or Venus sits here: support, goodwill and longevity for the marriage.'));
+  const IN_UL: Partial<Record<BodyId, L>> = { jupiter: l('Jüpiter bu noktada: evliliğe destek, iyi niyet ve uzun ömür getirir.', 'Jupiter sits here: support, goodwill and longevity for the marriage.'), venus: l('Venüs bu noktada: evlilik sevgi dolu, uyumlu ve keyifli olur.', 'Venus sits here: a loving, harmonious marriage.') };
+  const ulB = inUL.filter(b => IN_UL[b]);
+  if (ulB.length === 2) parts.push(l('Jüpiter ve Venüs ikisi de bu noktada: evlilik için çok güçlü bir destek; sevgi dolu ve uzun ömürlü bir bağ.', 'Both Jupiter and Venus sit here: strong support for a loving, long-lived marriage.'));
+  else if (ulB.length === 1) parts.push(IN_UL[ulB[0]]!);
+  const IN2: Record<string, L> = { venus: l('Venüs evliliği tatlandırır', 'Venus sweetens it'), jupiter: l('Jüpiter onu korur ve büyütür', 'Jupiter protects and grows it'), mercury: l('Merkür sorunları konuşarak çözmeyi sağlar', 'Mercury helps you talk things through'), moon: l('Ay duygusal yakınlık getirir', 'the Moon brings emotional closeness'), mars: l('Mars tartışma ve sabırsızlık getirir', 'Mars brings arguments and impatience'), saturn: l('Satürn mesafe ve sorumluluk yükü getirir', 'Saturn brings distance and duty'), sun: l('Güneş ego çatışmasına yol açabilir', 'the Sun can bring clashes of ego') };
   const g = in2.filter(b => BENEFIC.includes(b)).length, b = in2.filter(x => MALEFIC.includes(x)).length;
-  if (g && !b) parts.push(l('Evliliği ayakta tutan alanda iyicil gezegenler var: bağ zamanla güçlenen, uzun soluklu bir yapı.', 'Benefics sit where the marriage is sustained: a long-lasting bond that grows stronger.'));
-  else if (b && !g) parts.push(l('Evliliği ayakta tutan alanda zorlayıcı gezegenler var: evlilik emek ister; sınavlardan geçerek oturur.', 'Malefics sit where the marriage is sustained: it takes work and settles through tests.'));
-  else if (g && b) parts.push(l('Evliliği taşıyan alanda hem destekleyici hem zorlayıcı etkiler var: iyi dönemlerle sınavlar iç içe.', 'Both supportive and testing planets sit where the marriage is sustained: good periods and tests alternate.'));
-  else parts.push(l('Evliliği taşıyan alan boş: kalıcılığı belirleyen, o alanın yöneticisinin durumu ve ikinizin emeği.', 'The house that sustains the marriage is empty; its ruler and your shared effort decide how lasting it is.'));
+  const list = (lang: 'tr' | 'en') => { const xs = in2.map(x => IN2[x][lang]); return xs.length > 1 ? xs.slice(0, -1).join(', ') + (lang === 'tr' ? ', ' : ', while ') + xs[xs.length - 1] : xs[0]; };
+  if (in2.length) {
+    const tail = g && !b ? l('bağ zamanla güçlenen, uzun soluklu bir yapı.', 'a long-lasting bond that grows stronger.') : b && !g ? l('evlilik emek ister; sınavlardan geçerek oturur.', 'the marriage takes work and settles through tests.') : l('iyi dönemlerle sınavlar iç içe.', 'good periods and tests alternate.');
+    const t = list('tr');
+    parts.push(l(`Evliliği ayakta tutan alanda ${t}: ${tail.tr}`, `Where the marriage is sustained, ${list('en')}: ${tail.en}`));
+  } else parts.push(l('Evliliği taşıyan alan boş: kalıcılığı belirleyen, o alanın yöneticisinin durumu ve ikinizin emeği.', 'The house that sustains the marriage is empty; its ruler and your shared effort decide how lasting it is.'));
   return {
     id: 'upapada', title: l('Upapada: evliliğin kendisi', 'Upapada: the marriage itself'),
     text: l(parts.map(p => p.tr).join(' '), parts.map(p => p.en).join(' ')),
     why: l(`Jaimini’nin Upapada Lagna’sı eşi değil evliliğin kendisini gösterir: 12. evin yöneticisinin uzaklığı kadar ondan ileri sayılarak bulunur. Senin Upapada’n ${SIGNS[ul].tr}${inUL.length ? `; içinde ${inUL.map(x => nm(x).tr).join(', ')}` : ''}${in2.length ? `; ondan sonraki burçta ${in2.map(x => nm(x).tr).join(', ')}` : ''}.`,
       `Jaimini’s Upapada Lagna shows the marriage itself rather than the spouse: count from the 12th house to its ruler, then the same distance again. Your Upapada is ${SIGNS[ul].en}${inUL.length ? `, holding ${inUL.map(x => nm(x).en).join(', ')}` : ''}${in2.length ? `; the next sign holds ${in2.map(x => nm(x).en).join(', ')}` : ''}.`),
   };
+}
+
+// ---------- Evliliğin özeti: teknikleri birleştirir ----------
+const THEME: Partial<Record<BodyId, L>> = {
+  saturn: l('ciddi, olgun, sorumluluk sahibi bir eş ve zamanla güçlenen, kalıcı bir evlilik', 'a serious, mature, responsible spouse and a marriage that strengthens with time'),
+  venus: l('sevgi dolu, uyumlu ve keyifli bir evlilik', 'a loving, harmonious, pleasant marriage'),
+  jupiter: l('cömert, ufuk açan ve şanslı bir evlilik', 'a generous, horizon-widening, fortunate marriage'),
+  mars: l('tutkulu, canlı ama zaman zaman tartışmalı bir evlilik', 'a passionate, lively but sometimes argumentative marriage'),
+  mercury: l('konuşmanın ve ortak fikirlerin merkezde olduğu bir evlilik', 'a marriage centred on talk and shared ideas'),
+  moon: l('duygusal, yuva ve aile odaklı bir evlilik', 'an emotional, home- and family-centred marriage'),
+  sun: l('güçlü, gururlu ve çevrede görünür bir evlilik', 'a strong, proud, visible marriage'),
+};
+export function marriageSummary(ch: Chart, gender?: 'f' | 'm' | null): SpouseSection | null {
+  if (ch.asc === null || !ch.cusps.length) return null;
+  const P = ch.positions;
+  const votes: { b: BodyId; why: string }[] = [];
+  const s7 = Math.floor(ch.cusps[6] / 30), r7 = SIGN_RULERS[s7];
+  votes.push({ b: r7, why: `yedinci ev ${SIGNS[s7].tr}` });
+  for (const b of SEVEN) if (P[b].house === 7 && b !== r7) votes.push({ b, why: `yedinci evde ${nm(b).tr}` });
+  if (P.juno) votes.push({ b: SIGN_RULERS[P.juno.sign], why: `Juno ${SIGNS[P.juno.sign].tr}` });
+  const d9 = (navamsa(sid(ch, ch.asc)) + 6) % 12; votes.push({ b: SIGN_RULERS[d9], why: `Navamsa’nın 7. evi ${SIGNS[d9].tr}` });
+  const up = upapada(ch); const ulS = up ? SIGNS.findIndex(x => up.why.tr.includes(`Upapada’n ${x.tr}`)) : -1;
+  if (ulS >= 0) votes.push({ b: SIGN_RULERS[ulS], why: `Upapada ${SIGNS[ulS].tr}` });
+  const cnt = new Map<BodyId, string[]>(); for (const v of votes) cnt.set(v.b, [...(cnt.get(v.b) ?? []), v.why]);
+  const top = [...cnt.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+  // zamanlama
+  const satIn7 = P.saturn.house === 7, satRules = r7 === 'saturn' || s7 === 9 || s7 === 10;
+  const sig: BodyId | null = gender ? (gender === 'm' ? 'moon' : 'sun') : null;
+  const east = sig ? [10, 11, 12, 4, 5, 6].includes(P[sig].house) : null;
+  const multi = sig ? BICORP.includes(P[sig].sign) : false;
+  const late = satIn7 || satRules || east === false, early = east === true;
+  const timing = early && late
+    ? `Zamanlama konusunda teknikler ikiye ayrılıyor ama birbirini tamamlıyor: hayatına erken yaşta ciddi bir bağ girebilir${multi ? ' ve bu çoğu zaman son bağ olmaz' : ''}; kalıcı evlilik ise daha geç ve daha olgun biriyle gelir.`
+    : late ? 'Evlilik acele etmeden, hayatın oturduğu yıllarda gelir.' : early ? `Ciddi bağlar hayatına erken girer${multi ? '; ama ilk bağ çoğu zaman son bağ olmaz' : ''}.` : multi ? 'Hayatında birden fazla derin bağ olabilir.' : '';
+  const theme = top && top[1].length >= 2 && THEME[top[0]] ? `Tekniklerin en çok buluştuğu nokta: ${THEME[top[0]]!.tr}. Bu tema ${top[1].length} ayrı yerde tekrar ediyor (${top[1].join(', ')}); haritandaki en güvenilir evlilik bilgisi bu.` : 'Teknikler farklı tonlar gösteriyor; evliliğin tek bir kalıba sığmayan, çok yönlü bir bağ olur.';
+  const whyT = [early && late ? `Batlamyus’un kuralı ${nm(sig!).tr} doğu çeyreğinde olduğu için erken bağı, ${satIn7 ? 'yedinci evdeki Satürn' : 'Satürn’ün yedinci eve hükmetmesi'} geç ve olgun evliliği gösteriyor.` : '', 'Yedinci ev, Juno, Navamsa, Upapada ve Batlamyus’un kuralı birlikte tarandı; aynı gezegenin birden fazla teknikte öne çıkması o konuyu güçlendirir.'].filter(Boolean).join(' ');
+  return { id: 'msum', title: l('Kısaca evliliğin', 'Your marriage in short'), text: l(`${timing} ${theme}`.trim(), `${theme}`), why: l(whyT, 'Seventh house, Juno, Navamsa, Upapada and Ptolemy’s rule read together.') };
 }
 
 // ---------- Alçalanın terim yöneticisi ----------
